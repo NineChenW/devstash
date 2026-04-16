@@ -6,10 +6,10 @@ A developer knowledge hub for snippets, commands, prompts, notes, files, images,
 
 Read the following to ge the full context of the project:
 
-- @context/project-overview.md
-- @context/coding-standards.md
-- @context/ai-interaction.md
-- @context/current-feature.md
+- context/project-overview.md
+- context/coding-standards.md
+- context/ai-interaction.md
+- context/current-feature.md
 
 ## Development Commands
 
