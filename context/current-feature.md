@@ -16,19 +16,35 @@ Do not violate any following rules:
 
 <!--Feature Name-->
 
+Dashboard UI Phase 3
+
 ## Status
 
 <!--Not Started|In Progress|Completed-->
 
-Not Started
+In Progress
 
 ## Goals
 
 <!--Goals & requirements-->
 
+- 4 stats cards at the top (total items, total collections, favorite items, favorite collections)
+- Recent collections section
+- Pinned items section
+- 10 recent items section
+
 ## Notes
 
 <!--Any extra notes-->
+
+References:
+
+- @context/screenshots/dashboard-ui-main.png
+- @context/project-overview.md
+- @src/lib/mock-data.ts
+- @context/features/dashboard-phase-1-spec.md
+- @context/features/dashboard-phase-2-spec.md
+- @context/features/dashboard-phase-3-spec.md
 
 ## History
 
@@ -39,6 +55,6 @@ Earliest to latest.
 
 - **2026-04-14**: Initial Next.js and Tailwind CSS v4 setup - Created project structure, coding standards, and AI interaction guidelines. Committed with message "chore: initial next.js and tailwind setup".
 - **2026-04-15**: Dashboard UI Phase 1 implementation - Initialized ShadCN UI components, created dashboard route at /dashboard, implemented dark mode by default, added top bar with search and new item button, created sidebar and main area placeholders.
-- **2026-04-16**: Dashboard UI Phase 2 implementation - Implemented collapsible sidebar with item types links, favorite collections, most recent collections, user avatar area, drawer icon for mobile/desktop toggle, fixed hydration error with mounted state, added localStorage persistence for sidebar state. **COMPLETED**
+- **2026-04-16**: Dashboard UI Phase 2 implementation - Implemented collapsible sidebar with item types links, favorite collections, most recent collections, user avatar area, drawer icon for mobile/desktop toggle, fixed hydration error with mounted state, added localStorage persistence for sidebar state.
 - **2026-04-16**: Dashboard UI Phase 2 completion - Created Sidebar component with collapsible functionality, SidebarDrawer for mobile view, integrated with dashboard page, added localStorage persistence for sidebar collapsed state. Build verified successfully.
-- **2026-04-16**: Bug fixes and sidebar improvements - Fixed toggle icon not changing between collapsed/expanded states, added colored left border accent to PinnedItem to match CollectionCard, made Collections section in sidebar collapsible with chevron animation, fixed sidebar not rendering after browser back navigation (removed mounted guard from sidebar render). **COMPLETED**
+- **2026-04-16**: Bug fixes and sidebar improvements - Fixed toggle icon not changing between collapsed/expanded states, added colored left border accent to PinnedItem to match CollectionCard, made Collections section in sidebar collapsible with chevron animation, fixed sidebar not rendering after browser back navigation (removed mounted guard from sidebar render).

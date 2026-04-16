@@ -155,6 +155,149 @@ function Counter() {
     userId: 'user-1',
     itemTypeId: 'type-5',
   },
+  {
+    id: 'item-6',
+    title: 'Prisma Client Singleton',
+    description: 'Prevent multiple Prisma instances in Next.js dev mode',
+    contentType: 'text',
+    content: `import { PrismaClient } from '@prisma/client'
+
+const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
+
+export const prisma = globalForPrisma.prisma ?? new PrismaClient()
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma`,
+    language: 'typescript',
+    isFavorite: true,
+    isPinned: false,
+    createdAt: '2024-01-20T09:00:00Z',
+    updatedAt: '2024-01-20T09:00:00Z',
+    userId: 'user-1',
+    itemTypeId: 'type-1',
+  },
+  {
+    id: 'item-7',
+    title: 'Write API Documentation',
+    description: 'Prompt for generating clear API docs',
+    contentType: 'text',
+    content: 'You are a technical writer. Given the following API route, write clear and concise documentation including: endpoint, method, request body, response schema, and example usage.',
+    isFavorite: false,
+    isPinned: false,
+    createdAt: '2024-01-21T11:00:00Z',
+    updatedAt: '2024-01-21T11:00:00Z',
+    userId: 'user-1',
+    itemTypeId: 'type-2',
+  },
+  {
+    id: 'item-8',
+    title: 'Docker Run Dev Container',
+    description: 'Run a Node.js app in Docker with hot reload',
+    contentType: 'text',
+    content: 'docker run -it --rm -v $(pwd):/app -w /app -p 3000:3000 node:20-alpine sh',
+    isFavorite: false,
+    isPinned: false,
+    createdAt: '2024-01-22T14:30:00Z',
+    updatedAt: '2024-01-22T14:30:00Z',
+    userId: 'user-1',
+    itemTypeId: 'type-3',
+  },
+  {
+    id: 'item-9',
+    title: 'Database Schema Decisions',
+    description: 'Notes on schema design choices for the project',
+    contentType: 'text',
+    content: '- Use cuid() for IDs (better for distributed systems than UUID)\n- Soft deletes via deletedAt field\n- Always store timestamps in UTC\n- Use enums sparingly — prefer string fields with validation',
+    isFavorite: false,
+    isPinned: false,
+    createdAt: '2024-01-23T10:15:00Z',
+    updatedAt: '2024-01-23T10:15:00Z',
+    userId: 'user-1',
+    itemTypeId: 'type-4',
+  },
+  {
+    id: 'item-10',
+    title: 'Prisma Docs',
+    description: 'Official Prisma ORM documentation',
+    contentType: 'url',
+    url: 'https://www.prisma.io/docs',
+    isFavorite: false,
+    isPinned: false,
+    createdAt: '2024-01-24T09:00:00Z',
+    updatedAt: '2024-01-24T09:00:00Z',
+    userId: 'user-1',
+    itemTypeId: 'type-5',
+  },
+  {
+    id: 'item-11',
+    title: 'NextAuth v5 Setup',
+    description: 'Minimal NextAuth v5 config with GitHub provider',
+    contentType: 'text',
+    content: `import NextAuth from 'next-auth'
+import GitHub from 'next-auth/providers/github'
+
+export const { handlers, signIn, signOut, auth } = NextAuth({
+  providers: [GitHub],
+})`,
+    language: 'typescript',
+    isFavorite: true,
+    isPinned: false,
+    createdAt: '2024-01-25T13:00:00Z',
+    updatedAt: '2024-01-25T13:00:00Z',
+    userId: 'user-1',
+    itemTypeId: 'type-1',
+  },
+  {
+    id: 'item-12',
+    title: 'Code Review Assistant',
+    description: 'Prompt for thorough code review feedback',
+    contentType: 'text',
+    content: 'Review the following code for: correctness, security issues, performance concerns, readability, and adherence to SOLID principles. Be specific and suggest concrete improvements.',
+    isFavorite: false,
+    isPinned: false,
+    createdAt: '2024-01-26T10:00:00Z',
+    updatedAt: '2024-01-26T10:00:00Z',
+    userId: 'user-1',
+    itemTypeId: 'type-2',
+  },
+  {
+    id: 'item-13',
+    title: 'Git Stash Workflow',
+    description: 'Stash, switch branch, and restore changes',
+    contentType: 'text',
+    content: 'git stash push -m "wip: feature description"\ngit checkout main\n# ... do work ...\ngit checkout -\ngit stash pop',
+    isFavorite: false,
+    isPinned: false,
+    createdAt: '2024-01-27T15:45:00Z',
+    updatedAt: '2024-01-27T15:45:00Z',
+    userId: 'user-1',
+    itemTypeId: 'type-3',
+  },
+  {
+    id: 'item-14',
+    title: 'TypeScript Strict Mode Notes',
+    description: 'What strict mode enables and why it matters',
+    contentType: 'text',
+    content: 'Strict mode enables: strictNullChecks, noImplicitAny, strictFunctionTypes, strictPropertyInitialization. Always enable — catching these at compile time saves hours of runtime debugging.',
+    isFavorite: false,
+    isPinned: false,
+    createdAt: '2024-01-28T11:20:00Z',
+    updatedAt: '2024-01-28T11:20:00Z',
+    userId: 'user-1',
+    itemTypeId: 'type-4',
+  },
+  {
+    id: 'item-15',
+    title: 'TypeScript Handbook',
+    description: 'The official TypeScript language handbook',
+    contentType: 'url',
+    url: 'https://www.typescriptlang.org/docs/handbook',
+    isFavorite: false,
+    isPinned: false,
+    createdAt: '2024-01-29T08:30:00Z',
+    updatedAt: '2024-01-29T08:30:00Z',
+    userId: 'user-1',
+    itemTypeId: 'type-5',
+  },
 ];
 
 export const mockCollections = [
@@ -254,6 +397,13 @@ export const mockItemCollections = [
     addedAt: '2024-01-18T09:15:00Z',
   },
 ];
+
+export const mockStats = {
+  totalItems: mockItemTypes.reduce((sum, t) => sum + t.count, 0),
+  totalCollections: 6,
+  favoriteItems: 12,
+  favoriteCollections: 3,
+};
 
 export const mockPinnedItems = [
   {
