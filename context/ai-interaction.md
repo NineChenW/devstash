@@ -57,3 +57,9 @@ Review AI-generated code periodically, especially for:
 - Performance (unnecessary re-renders, N+1 queries)
 - Logic errors (edge cases)
 - Patterns (matches existing codebase?)
+
+## Update Document
+
+- Before update, find if there are any rules or constraintion information
+- Do not violate any following rules
+- Double check before acting
