@@ -17,11 +17,14 @@ import {
   Settings,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { mockItemTypes, mockCollections, mockUser } from '@/lib/mock-data'
+import { mockUser } from '@/lib/mock-data'
+import type { ItemTypeWithCount } from '@/lib/db/items'
+import type { CollectionWithTypes } from '@/lib/db/collections'
 
 interface SidebarProps {
   collapsed: boolean
-  onToggle: () => void
+  itemTypes: ItemTypeWithCount[]
+  collections: CollectionWithTypes[]
 }
 
 const iconMap: Record<string, React.ElementType> = {
@@ -34,12 +37,12 @@ const iconMap: Record<string, React.ElementType> = {
   Image: ImageIcon,
 }
 
-export function Sidebar({ collapsed, onToggle }: SidebarProps) {
+export function Sidebar({ collapsed, itemTypes, collections }: SidebarProps) {
   const pathname = usePathname()
   const [collectionsOpen, setCollectionsOpen] = useState(true)
 
-  const favoriteCollections = mockCollections.filter((c) => c.isFavorite)
-  const allCollections = mockCollections.filter((c) => !c.isFavorite)
+  const favoriteCollections = collections.filter((c) => c.isFavorite)
+  const recentCollections = collections.filter((c) => !c.isFavorite)
 
   return (
     <aside
@@ -68,7 +71,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             </button>
           )}
           <nav className="space-y-0.5">
-            {mockItemTypes.map((type) => {
+            {itemTypes.map((type) => {
               const Icon = iconMap[type.icon] || Code
               const href = `/items/${type.name}s`
               const isActive = pathname === href
@@ -147,16 +150,16 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 </div>
               )}
 
-              {/* All Collections */}
-              {allCollections.length > 0 && (
+              {/* Recents */}
+              {recentCollections.length > 0 && (
                 <div>
                   {!collapsed && (
                     <h3 className="mb-1 px-2 text-xs font-medium text-muted-foreground">
-                      All Collections
+                      Recents
                     </h3>
                   )}
                   <nav className="space-y-0.5">
-                    {allCollections.map((collection) => (
+                    {recentCollections.map((collection) => (
                       <Link
                         key={collection.id}
                         href={`/collections/${collection.id}`}
@@ -166,17 +169,27 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                         )}
                         title={collapsed ? collection.name : undefined}
                       >
-                        <FolderOpen className="h-4 w-4 shrink-0" />
+                        <span
+                          className="h-2.5 w-2.5 shrink-0 rounded-full"
+                          style={{ backgroundColor: collection.dominantColor }}
+                        />
                         {!collapsed && (
-                          <>
-                            <span className="flex-1 truncate">{collection.name}</span>
-                            <span className="text-xs text-muted-foreground">{collection.itemCount}</span>
-                          </>
+                          <span className="flex-1 truncate">{collection.name}</span>
                         )}
                       </Link>
                     ))}
                   </nav>
                 </div>
+              )}
+
+              {/* View all collections */}
+              {!collapsed && (
+                <Link
+                  href="/collections"
+                  className="mt-2 flex items-center gap-3 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                >
+                  <span className="flex-1 truncate">View all collections</span>
+                </Link>
               )}
             </>
           )}
