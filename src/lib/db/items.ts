@@ -12,6 +12,42 @@ export interface DashboardItem {
   createdAt: Date
 }
 
+export interface ItemTypeWithCount {
+  id: string
+  name: string
+  icon: string
+  color: string
+  count: number
+}
+
+const SYSTEM_TYPE_ORDER = ['snippet', 'prompt', 'command', 'note', 'file', 'image', 'link']
+
+export async function getSystemItemTypesWithCounts(userId: string): Promise<ItemTypeWithCount[]> {
+  const types = await prisma.itemType.findMany({
+    where: { isSystem: true },
+    include: {
+      _count: {
+        select: {
+          items: { where: { userId } },
+        },
+      },
+    },
+  })
+
+  const byName = new Map(types.map((t) => [t.name, t]))
+  return SYSTEM_TYPE_ORDER.flatMap((name) => {
+    const type = byName.get(name)
+    if (!type) return []
+    return [{
+      id: type.id,
+      name: type.name,
+      icon: type.icon,
+      color: type.color,
+      count: type._count.items,
+    }]
+  })
+}
+
 export async function getPinnedItems(userId: string): Promise<DashboardItem[]> {
   const items = await prisma.item.findMany({
     where: { userId, isPinned: true },

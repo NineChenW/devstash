@@ -5,14 +5,14 @@ import { PinnedItem } from '@/components/items/PinnedItem'
 import { RecentItem } from '@/components/items/RecentItem'
 import { StatsCard } from '@/components/dashboard/StatsCard'
 import { getRecentCollections, getCollectionStats, getDemoUserId } from '@/lib/db/collections'
-import { getPinnedItems, getRecentItems } from '@/lib/db/items'
+import { getPinnedItems, getRecentItems, getSystemItemTypesWithCounts } from '@/lib/db/items'
 
 export default async function Dashboard() {
   const userId = await getDemoUserId()
 
   if (!userId) {
     return (
-      <DashboardShell>
+      <DashboardShell itemTypes={[]} sidebarCollections={[]}>
         <div className="flex h-64 items-center justify-center">
           <p className="text-muted-foreground">No demo user found. Run the seed script first.</p>
         </div>
@@ -20,15 +20,16 @@ export default async function Dashboard() {
     )
   }
 
-  const [collections, stats, pinnedItems, recentItems] = await Promise.all([
+  const [collections, stats, pinnedItems, recentItems, itemTypes] = await Promise.all([
     getRecentCollections(userId),
     getCollectionStats(userId),
     getPinnedItems(userId),
     getRecentItems(userId, 10),
+    getSystemItemTypesWithCounts(userId),
   ])
 
   return (
-    <DashboardShell>
+    <DashboardShell itemTypes={itemTypes} sidebarCollections={collections}>
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-semibold">Dashboard</h1>

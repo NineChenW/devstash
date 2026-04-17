@@ -6,12 +6,16 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Sidebar } from '@/components/sidebar/Sidebar'
 import { SidebarDrawer } from '@/components/sidebar/SidebarDrawer'
+import type { ItemTypeWithCount } from '@/lib/db/items'
+import type { CollectionWithTypes } from '@/lib/db/collections'
 
 interface DashboardShellProps {
   children: React.ReactNode
+  itemTypes: ItemTypeWithCount[]
+  sidebarCollections: CollectionWithTypes[]
 }
 
-export function DashboardShell({ children }: DashboardShellProps) {
+export function DashboardShell({ children, itemTypes, sidebarCollections }: DashboardShellProps) {
   const [collapsed, setCollapsed] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
 
@@ -86,7 +90,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
       <div className="flex h-[calc(100vh-4rem)]">
         {/* Desktop Sidebar */}
         <div className="hidden md:block">
-          <Sidebar collapsed={collapsed} onToggle={handleToggle} />
+          <Sidebar collapsed={collapsed} itemTypes={itemTypes} collections={sidebarCollections} />
         </div>
 
         {/* Main Content */}
@@ -94,7 +98,12 @@ export function DashboardShell({ children }: DashboardShellProps) {
       </div>
 
       {/* Mobile Drawer */}
-      <SidebarDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      <SidebarDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        itemTypes={itemTypes}
+        collections={sidebarCollections}
+      />
     </div>
   )
 }
