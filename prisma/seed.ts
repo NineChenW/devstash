@@ -1,5 +1,7 @@
+import 'dotenv/config'
 import { PrismaClient } from '@/generated/prisma/client'
 import { PrismaNeon } from '@prisma/adapter-neon'
+import bcrypt from 'bcryptjs'
 
 const adapter = new PrismaNeon({
   connectionString: process.env.DATABASE_URL!,
@@ -17,6 +19,18 @@ const systemItemTypes = [
 ]
 
 async function main() {
+  // --- Clean existing data (order matters for foreign keys) ---
+  console.log('Cleaning existing data...')
+  await prisma.itemCollection.deleteMany()
+  await prisma.item.deleteMany()
+  await prisma.collection.deleteMany()
+  await prisma.tag.deleteMany()
+  await prisma.session.deleteMany()
+  await prisma.account.deleteMany()
+  await prisma.user.deleteMany()
+  await prisma.itemType.deleteMany()
+  console.log('  ✓ cleaned')
+
   // --- System Item Types ---
   console.log('Seeding system item types...')
 
@@ -52,13 +66,17 @@ async function main() {
   // --- Demo User ---
   console.log('Seeding demo user...')
 
+  const hashedPassword = await bcrypt.hash('12345678', 12)
+
   const user = await prisma.user.upsert({
-    where: { email: 'john@example.com' },
+    where: { email: 'demo@devstash.io' },
     update: {},
     create: {
-      name: 'John Developer',
-      email: 'john@example.com',
-      isPro: true,
+      name: 'Demo User',
+      email: 'demo@devstash.io',
+      password: hashedPassword,
+      isPro: false,
+      emailVerified: new Date(),
     },
   })
   console.log(`  ✓ ${user.name} (${user.email})`)
@@ -67,9 +85,11 @@ async function main() {
   console.log('Seeding tags...')
 
   const tagNames = [
-    'react', 'hooks', 'auth', 'typescript', 'nextjs',
-    'api', 'error-handling', 'fetch', 'git', 'docker',
-    'python', 'prisma', 'database', 'css', 'testing',
+    'react', 'hooks', 'typescript', 'patterns',
+    'ai', 'prompts', 'workflow', 'code-review',
+    'docker', 'devops', 'ci-cd', 'deployment',
+    'git', 'terminal', 'shell', 'npm',
+    'css', 'tailwind', 'ui', 'design',
   ]
 
   const tagMap: Record<string, string> = {}
@@ -87,189 +107,404 @@ async function main() {
   // --- Items ---
   console.log('Seeding items...')
 
-  const items = [
+  // React Patterns items (3 snippets)
+  const reactPatternItems = [
     {
-      title: 'React useState Hook',
-      description: 'Basic usage of useState in React',
+      title: 'useDebounce Hook',
+      description: 'Custom hook to debounce rapidly changing values',
       contentType: 'text',
-      content: `import React, { useState } from 'react';
+      content: `import { useState, useEffect } from 'react';
 
-function Counter() {
-  const [count, setCount] = useState(0);
+export function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+// Usage:
+// const debouncedSearch = useDebounce(searchTerm, 300);`,
+      language: 'typescript',
+      isFavorite: true,
+      isPinned: true,
+      itemType: 'snippet',
+      tags: ['react', 'hooks', 'typescript'],
+    },
+    {
+      title: 'Context Provider Pattern',
+      description: 'Type-safe React context with provider and custom hook',
+      contentType: 'text',
+      content: `import { createContext, useContext, useState, ReactNode } from 'react';
+
+interface ThemeContextType {
+  theme: 'light' | 'dark';
+  toggleTheme: () => void;
+}
+
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+
+  const toggleTheme = () =>
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
 
   return (
-    <div>
-      <p>Count: {count}</p>
-      <button onClick={() => setCount(count + 1)}>
-        Increment
-      </button>
-    </div>
+    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+      {children}
+    </ThemeContext.Provider>
   );
+}
+
+export function useTheme() {
+  const context = useContext(ThemeContext);
+  if (!context) throw new Error('useTheme must be used within ThemeProvider');
+  return context;
 }`,
       language: 'typescript',
-      isFavorite: true,
-      isPinned: true,
+      isFavorite: false,
+      isPinned: false,
       itemType: 'snippet',
-      tags: ['react', 'hooks'],
+      tags: ['react', 'patterns', 'typescript'],
     },
     {
-      title: 'Generate React Components',
-      description: 'Prompt for generating React components',
+      title: 'useLocalStorage Hook',
+      description: 'Persist state to localStorage with SSR safety',
       contentType: 'text',
-      content: 'You are an expert React developer. Create a well-structured React component with TypeScript that includes proper state management, props interface, and responsive design. The component should follow React best practices and include proper TypeScript types.',
-      isFavorite: false,
-      isPinned: true,
-      itemType: 'prompt',
-      tags: ['react', 'typescript'],
-    },
-    {
-      title: 'Create Next.js App',
-      description: 'Command to create a new Next.js application',
-      contentType: 'text',
-      content: 'npx create-next-app@latest my-app --typescript --tailwind --eslint --app',
-      isFavorite: false,
-      isPinned: false,
-      itemType: 'command',
-      tags: ['nextjs', 'typescript'],
-    },
-    {
-      title: 'Project Architecture Notes',
-      description: 'Notes about project architecture decisions',
-      contentType: 'text',
-      content: 'Key decisions:\n- Use Next.js 14 with App Router\n- Implement TypeScript for type safety\n- Use Tailwind CSS for styling\n- Structure components in feature-based folders\n- Implement proper error boundaries',
-      isFavorite: true,
-      isPinned: false,
-      itemType: 'note',
-      tags: ['nextjs', 'typescript'],
-    },
-    {
-      title: 'React Documentation',
-      description: 'Official React documentation',
-      contentType: 'url',
-      url: 'https://react.dev',
-      isFavorite: false,
-      isPinned: false,
-      itemType: 'link',
-      tags: ['react'],
-    },
-    {
-      title: 'Prisma Client Singleton',
-      description: 'Prevent multiple Prisma instances in Next.js dev mode',
-      contentType: 'text',
-      content: `import { PrismaClient } from '@prisma/client'
+      content: `import { useState, useEffect } from 'react';
 
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
+export function useLocalStorage<T>(key: string, initialValue: T) {
+  const [storedValue, setStoredValue] = useState<T>(() => {
+    if (typeof window === 'undefined') return initialValue;
+    try {
+      const item = window.localStorage.getItem(key);
+      return item ? (JSON.parse(item) as T) : initialValue;
+    } catch {
+      return initialValue;
+    }
+  });
 
-export const prisma = globalForPrisma.prisma ?? new PrismaClient()
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(key, JSON.stringify(storedValue));
+    } catch {
+      console.warn(\`Failed to save \${key} to localStorage\`);
+    }
+  }, [key, storedValue]);
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma`,
+  return [storedValue, setStoredValue] as const;
+}
+
+// Usage:
+// const [name, setName] = useLocalStorage('user-name', '');`,
       language: 'typescript',
       isFavorite: true,
       isPinned: false,
       itemType: 'snippet',
-      tags: ['prisma', 'nextjs', 'typescript'],
-    },
-    {
-      title: 'Write API Documentation',
-      description: 'Prompt for generating clear API docs',
-      contentType: 'text',
-      content: 'You are a technical writer. Given the following API route, write clear and concise documentation including: endpoint, method, request body, response schema, and example usage.',
-      isFavorite: false,
-      isPinned: false,
-      itemType: 'prompt',
-      tags: ['api'],
-    },
-    {
-      title: 'Docker Run Dev Container',
-      description: 'Run a Node.js app in Docker with hot reload',
-      contentType: 'text',
-      content: 'docker run -it --rm -v $(pwd):/app -w /app -p 3000:3000 node:20-alpine sh',
-      isFavorite: false,
-      isPinned: false,
-      itemType: 'command',
-      tags: ['docker'],
-    },
-    {
-      title: 'Database Schema Decisions',
-      description: 'Notes on schema design choices for the project',
-      contentType: 'text',
-      content: '- Use cuid() for IDs (better for distributed systems than UUID)\n- Soft deletes via deletedAt field\n- Always store timestamps in UTC\n- Use enums sparingly — prefer string fields with validation',
-      isFavorite: false,
-      isPinned: false,
-      itemType: 'note',
-      tags: ['database', 'prisma'],
-    },
-    {
-      title: 'Prisma Docs',
-      description: 'Official Prisma ORM documentation',
-      contentType: 'url',
-      url: 'https://www.prisma.io/docs',
-      isFavorite: false,
-      isPinned: false,
-      itemType: 'link',
-      tags: ['prisma', 'database'],
-    },
-    {
-      title: 'NextAuth v5 Setup',
-      description: 'Minimal NextAuth v5 config with GitHub provider',
-      contentType: 'text',
-      content: `import NextAuth from 'next-auth'
-import GitHub from 'next-auth/providers/github'
-
-export const { handlers, signIn, signOut, auth } = NextAuth({
-  providers: [GitHub],
-})`,
-      language: 'typescript',
-      isFavorite: true,
-      isPinned: false,
-      itemType: 'snippet',
-      tags: ['nextjs', 'auth'],
-    },
-    {
-      title: 'Code Review Assistant',
-      description: 'Prompt for thorough code review feedback',
-      contentType: 'text',
-      content: 'Review the following code for: correctness, security issues, performance concerns, readability, and adherence to SOLID principles. Be specific and suggest concrete improvements.',
-      isFavorite: false,
-      isPinned: false,
-      itemType: 'prompt',
-      tags: ['testing'],
-    },
-    {
-      title: 'Git Stash Workflow',
-      description: 'Stash, switch branch, and restore changes',
-      contentType: 'text',
-      content: 'git stash push -m "wip: feature description"\ngit checkout main\n# ... do work ...\ngit checkout -\ngit stash pop',
-      isFavorite: false,
-      isPinned: false,
-      itemType: 'command',
-      tags: ['git'],
-    },
-    {
-      title: 'TypeScript Strict Mode Notes',
-      description: 'What strict mode enables and why it matters',
-      contentType: 'text',
-      content: 'Strict mode enables: strictNullChecks, noImplicitAny, strictFunctionTypes, strictPropertyInitialization. Always enable — catching these at compile time saves hours of runtime debugging.',
-      isFavorite: false,
-      isPinned: false,
-      itemType: 'note',
-      tags: ['typescript'],
-    },
-    {
-      title: 'TypeScript Handbook',
-      description: 'The official TypeScript language handbook',
-      contentType: 'url',
-      url: 'https://www.typescriptlang.org/docs/handbook',
-      isFavorite: false,
-      isPinned: false,
-      itemType: 'link',
-      tags: ['typescript'],
+      tags: ['react', 'hooks', 'typescript'],
     },
   ]
 
-  const createdItems: { id: string; tags: string[] }[] = []
+  // AI Workflows items (3 prompts)
+  const aiWorkflowItems = [
+    {
+      title: 'Thorough Code Review',
+      description: 'Prompt for detailed code review with actionable feedback',
+      contentType: 'text',
+      content: `You are a senior software engineer conducting a code review. Analyze the following code for:
 
-  for (const item of items) {
+1. **Correctness** — Logic errors, edge cases, off-by-one errors
+2. **Security** — Injection, XSS, auth bypasses, data exposure
+3. **Performance** — Unnecessary renders, N+1 queries, memory leaks
+4. **Readability** — Naming, structure, complexity (suggest refactors)
+5. **Best Practices** — Framework conventions, SOLID principles
+
+For each issue found:
+- Cite the exact line or block
+- Explain why it's a problem
+- Provide a concrete fix
+
+End with a summary: what's good, what needs work, and a priority-ordered action list.`,
+      isFavorite: true,
+      isPinned: true,
+      itemType: 'prompt',
+      tags: ['ai', 'code-review', 'workflow'],
+    },
+    {
+      title: 'Generate API Documentation',
+      description: 'Prompt to generate clear REST API docs from code',
+      contentType: 'text',
+      content: `You are a technical writer. Given the following API route handler, generate documentation in this format:
+
+## \`METHOD /path\`
+
+**Description:** One-line summary
+
+**Auth:** Required / None
+
+**Request Body:**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+
+**Response:**
+\`\`\`json
+{ "example": "response" }
+\`\`\`
+
+**Status Codes:**
+- 200 — Success
+- 400 — Validation error
+- 401 — Unauthorized
+
+**Example:**
+\`\`\`bash
+curl -X METHOD /path -H "Authorization: Bearer token" -d '{}'
+\`\`\`
+
+Keep it concise. Infer types from the code. Flag any undocumented edge cases.`,
+      isFavorite: false,
+      isPinned: false,
+      itemType: 'prompt',
+      tags: ['ai', 'prompts', 'workflow'],
+    },
+    {
+      title: 'Refactoring Assistant',
+      description: 'Prompt for safe, incremental code refactoring',
+      contentType: 'text',
+      content: `You are an expert refactoring assistant. Given the following code:
+
+1. Identify code smells (duplication, long methods, deep nesting, unclear naming)
+2. Propose refactoring steps in a safe, incremental order — each step should leave the code in a working state
+3. For each step:
+   - Describe the refactoring technique (Extract Method, Replace Conditional with Polymorphism, etc.)
+   - Show the before and after
+   - Explain what improves and any risks
+
+Constraints:
+- Preserve existing behavior (no feature changes)
+- Maintain all public interfaces
+- Keep changes minimal and reviewable
+- Prefer well-known refactoring patterns from Martin Fowler's catalog`,
+      isFavorite: false,
+      isPinned: false,
+      itemType: 'prompt',
+      tags: ['ai', 'prompts', 'code-review'],
+    },
+  ]
+
+  // DevOps items (1 snippet, 1 command, 2 links)
+  const devopsItems = [
+    {
+      title: 'Multi-stage Dockerfile',
+      description: 'Production-optimized Dockerfile for Node.js apps',
+      contentType: 'text',
+      content: `# Build stage
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+# Production stage
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+EXPOSE 3000
+ENV PORT=3000
+
+CMD ["node", "server.js"]`,
+      language: 'dockerfile',
+      isFavorite: false,
+      isPinned: false,
+      itemType: 'snippet',
+      tags: ['docker', 'devops', 'deployment'],
+    },
+    {
+      title: 'Deploy with Health Check',
+      description: 'Build, push Docker image, deploy, and verify health',
+      contentType: 'text',
+      content: `docker build -t myapp:latest . && \\
+docker tag myapp:latest registry.example.com/myapp:latest && \\
+docker push registry.example.com/myapp:latest && \\
+echo "Deployed. Checking health..." && \\
+curl -sf --retry 5 --retry-delay 3 https://myapp.example.com/api/health || echo "Health check failed"`,
+      isFavorite: false,
+      isPinned: false,
+      itemType: 'command',
+      tags: ['docker', 'devops', 'deployment'],
+    },
+    {
+      title: 'GitHub Actions Documentation',
+      description: 'Official docs for GitHub Actions workflows and syntax',
+      contentType: 'url',
+      url: 'https://docs.github.com/en/actions',
+      isFavorite: false,
+      isPinned: false,
+      itemType: 'link',
+      tags: ['ci-cd', 'devops'],
+    },
+    {
+      title: 'Docker Hub',
+      description: 'Container image registry and documentation',
+      contentType: 'url',
+      url: 'https://hub.docker.com',
+      isFavorite: false,
+      isPinned: false,
+      itemType: 'link',
+      tags: ['docker', 'devops'],
+    },
+  ]
+
+  // Terminal Commands items (4 commands)
+  const terminalItems = [
+    {
+      title: 'Interactive Rebase Last N Commits',
+      description: 'Squash, reorder, or edit recent commits',
+      contentType: 'text',
+      content: `# Rebase last 5 commits interactively
+git rebase -i HEAD~5
+
+# Useful prefixes in the editor:
+# pick   = keep commit as-is
+# squash = merge into previous commit
+# reword = change commit message
+# drop   = remove commit entirely`,
+      isFavorite: true,
+      isPinned: false,
+      itemType: 'command',
+      tags: ['git', 'terminal'],
+    },
+    {
+      title: 'Docker Cleanup',
+      description: 'Remove unused containers, images, networks, and volumes',
+      contentType: 'text',
+      content: `# Remove all stopped containers
+docker container prune -f
+
+# Remove unused images
+docker image prune -a -f
+
+# Remove unused volumes
+docker volume prune -f
+
+# Nuclear option — remove everything unused
+docker system prune -a --volumes -f`,
+      isFavorite: false,
+      isPinned: true,
+      itemType: 'command',
+      tags: ['docker', 'terminal', 'devops'],
+    },
+    {
+      title: 'Find and Kill Process on Port',
+      description: 'Find which process is using a port and kill it',
+      contentType: 'text',
+      content: `# Find process on port 3000 (macOS/Linux)
+lsof -i :3000
+
+# Kill it
+kill -9 $(lsof -t -i :3000)
+
+# Alternative using fuser (Linux)
+fuser -k 3000/tcp`,
+      isFavorite: false,
+      isPinned: false,
+      itemType: 'command',
+      tags: ['terminal', 'shell'],
+    },
+    {
+      title: 'NPM Dependency Audit',
+      description: 'Check for outdated and vulnerable packages',
+      contentType: 'text',
+      content: `# Check for outdated packages
+npm outdated
+
+# Check for vulnerabilities
+npm audit
+
+# Auto-fix vulnerabilities (safe fixes only)
+npm audit fix
+
+# See what would update (dry run)
+npm update --dry-run
+
+# Interactively update to latest majors
+npx npm-check-updates -i`,
+      isFavorite: false,
+      isPinned: false,
+      itemType: 'command',
+      tags: ['npm', 'terminal', 'shell'],
+    },
+  ]
+
+  // Design Resources items (4 links)
+  const designItems = [
+    {
+      title: 'Tailwind CSS Documentation',
+      description: 'Official Tailwind CSS utility-first framework docs',
+      contentType: 'url',
+      url: 'https://tailwindcss.com/docs',
+      isFavorite: true,
+      isPinned: false,
+      itemType: 'link',
+      tags: ['tailwind', 'css', 'design'],
+    },
+    {
+      title: 'shadcn/ui Components',
+      description: 'Beautifully designed components built with Radix UI and Tailwind',
+      contentType: 'url',
+      url: 'https://ui.shadcn.com',
+      isFavorite: true,
+      isPinned: false,
+      itemType: 'link',
+      tags: ['ui', 'design', 'tailwind'],
+    },
+    {
+      title: 'Radix UI Primitives',
+      description: 'Unstyled, accessible UI primitives for React',
+      contentType: 'url',
+      url: 'https://www.radix-ui.com/primitives',
+      isFavorite: false,
+      isPinned: false,
+      itemType: 'link',
+      tags: ['ui', 'design'],
+    },
+    {
+      title: 'Lucide Icons',
+      description: 'Beautiful and consistent open-source icon library',
+      contentType: 'url',
+      url: 'https://lucide.dev/icons',
+      isFavorite: false,
+      isPinned: false,
+      itemType: 'link',
+      tags: ['ui', 'design'],
+    },
+  ]
+
+  const allItems = [
+    ...reactPatternItems,
+    ...aiWorkflowItems,
+    ...devopsItems,
+    ...terminalItems,
+    ...designItems,
+  ]
+
+  const createdItems: { id: string; tags: string[]; group: string }[] = []
+
+  for (const item of allItems) {
     const { tags, itemType, ...data } = item
     const created = await prisma.item.create({
       data: {
@@ -278,7 +513,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         itemTypeId: typeMap[itemType],
       },
     })
-    createdItems.push({ id: created.id, tags })
+    const group =
+      reactPatternItems.includes(item) ? 'react' :
+      aiWorkflowItems.includes(item) ? 'ai' :
+      devopsItems.includes(item) ? 'devops' :
+      terminalItems.includes(item) ? 'terminal' :
+      'design'
+    createdItems.push({ id: created.id, tags, group })
     console.log(`  ✓ ${item.title}`)
   }
 
@@ -303,46 +544,43 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   const collections = [
     {
       name: 'React Patterns',
-      description: 'Common React patterns and hooks',
+      description: 'Reusable React patterns and hooks',
       isFavorite: true,
       defaultType: 'snippet',
+      group: 'react',
     },
     {
-      name: 'Python Snippets',
-      description: 'Useful Python code snippets',
-      isFavorite: false,
-      defaultType: 'snippet',
-    },
-    {
-      name: 'Context Files',
-      description: 'AI context files for projects',
+      name: 'AI Workflows',
+      description: 'AI prompts and workflow automations',
       isFavorite: true,
-      defaultType: 'file',
-    },
-    {
-      name: 'Interview Prep',
-      description: 'Technical interview preparation',
-      isFavorite: false,
-      defaultType: 'snippet',
-    },
-    {
-      name: 'Git Commands',
-      description: 'Frequently used git commands',
-      isFavorite: true,
-      defaultType: 'command',
-    },
-    {
-      name: 'AI Prompts',
-      description: 'Curated AI prompts for coding',
-      isFavorite: false,
       defaultType: 'prompt',
+      group: 'ai',
+    },
+    {
+      name: 'DevOps',
+      description: 'Infrastructure and deployment resources',
+      isFavorite: false,
+      defaultType: 'snippet',
+      group: 'devops',
+    },
+    {
+      name: 'Terminal Commands',
+      description: 'Useful shell commands for everyday development',
+      isFavorite: false,
+      defaultType: 'command',
+      group: 'terminal',
+    },
+    {
+      name: 'Design Resources',
+      description: 'UI/UX resources and references',
+      isFavorite: true,
+      defaultType: 'link',
+      group: 'design',
     },
   ]
 
-  const createdCollections: string[] = []
-
   for (const col of collections) {
-    const { defaultType, ...data } = col
+    const { defaultType, group, ...data } = col
     const created = await prisma.collection.create({
       data: {
         ...data,
@@ -350,40 +588,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         userId: user.id,
       },
     })
-    createdCollections.push(created.id)
-    console.log(`  ✓ ${col.name}`)
+
+    // Associate items by group
+    const groupItems = createdItems.filter((i) => i.group === group)
+    for (const item of groupItems) {
+      await prisma.itemCollection.create({
+        data: {
+          itemId: item.id,
+          collectionId: created.id,
+        },
+      })
+    }
+
+    console.log(`  ✓ ${col.name} (${groupItems.length} items)`)
   }
-
-  // --- Item-Collection Associations ---
-  console.log('Seeding item-collection associations...')
-
-  const associations = [
-    // React Patterns: React useState, Prisma Singleton, NextAuth Setup
-    { itemIdx: 0, colIdx: 0 },
-    { itemIdx: 5, colIdx: 0 },
-    { itemIdx: 10, colIdx: 0 },
-    // Interview Prep: Architecture Notes, Strict Mode Notes, Code Review
-    { itemIdx: 3, colIdx: 3 },
-    { itemIdx: 13, colIdx: 3 },
-    { itemIdx: 11, colIdx: 3 },
-    // Git Commands: Git Stash, Create Next.js App
-    { itemIdx: 12, colIdx: 4 },
-    { itemIdx: 2, colIdx: 4 },
-    // AI Prompts: Generate Components, Write API Docs, Code Review
-    { itemIdx: 1, colIdx: 5 },
-    { itemIdx: 6, colIdx: 5 },
-    { itemIdx: 11, colIdx: 5 },
-  ]
-
-  for (const { itemIdx, colIdx } of associations) {
-    await prisma.itemCollection.create({
-      data: {
-        itemId: createdItems[itemIdx].id,
-        collectionId: createdCollections[colIdx],
-      },
-    })
-  }
-  console.log(`  ✓ ${associations.length} associations`)
 
   console.log('Seeding complete.')
 }
