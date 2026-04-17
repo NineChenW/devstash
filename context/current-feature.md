@@ -15,7 +15,7 @@ Do not violate any following rules:
 # Current Feature
 
 <!--Feature Name-->
-Dashboard Collections
+Dashboard Items
 
 ## Status
 
@@ -26,21 +26,20 @@ Completed
 ## Goals
 
 <!--Goals & requirements-->
-- Create src/lib/db/collections.ts with data fetching functions
-- Fetch collections directly in server component
-- Collection card border color derived from most-used content type in that collection
-- Show small icons of all types in that collection
-- Keep the current design layout
+- Replace dummy item data in the main dashboard area (pinned and recent items) with actual data from the Neon database via Prisma
+- Create src/lib/db/items.ts with data fetching functions
+- Fetch items directly in server component
+- Item card icon/border derived from the item type
+- Display item type tags and anything else currently there
+- If there are no pinned items, nothing should display there
 - Update collection stats display
-- Replace dummy collection data in dashboard main area with actual Neon database data via Prisma
-- Do not add items underneath yet
 
 ## Notes
 
 <!--Any extra notes-->
-- References: @context/features/dashboard-collections-spec.md
+- References: @context/features/dashboard-items-spec.md
 - Reference screenshot: @context/screenshots/dashboard-ui-main.png
-- Keep existing card design, just swap data source from mock-data.ts to Prisma queries
+- Replace data from @src/lib/mock-data.ts with Prisma queries against the Neon database
 
 ## History
 
@@ -58,3 +57,4 @@ Earliest to latest.
 - **2026-04-17**: Neon PostgreSQL + Prisma Setup - Configured Prisma 7 with Neon serverless adapter, created initial migration with all data models, added seed script with system item types and demo data, added database test script. Build verified and merged to main.
 - **2026-04-17**: Seed Data Population - Overwrote seed file with spec-compliant data, created demo user (demo@devstash.io), seeded all 7 system item types, created 5 collections (React Patterns, AI Workflows, DevOps, Terminal Commands, Design Resources), populated collections with realistic items. Build verified and merged to main.
 - **2026-04-17**: Dashboard Collections - Created src/lib/db/collections.ts with data fetching functions, replaced mock collection data in dashboard with real Neon database queries via Prisma, collection card border color derived from most-used content type, type icons shown per collection, stats fetched from database. Fixed pre-existing seed.ts type error. Build verified.
+- **2026-04-17**: Dashboard Items - Created src/lib/db/items.ts with getPinnedItems and getRecentItems functions, replaced mock pinned/recent item data in dashboard with real Neon database queries via Prisma. Updated PinnedItem and RecentItem components to receive type icon/color/name directly (removed mock-data dependency) and added type tag pill. Pinned section hides when empty. Build verified.

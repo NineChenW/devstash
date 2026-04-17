@@ -5,7 +5,7 @@ import { PinnedItem } from '@/components/items/PinnedItem'
 import { RecentItem } from '@/components/items/RecentItem'
 import { StatsCard } from '@/components/dashboard/StatsCard'
 import { getRecentCollections, getCollectionStats, getDemoUserId } from '@/lib/db/collections'
-import { mockPinnedItems, mockItems } from '@/lib/mock-data'
+import { getPinnedItems, getRecentItems } from '@/lib/db/items'
 
 export default async function Dashboard() {
   const userId = await getDemoUserId()
@@ -20,9 +20,11 @@ export default async function Dashboard() {
     )
   }
 
-  const [collections, stats] = await Promise.all([
+  const [collections, stats, pinnedItems, recentItems] = await Promise.all([
     getRecentCollections(userId),
     getCollectionStats(userId),
+    getPinnedItems(userId),
+    getRecentItems(userId, 10),
   ])
 
   return (
@@ -64,26 +66,30 @@ export default async function Dashboard() {
       </section>
 
       {/* Pinned Section */}
-      <section className="mb-8">
-        <div className="mb-4 flex items-center gap-2">
-          <Pin className="h-4 w-4 text-muted-foreground" />
-          <h2 className="text-lg font-semibold">Pinned</h2>
-        </div>
-        <div className="space-y-3">
-          {mockPinnedItems.map((item) => (
-            <PinnedItem
-              key={item.id}
-              id={item.id}
-              title={item.title}
-              description={item.description}
-              itemTypeId={item.itemTypeId}
-              isFavorite={item.isFavorite}
-              tags={item.tags}
-              createdAt={item.createdAt}
-            />
-          ))}
-        </div>
-      </section>
+      {pinnedItems.length > 0 && (
+        <section className="mb-8">
+          <div className="mb-4 flex items-center gap-2">
+            <Pin className="h-4 w-4 text-muted-foreground" />
+            <h2 className="text-lg font-semibold">Pinned</h2>
+          </div>
+          <div className="space-y-3">
+            {pinnedItems.map((item) => (
+              <PinnedItem
+                key={item.id}
+                id={item.id}
+                title={item.title}
+                description={item.description}
+                typeIcon={item.typeIcon}
+                typeColor={item.typeColor}
+                typeName={item.typeName}
+                isFavorite={item.isFavorite}
+                tags={item.tags}
+                createdAt={item.createdAt}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Recent Items */}
       <section>
@@ -92,19 +98,18 @@ export default async function Dashboard() {
           <button className="text-sm text-muted-foreground hover:text-foreground">View all</button>
         </div>
         <div className="space-y-2">
-          {[...mockItems]
-            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-            .slice(0, 10)
-            .map((item) => (
-              <RecentItem
-                key={item.id}
-                id={item.id}
-                title={item.title}
-                description={item.description}
-                itemTypeId={item.itemTypeId}
-                createdAt={item.createdAt}
-              />
-            ))}
+          {recentItems.map((item) => (
+            <RecentItem
+              key={item.id}
+              id={item.id}
+              title={item.title}
+              description={item.description}
+              typeIcon={item.typeIcon}
+              typeColor={item.typeColor}
+              typeName={item.typeName}
+              createdAt={item.createdAt}
+            />
+          ))}
         </div>
       </section>
     </DashboardShell>
