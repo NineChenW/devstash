@@ -12,7 +12,6 @@ import {
   Star,
   MoreHorizontal,
 } from 'lucide-react'
-import { mockItemTypes } from '@/lib/mock-data'
 
 const iconMap: Record<string, React.ElementType> = {
   Code,
@@ -27,11 +26,11 @@ const iconMap: Record<string, React.ElementType> = {
 interface CollectionCardProps {
   id: string
   name: string
-  description: string
+  description: string | null
   itemCount: number
-  typeIcons: string[]
+  typeIcons: { icon: string; color: string }[]
   isFavorite: boolean
-  defaultTypeId?: string
+  dominantColor: string
 }
 
 export function CollectionCard({
@@ -41,16 +40,13 @@ export function CollectionCard({
   itemCount,
   typeIcons,
   isFavorite,
-  defaultTypeId,
+  dominantColor,
 }: CollectionCardProps) {
-  const dominantType = mockItemTypes.find((t) => t.id === defaultTypeId)
-  const borderColor = dominantType?.color || '#3b82f6'
-
   return (
     <Link
       href={`/collections/${id}`}
       className="group relative flex flex-col rounded-xl border bg-card p-5 transition-colors hover:bg-accent/50"
-      style={{ borderLeftColor: borderColor, borderLeftWidth: '2px' }}
+      style={{ borderLeftColor: dominantColor, borderLeftWidth: '2px' }}
     >
       <div className="flex items-start justify-between">
         <div className="flex-1">
@@ -75,15 +71,14 @@ export function CollectionCard({
       <p className="mt-3 text-sm text-muted-foreground">{description}</p>
 
       <div className="mt-4 flex gap-1.5">
-        {typeIcons.slice(0, 4).map((iconName, index) => {
-          const Icon = iconMap[iconName] || Code
-          const type = mockItemTypes.find((t) => t.icon === iconName)
+        {typeIcons.slice(0, 4).map((type, index) => {
+          const Icon = iconMap[type.icon] || Code
           return (
             <div
               key={index}
               className="flex h-6 w-6 items-center justify-center rounded bg-muted/50"
             >
-              <Icon className="h-3.5 w-3.5" style={{ color: type?.color }} />
+              <Icon className="h-3.5 w-3.5" style={{ color: type.color }} />
             </div>
           )
         })}
