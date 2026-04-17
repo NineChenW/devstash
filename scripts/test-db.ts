@@ -14,7 +14,24 @@ async function main() {
   const result = await prisma.$queryRaw<[{ now: Date }]>`SELECT NOW()`
   console.log(`✓ Connected at ${result[0].now}\n`)
 
-  // Count all tables
+  // --- Demo User ---
+  const user = await prisma.user.findUnique({
+    where: { email: 'demo@devstash.io' },
+  })
+
+  if (!user) {
+    console.error('✗ Demo user not found')
+    process.exit(1)
+  }
+
+  console.log('Demo User:')
+  console.log(`  Name:          ${user.name}`)
+  console.log(`  Email:         ${user.email}`)
+  console.log(`  isPro:         ${user.isPro}`)
+  console.log(`  Password hash: ${user.password ? '✓ set' : '✗ missing'}`)
+  console.log(`  Verified:      ${user.emailVerified ? '✓' : '✗'}`)
+
+  // --- Table Counts ---
   const [users, itemTypes, items, tags, collections, itemCollections] =
     await Promise.all([
       prisma.user.count(),
@@ -25,7 +42,7 @@ async function main() {
       prisma.itemCollection.count(),
     ])
 
-  console.log('Table counts:')
+  console.log('\nTable counts:')
   console.log(`  Users:            ${users}`)
   console.log(`  Item Types:       ${itemTypes}`)
   console.log(`  Items:            ${items}`)
@@ -33,7 +50,7 @@ async function main() {
   console.log(`  Collections:      ${collections}`)
   console.log(`  Item-Collections: ${itemCollections}`)
 
-  // List system item types
+  // --- System Item Types ---
   const systemTypes = await prisma.itemType.findMany({
     where: { isSystem: true },
     orderBy: { name: 'asc' },
@@ -43,29 +60,48 @@ async function main() {
     console.log(`  ${t.icon.padEnd(12)} ${t.name.padEnd(10)} ${t.color}`)
   }
 
-  // List items with their types and tags
-  const allItems = await prisma.item.findMany({
-    include: { itemType: true, tags: true },
-    orderBy: { createdAt: 'asc' },
-  })
-  console.log('\nItems:')
-  for (const item of allItems) {
-    const tags = item.tags.map((t) => t.name).join(', ')
-    console.log(`  [${item.itemType.name}] ${item.title} — ${tags || 'no tags'}`)
-  }
-
-  // List collections with item counts
+  // --- Collections with Items ---
   const allCollections = await prisma.collection.findMany({
-    include: { _count: { select: { items: true } } },
+    include: {
+      items: {
+        include: {
+          item: {
+            include: { itemType: true, tags: true },
+          },
+        },
+      },
+    },
     orderBy: { name: 'asc' },
   })
+
   console.log('\nCollections:')
   for (const col of allCollections) {
     const fav = col.isFavorite ? ' ★' : ''
-    console.log(`  ${col.name} (${col._count.items} items)${fav}`)
+    console.log(`\n  ${col.name}${fav}`)
+    console.log(`  ${col.description}`)
+    for (const ic of col.items) {
+      const item = ic.item
+      const tags = item.tags.map((t) => t.name).join(', ')
+      const type = item.itemType.name.padEnd(8)
+      const pin = item.isPinned ? ' 📌' : ''
+      const heart = item.isFavorite ? ' ♥' : ''
+      console.log(`    [${type}] ${item.title}${pin}${heart} — ${tags}`)
+    }
   }
 
-  console.log('\n✓ All tests passed.')
+  // --- Items not in any collection ---
+  const orphanItems = await prisma.item.findMany({
+    where: { collections: { none: {} } },
+    include: { itemType: true },
+  })
+  if (orphanItems.length > 0) {
+    console.log(`\nItems without a collection: ${orphanItems.length}`)
+    for (const item of orphanItems) {
+      console.log(`  [${item.itemType.name}] ${item.title}`)
+    }
+  }
+
+  console.log('\n✓ All checks passed.')
 }
 
 main()

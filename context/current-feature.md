@@ -15,7 +15,7 @@ Do not violate any following rules:
 # Current Feature
 
 <!--Feature Name-->
-Neon PostgreSQL + Prisma Setup
+Seed Data Population
 
 ## Status
 
@@ -26,22 +26,20 @@ In Progress
 ## Goals
 
 <!--Goals & requirements-->
-- Set up Prisma 7 ORM with Neon PostgreSQL (serverless)
-- Create initial Prisma schema based on data models from project-overview.md
-- Include all NextAuth required models (Account, Session, VerificationToken)
-- Add appropriate database indexes and cascade deletes
-- Create development and production database branches in Neon
-- Use migrations workflow (prisma migrate dev, never db push)
-- Verify Prisma 7 breaking changes and apply necessary updates
+- Overwrite existing seed file with spec-compliant data
+- Create demo user (demo@devstash.io, password hashed with bcryptjs 12 rounds, isPro: false)
+- Seed all 7 system item types
+- Create 5 collections: React Patterns, AI Workflows, DevOps, Terminal Commands, Design Resources
+- Populate collections with items per seed-spec.md (snippets, prompts, commands, links)
+- All items should have realistic, useful content
 
 ## Notes
 
 <!--Any extra notes-->
-- References: @context/features/database-spec.md, @context/project-overview.md
-- Prisma 7 has breaking changes - read entire upgrade guide: https://www.prisma.io/docs/orm/more/upgrade-guides/upgrading-versions/upgrading-to-prisma-7
-- Setup guide: https://www.prisma.io/docs/getting-started/prisma-orm/quickstart/prisma-postgres
-- Dev workflow: Always create migrations with `prisma migrate dev`, never push directly
-- Database strategy: Separate dev and production branches in Neon
+- References: @context/features/seed-spec.md
+- Password hashing requires bcryptjs package
+- Use real URLs for link items
+- Items should have meaningful content, not placeholder text
 
 ## History
 
@@ -56,3 +54,4 @@ Earliest to latest.
 - **2026-04-16**: Dashboard UI Phase 2 completion - Created Sidebar component with collapsible functionality, SidebarDrawer for mobile view, integrated with dashboard page, added localStorage persistence for sidebar collapsed state. Build verified successfully.
 - **2026-04-16**: Bug fixes and sidebar improvements - Fixed toggle icon not changing between collapsed/expanded states, added colored left border accent to PinnedItem to match CollectionCard, made Collections section in sidebar collapsible with chevron animation, fixed sidebar not rendering after browser back navigation (removed mounted guard from sidebar render).
 - **2026-04-16**: Dashboard UI Phase 3 completion - Implemented stats cards (total items, collections, favorites), recent collections section, pinned items section, and recent items section. Created DashboardShell and StatsCard components, RecentItem component. Updated mock data for development. Build verified and merged to main.
+- **2026-04-17**: Neon PostgreSQL + Prisma Setup - Configured Prisma 7 with Neon serverless adapter, created initial migration with all data models, added seed script with system item types and demo data, added database test script. Build verified and merged to main.
