@@ -495,17 +495,17 @@ npx npm-check-updates -i`,
   ]
 
   const allItems = [
-    ...reactPatternItems,
-    ...aiWorkflowItems,
-    ...devopsItems,
-    ...terminalItems,
-    ...designItems,
+    ...reactPatternItems.map((i) => ({ ...i, group: 'react' })),
+    ...aiWorkflowItems.map((i) => ({ ...i, group: 'ai' })),
+    ...devopsItems.map((i) => ({ ...i, group: 'devops' })),
+    ...terminalItems.map((i) => ({ ...i, group: 'terminal' })),
+    ...designItems.map((i) => ({ ...i, group: 'design' })),
   ]
 
   const createdItems: { id: string; tags: string[]; group: string }[] = []
 
   for (const item of allItems) {
-    const { tags, itemType, ...data } = item
+    const { tags, itemType, group, ...data } = item
     const created = await prisma.item.create({
       data: {
         ...data,
@@ -513,12 +513,6 @@ npx npm-check-updates -i`,
         itemTypeId: typeMap[itemType],
       },
     })
-    const group =
-      reactPatternItems.includes(item) ? 'react' :
-      aiWorkflowItems.includes(item) ? 'ai' :
-      devopsItems.includes(item) ? 'devops' :
-      terminalItems.includes(item) ? 'terminal' :
-      'design'
     createdItems.push({ id: created.id, tags, group })
     console.log(`  ✓ ${item.title}`)
   }

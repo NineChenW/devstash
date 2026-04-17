@@ -4,9 +4,27 @@ import { CollectionCard } from '@/components/collections/CollectionCard'
 import { PinnedItem } from '@/components/items/PinnedItem'
 import { RecentItem } from '@/components/items/RecentItem'
 import { StatsCard } from '@/components/dashboard/StatsCard'
-import { mockCollections, mockPinnedItems, mockItems, mockStats } from '@/lib/mock-data'
+import { getRecentCollections, getCollectionStats, getDemoUserId } from '@/lib/db/collections'
+import { mockPinnedItems, mockItems } from '@/lib/mock-data'
 
-export default function Dashboard() {
+export default async function Dashboard() {
+  const userId = await getDemoUserId()
+
+  if (!userId) {
+    return (
+      <DashboardShell>
+        <div className="flex h-64 items-center justify-center">
+          <p className="text-muted-foreground">No demo user found. Run the seed script first.</p>
+        </div>
+      </DashboardShell>
+    )
+  }
+
+  const [collections, stats] = await Promise.all([
+    getRecentCollections(userId),
+    getCollectionStats(userId),
+  ])
+
   return (
     <DashboardShell>
       {/* Header */}
@@ -17,10 +35,10 @@ export default function Dashboard() {
 
       {/* Stats Cards */}
       <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatsCard label="Total Items" value={mockStats.totalItems} icon={Layers} iconColor="#3b82f6" />
-        <StatsCard label="Collections" value={mockStats.totalCollections} icon={FolderOpen} iconColor="#10b981" />
-        <StatsCard label="Favorite Items" value={mockStats.favoriteItems} icon={Star} iconColor="#f59e0b" />
-        <StatsCard label="Fav Collections" value={mockStats.favoriteCollections} icon={Bookmark} iconColor="#8b5cf6" />
+        <StatsCard label="Total Items" value={stats.totalItems} icon={Layers} iconColor="#3b82f6" />
+        <StatsCard label="Collections" value={stats.totalCollections} icon={FolderOpen} iconColor="#10b981" />
+        <StatsCard label="Favorite Items" value={stats.favoriteItems} icon={Star} iconColor="#f59e0b" />
+        <StatsCard label="Fav Collections" value={stats.favoriteCollections} icon={Bookmark} iconColor="#8b5cf6" />
       </div>
 
       {/* Recent Collections */}
@@ -30,20 +48,18 @@ export default function Dashboard() {
           <button className="text-sm text-muted-foreground hover:text-foreground">View all</button>
         </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {[...mockCollections]
-            .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-            .map((collection) => (
-              <CollectionCard
-                key={collection.id}
-                id={collection.id}
-                name={collection.name}
-                description={collection.description}
-                itemCount={collection.itemCount}
-                typeIcons={collection.typeIcons}
-                isFavorite={collection.isFavorite}
-                defaultTypeId={collection.defaultTypeId}
-              />
-            ))}
+          {collections.map((collection) => (
+            <CollectionCard
+              key={collection.id}
+              id={collection.id}
+              name={collection.name}
+              description={collection.description}
+              itemCount={collection.itemCount}
+              typeIcons={collection.typeIcons}
+              isFavorite={collection.isFavorite}
+              dominantColor={collection.dominantColor}
+            />
+          ))}
         </div>
       </section>
 
