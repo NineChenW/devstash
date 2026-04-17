@@ -15,8 +15,7 @@ Do not violate any following rules:
 # Current Feature
 
 <!--Feature Name-->
-
-Dashboard UI Phase 3
+Neon PostgreSQL + Prisma Setup
 
 ## Status
 
@@ -27,24 +26,22 @@ In Progress
 ## Goals
 
 <!--Goals & requirements-->
-
-- 4 stats cards at the top (total items, total collections, favorite items, favorite collections)
-- Recent collections section
-- Pinned items section
-- 10 recent items section
+- Set up Prisma 7 ORM with Neon PostgreSQL (serverless)
+- Create initial Prisma schema based on data models from project-overview.md
+- Include all NextAuth required models (Account, Session, VerificationToken)
+- Add appropriate database indexes and cascade deletes
+- Create development and production database branches in Neon
+- Use migrations workflow (prisma migrate dev, never db push)
+- Verify Prisma 7 breaking changes and apply necessary updates
 
 ## Notes
 
 <!--Any extra notes-->
-
-References:
-
-- @context/screenshots/dashboard-ui-main.png
-- @context/project-overview.md
-- @src/lib/mock-data.ts
-- @context/features/dashboard-phase-1-spec.md
-- @context/features/dashboard-phase-2-spec.md
-- @context/features/dashboard-phase-3-spec.md
+- References: @context/features/database-spec.md, @context/project-overview.md
+- Prisma 7 has breaking changes - read entire upgrade guide: https://www.prisma.io/docs/orm/more/upgrade-guides/upgrading-versions/upgrading-to-prisma-7
+- Setup guide: https://www.prisma.io/docs/getting-started/prisma-orm/quickstart/prisma-postgres
+- Dev workflow: Always create migrations with `prisma migrate dev`, never push directly
+- Database strategy: Separate dev and production branches in Neon
 
 ## History
 
@@ -58,3 +55,4 @@ Earliest to latest.
 - **2026-04-16**: Dashboard UI Phase 2 implementation - Implemented collapsible sidebar with item types links, favorite collections, most recent collections, user avatar area, drawer icon for mobile/desktop toggle, fixed hydration error with mounted state, added localStorage persistence for sidebar state.
 - **2026-04-16**: Dashboard UI Phase 2 completion - Created Sidebar component with collapsible functionality, SidebarDrawer for mobile view, integrated with dashboard page, added localStorage persistence for sidebar collapsed state. Build verified successfully.
 - **2026-04-16**: Bug fixes and sidebar improvements - Fixed toggle icon not changing between collapsed/expanded states, added colored left border accent to PinnedItem to match CollectionCard, made Collections section in sidebar collapsible with chevron animation, fixed sidebar not rendering after browser back navigation (removed mounted guard from sidebar render).
+- **2026-04-16**: Dashboard UI Phase 3 completion - Implemented stats cards (total items, collections, favorites), recent collections section, pinned items section, and recent items section. Created DashboardShell and StatsCard components, RecentItem component. Updated mock data for development. Build verified and merged to main.
