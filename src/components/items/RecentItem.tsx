@@ -9,7 +9,6 @@ import {
   File,
   Image as ImageIcon,
 } from 'lucide-react'
-import { mockItemTypes } from '@/lib/mock-data'
 
 const iconMap: Record<string, React.ElementType> = {
   Code,
@@ -24,14 +23,22 @@ const iconMap: Record<string, React.ElementType> = {
 interface RecentItemProps {
   id: string
   title: string
-  description?: string
-  itemTypeId: string
-  createdAt: string
+  description: string | null
+  typeIcon: string
+  typeColor: string
+  typeName: string
+  createdAt: Date
 }
 
-export function RecentItem({ title, description, itemTypeId, createdAt }: RecentItemProps) {
-  const type = mockItemTypes.find((t) => t.id === itemTypeId)
-  const Icon = type ? iconMap[type.icon] || Code : Code
+export function RecentItem({
+  title,
+  description,
+  typeIcon,
+  typeColor,
+  typeName,
+  createdAt,
+}: RecentItemProps) {
+  const Icon = iconMap[typeIcon] || Code
   const date = new Date(createdAt).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -40,17 +47,25 @@ export function RecentItem({ title, description, itemTypeId, createdAt }: Recent
   return (
     <div
       className="flex items-center gap-3 rounded-xl border bg-card px-4 py-3 transition-colors hover:bg-accent/50"
-      style={{ borderLeftColor: type?.color, borderLeftWidth: '2px' }}
+      style={{ borderLeftColor: typeColor, borderLeftWidth: '2px' }}
     >
       <div
         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-        style={{ backgroundColor: `${type?.color}20` }}
+        style={{ backgroundColor: `${typeColor}20` }}
       >
-        <Icon className="h-4 w-4" style={{ color: type?.color }} />
+        <Icon className="h-4 w-4" style={{ color: typeColor }} />
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">{title}</p>
+        <div className="flex items-center gap-2">
+          <p className="truncate text-sm font-medium">{title}</p>
+          <span
+            className="shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide"
+            style={{ backgroundColor: `${typeColor}20`, color: typeColor }}
+          >
+            {typeName}
+          </span>
+        </div>
         {description && (
           <p className="truncate text-xs text-muted-foreground">{description}</p>
         )}
