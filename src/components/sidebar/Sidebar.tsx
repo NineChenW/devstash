@@ -18,8 +18,11 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { mockUser } from '@/lib/mock-data'
+import { Badge } from '@/components/ui/badge'
 import type { ItemTypeWithCount } from '@/lib/db/items'
 import type { CollectionWithTypes } from '@/lib/db/collections'
+
+const PRO_TYPES = new Set(['file', 'image'])
 
 interface SidebarProps {
   collapsed: boolean
@@ -75,6 +78,7 @@ export function Sidebar({ collapsed, itemTypes, collections }: SidebarProps) {
               const Icon = iconMap[type.icon] || Code
               const href = `/items/${type.name}s`
               const isActive = pathname === href
+              const isPro = PRO_TYPES.has(type.name)
 
               return (
                 <Link
@@ -92,8 +96,16 @@ export function Sidebar({ collapsed, itemTypes, collections }: SidebarProps) {
                   <Icon className="h-4 w-4 shrink-0" style={{ color: type.color }} />
                   {!collapsed && (
                     <>
-                      <span className="flex-1 truncate">{type.name.charAt(0).toUpperCase() + type.name.slice(1)}s</span>
-                      <span className="text-xs text-muted-foreground">{type.count}</span>
+                      <span className="truncate">{type.name.charAt(0).toUpperCase() + type.name.slice(1)}s</span>
+                      {isPro && (
+                        <Badge
+                          variant="outline"
+                          className="h-4 border-muted-foreground/30 px-1 py-0 text-[9px] font-semibold tracking-wider text-muted-foreground"
+                        >
+                          PRO
+                        </Badge>
+                      )}
+                      <span className="ml-auto text-xs text-muted-foreground">{type.count}</span>
                     </>
                   )}
                 </Link>
