@@ -15,30 +15,28 @@ Do not violate any following rules:
 # Current Feature
 
 <!--Feature Name-->
-Stats & Sidebar
+Add Pro Badge to Sidebar
 
 ## Status
 
 <!--Not Started|In Progress|Completed-->
 
-Completed
+In Progress
 
 ## Goals
 
 <!--Goals & requirements-->
-- Display stats in the main area from the database instead of @src/lib/mock-data.ts, keeping the current design/layout
-- Display system item types in the sidebar with their icons, linking to /items/[typename]
-- Display actual collection data from the database in the sidebar
-- Add "View all collections" link under the collections list that goes to /collections
-- Keep the star icons for favorite collections; for recents, each collection should show a colored circle based on the most-used item type in that collection
-- Create @src/lib/db/items.ts and add the database functions (use @src/lib/db/collections.ts for reference if needed)
+- Add a PRO badge next to the `file` and `image` item types in the sidebar
+- Use the ShadCN UI badge component
+- Keep the badge clean and subtle
+- Display "PRO" in all uppercase
 
 ## Notes
 
 <!--Any extra notes-->
-- References: @context/features/stats-sidebar-spec.md
-- Reference: @src/lib/db/collections.ts
-- Replace data from @src/lib/mock-data.ts with Prisma queries against the Neon database
+- Reference: @context/features/add-pro-badge-sidebar.md
+- Pro-only item types per project spec: `file` and `image`
+- Badge should appear in both expanded sidebar and mobile drawer views
 
 ## History
 
