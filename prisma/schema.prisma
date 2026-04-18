@@ -28,8 +28,6 @@ model User {
   items       Item[]
   collections Collection[]
   itemTypes   ItemType[]   // user-created custom types
-
-  @@index([email])
 }
 
 model Item {
@@ -116,8 +114,6 @@ model Tag {
   id    String @id @default(cuid())
   name  String @unique
   items Item[] @relation("ItemTags")
-
-  @@index([name])
 }
 
 // NextAuth required models

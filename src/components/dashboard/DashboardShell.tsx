@@ -22,7 +22,14 @@ export function DashboardShell({ children, itemTypes, sidebarCollections }: Dash
   useEffect(() => {
     const saved = localStorage.getItem('sidebar-collapsed')
     if (saved !== null) {
-      setCollapsed(JSON.parse(saved))
+      try {
+        const parsed = JSON.parse(saved)
+        if (typeof parsed === 'boolean') {
+          setCollapsed(parsed)
+        }
+      } catch {
+        // ignore malformed localStorage value
+      }
     }
   }, [])
 

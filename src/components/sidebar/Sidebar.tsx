@@ -4,13 +4,6 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  Code,
-  Sparkles,
-  Terminal,
-  StickyNote,
-  Link as LinkIcon,
-  File,
-  Image as ImageIcon,
   Star,
   FolderOpen,
   ChevronDown,
@@ -19,6 +12,7 @@ import {
 import { cn } from '@/lib/utils'
 import { mockUser } from '@/lib/mock-data'
 import { Badge } from '@/components/ui/badge'
+import { iconMap, DefaultIcon } from '@/lib/icon-map'
 import type { ItemTypeWithCount } from '@/lib/db/items'
 import type { CollectionWithTypes } from '@/lib/db/collections'
 
@@ -28,16 +22,6 @@ interface SidebarProps {
   collapsed: boolean
   itemTypes: ItemTypeWithCount[]
   collections: CollectionWithTypes[]
-}
-
-const iconMap: Record<string, React.ElementType> = {
-  Code,
-  Sparkles,
-  Terminal,
-  StickyNote,
-  Link: LinkIcon,
-  File,
-  Image: ImageIcon,
 }
 
 export function Sidebar({ collapsed, itemTypes, collections }: SidebarProps) {
@@ -75,7 +59,7 @@ export function Sidebar({ collapsed, itemTypes, collections }: SidebarProps) {
           )}
           <nav className="space-y-0.5">
             {itemTypes.map((type) => {
-              const Icon = iconMap[type.icon] || Code
+              const Icon = iconMap[type.icon] || DefaultIcon
               const href = `/items/${type.name}s`
               const isActive = pathname === href
               const isPro = PRO_TYPES.has(type.name)

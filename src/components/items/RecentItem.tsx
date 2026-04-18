@@ -1,24 +1,4 @@
-'use client'
-
-import {
-  Code,
-  Sparkles,
-  Terminal,
-  StickyNote,
-  Link as LinkIcon,
-  File,
-  Image as ImageIcon,
-} from 'lucide-react'
-
-const iconMap: Record<string, React.ElementType> = {
-  Code,
-  Sparkles,
-  Terminal,
-  StickyNote,
-  Link: LinkIcon,
-  File,
-  Image: ImageIcon,
-}
+import { iconMap, DefaultIcon } from '@/lib/icon-map'
 
 interface RecentItemProps {
   id: string
@@ -38,7 +18,7 @@ export function RecentItem({
   typeName,
   createdAt,
 }: RecentItemProps) {
-  const Icon = iconMap[typeIcon] || Code
+  const Icon = iconMap[typeIcon] || DefaultIcon
   const date = new Date(createdAt).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
