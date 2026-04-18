@@ -15,28 +15,19 @@ Do not violate any following rules:
 # Current Feature
 
 <!--Feature Name-->
-Add Pro Badge to Sidebar
 
 ## Status
 
 <!--Not Started|In Progress|Completed-->
 
-In Progress
-
 ## Goals
 
 <!--Goals & requirements-->
-- Add a PRO badge next to the `file` and `image` item types in the sidebar
-- Use the ShadCN UI badge component
-- Keep the badge clean and subtle
-- Display "PRO" in all uppercase
 
 ## Notes
 
 <!--Any extra notes-->
-- Reference: @context/features/add-pro-badge-sidebar.md
-- Pro-only item types per project spec: `file` and `image`
-- Badge should appear in both expanded sidebar and mobile drawer views
+
 
 ## History
 
@@ -56,3 +47,4 @@ Earliest to latest.
 - **2026-04-17**: Dashboard Collections - Created src/lib/db/collections.ts with data fetching functions, replaced mock collection data in dashboard with real Neon database queries via Prisma, collection card border color derived from most-used content type, type icons shown per collection, stats fetched from database. Fixed pre-existing seed.ts type error. Build verified.
 - **2026-04-17**: Dashboard Items - Created src/lib/db/items.ts with getPinnedItems and getRecentItems functions, replaced mock pinned/recent item data in dashboard with real Neon database queries via Prisma. Updated PinnedItem and RecentItem components to receive type icon/color/name directly (removed mock-data dependency) and added type tag pill. Pinned section hides when empty. Build verified.
 - **2026-04-17**: Stats & Sidebar - Added getSystemItemTypesWithCounts to src/lib/db/items.ts returning system item types in fixed order (snippet, prompt, command, note, file, image, link) with per-user counts. Rewired Sidebar to consume real DB data via props (itemTypes, collections) threaded through DashboardShell and SidebarDrawer; removed mockItemTypes/mockCollections usage. System type links point to /items/[name]s. Favorites keep the star icon; recents show a colored dot using the collection's dominant item-type color. Added "View all collections" link to /collections. Build verified.
+- **2026-04-18**: Add Pro Badge to Sidebar - Installed ShadCN Badge component at src/components/ui/badge.tsx. Added PRO_TYPES set (file, image) in Sidebar.tsx and rendered a small outlined PRO badge between the item-type title and the count for those types; count pinned right via ml-auto, badge hidden when sidebar is collapsed. Covers mobile drawer automatically since SidebarDrawer wraps Sidebar. Build verified and merged to main.
