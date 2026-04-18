@@ -1,26 +1,5 @@
-'use client'
-
-import {
-  Code,
-  Sparkles,
-  Terminal,
-  StickyNote,
-  Link as LinkIcon,
-  File,
-  Image as ImageIcon,
-  Star,
-  Pin,
-} from 'lucide-react'
-
-const iconMap: Record<string, React.ElementType> = {
-  Code,
-  Sparkles,
-  Terminal,
-  StickyNote,
-  Link: LinkIcon,
-  File,
-  Image: ImageIcon,
-}
+import { Star, Pin } from 'lucide-react'
+import { iconMap, DefaultIcon } from '@/lib/icon-map'
 
 interface PinnedItemProps {
   id: string
@@ -44,7 +23,7 @@ export function PinnedItem({
   tags,
   createdAt,
 }: PinnedItemProps) {
-  const Icon = iconMap[typeIcon] || Code
+  const Icon = iconMap[typeIcon] || DefaultIcon
   const date = new Date(createdAt).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',

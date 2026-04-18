@@ -1,27 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import {
-  Code,
-  Sparkles,
-  Terminal,
-  StickyNote,
-  Link as LinkIcon,
-  File,
-  Image as ImageIcon,
-  Star,
-  MoreHorizontal,
-} from 'lucide-react'
-
-const iconMap: Record<string, React.ElementType> = {
-  Code,
-  Sparkles,
-  Terminal,
-  StickyNote,
-  Link: LinkIcon,
-  File,
-  Image: ImageIcon,
-}
+import { Star, MoreHorizontal } from 'lucide-react'
+import { iconMap, DefaultIcon } from '@/lib/icon-map'
 
 interface CollectionCardProps {
   id: string
@@ -72,7 +53,7 @@ export function CollectionCard({
 
       <div className="mt-4 flex gap-1.5">
         {typeIcons.slice(0, 4).map((type, index) => {
-          const Icon = iconMap[type.icon] || Code
+          const Icon = iconMap[type.icon] || DefaultIcon
           return (
             <div
               key={index}

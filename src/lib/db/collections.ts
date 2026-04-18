@@ -16,6 +16,7 @@ export async function getRecentCollections(userId: string): Promise<CollectionWi
   const collections = await prisma.collection.findMany({
     where: { userId },
     orderBy: { updatedAt: 'desc' },
+    take: 20,
     include: {
       items: {
         include: {
