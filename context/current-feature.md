@@ -16,17 +16,49 @@ Do not violate any following rules:
 
 <!--Feature Name-->
 
+Auth Phase 1 - NextAuth + GitHub Provider
+
 ## Status
 
 <!--Not Started|In Progress|Completed-->
+
+In Progress
 
 ## Goals
 
 <!--Goals & requirements-->
 
+- Install NextAuth v5 (`next-auth@beta`) and `@auth/prisma-adapter`
+- Set up split auth config pattern for edge compatibility (`src/auth.config.ts` + `src/auth.ts`)
+- Add GitHub OAuth provider
+- Create `src/app/api/auth/[...nextauth]/route.ts` exporting handlers from `auth.ts`
+- Create `src/proxy.ts` to protect `/dashboard/*` routes via Next.js 16 proxy
+- Redirect unauthenticated users to NextAuth's default sign-in page
+- Extend Session type with `user.id` via `src/types/next-auth.d.ts`
+- Add `AUTH_SECRET`, `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET` env vars
+
 ## Notes
 
 <!--Any extra notes-->
+
+Spec: `context/features/auth-phase-1-spec.md`
+
+Key gotchas:
+- Use `next-auth@beta` (not `@latest` which installs v4)
+- Proxy file must live at `src/proxy.ts` (same level as `app/`)
+- Use named export `export const proxy = auth(...)` (not default)
+- Use `session: { strategy: 'jwt' }` with the split config pattern
+- Don't set a custom `pages.signIn` — rely on NextAuth's default page
+- Verify current config/conventions with Context7 before coding
+
+Testing:
+1. Visit `/dashboard` unauthenticated → should redirect to sign-in
+2. Click "Sign in with GitHub" → complete OAuth
+3. Verify redirect back to `/dashboard` after auth
+
+References:
+- Edge compatibility: https://authjs.dev/getting-started/installation#edge-compatibility
+- Prisma adapter: https://authjs.dev/getting-started/adapters/prisma
 
 
 ## History
