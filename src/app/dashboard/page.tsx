@@ -1,4 +1,5 @@
 import { Layers, FolderOpen, Star, Bookmark, Pin } from 'lucide-react'
+import { auth } from '@/auth'
 import { DashboardShell } from '@/components/dashboard/DashboardShell'
 import { CollectionCard } from '@/components/collections/CollectionCard'
 import { PinnedItem } from '@/components/items/PinnedItem'
@@ -8,11 +9,16 @@ import { getRecentCollections, getCollectionStats, getDemoUserId } from '@/lib/d
 import { getPinnedItems, getRecentItems, getSystemItemTypesWithCounts } from '@/lib/db/items'
 
 export default async function Dashboard() {
+  const session = await auth()
+  const sidebarUser = session?.user
+    ? { name: session.user.name, email: session.user.email, image: session.user.image }
+    : null
+
   const userId = await getDemoUserId()
 
   if (!userId) {
     return (
-      <DashboardShell itemTypes={[]} sidebarCollections={[]}>
+      <DashboardShell itemTypes={[]} sidebarCollections={[]} user={sidebarUser}>
         <div className="flex h-64 items-center justify-center">
           <p className="text-muted-foreground">No demo user found. Run the seed script first.</p>
         </div>
@@ -29,7 +35,7 @@ export default async function Dashboard() {
   ])
 
   return (
-    <DashboardShell itemTypes={itemTypes} sidebarCollections={collections}>
+    <DashboardShell itemTypes={itemTypes} sidebarCollections={collections} user={sidebarUser}>
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-semibold">Dashboard</h1>

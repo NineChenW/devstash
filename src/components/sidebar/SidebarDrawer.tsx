@@ -1,6 +1,7 @@
 'use client'
 
 import { Sidebar } from './Sidebar'
+import type { SidebarUserData } from './SidebarUser'
 import type { ItemTypeWithCount } from '@/lib/db/items'
 import type { CollectionWithTypes } from '@/lib/db/collections'
 
@@ -9,9 +10,10 @@ interface SidebarDrawerProps {
   onClose: () => void
   itemTypes: ItemTypeWithCount[]
   collections: CollectionWithTypes[]
+  user: SidebarUserData | null
 }
 
-export function SidebarDrawer({ open, onClose, itemTypes, collections }: SidebarDrawerProps) {
+export function SidebarDrawer({ open, onClose, itemTypes, collections, user }: SidebarDrawerProps) {
   if (!open) return null
 
   return (
@@ -25,7 +27,7 @@ export function SidebarDrawer({ open, onClose, itemTypes, collections }: Sidebar
       {/* Drawer */}
       <div className="fixed inset-y-0 left-0 z-50 w-64 md:hidden">
         <div className="relative flex h-full flex-col">
-          <Sidebar collapsed={false} itemTypes={itemTypes} collections={collections} />
+          <Sidebar collapsed={false} itemTypes={itemTypes} collections={collections} user={user} />
         </div>
       </div>
     </>

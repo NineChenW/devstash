@@ -7,12 +7,11 @@ import {
   Star,
   FolderOpen,
   ChevronDown,
-  Settings,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { mockUser } from '@/lib/mock-data'
 import { Badge } from '@/components/ui/badge'
 import { iconMap, DefaultIcon } from '@/lib/icon-map'
+import { SidebarUser, type SidebarUserData } from './SidebarUser'
 import type { ItemTypeWithCount } from '@/lib/db/items'
 import type { CollectionWithTypes } from '@/lib/db/collections'
 
@@ -22,9 +21,10 @@ interface SidebarProps {
   collapsed: boolean
   itemTypes: ItemTypeWithCount[]
   collections: CollectionWithTypes[]
+  user: SidebarUserData | null
 }
 
-export function Sidebar({ collapsed, itemTypes, collections }: SidebarProps) {
+export function Sidebar({ collapsed, itemTypes, collections, user }: SidebarProps) {
   const pathname = usePathname()
   const [collectionsOpen, setCollectionsOpen] = useState(true)
 
@@ -192,39 +192,12 @@ export function Sidebar({ collapsed, itemTypes, collections }: SidebarProps) {
         </div>
       </div>
 
-      {/* User Avatar Area */}
-      <div className="border-t p-3">
-        <div
-          className={cn(
-            'flex items-center gap-3 rounded-md px-2 py-2',
-            collapsed && 'justify-center'
-          )}
-        >
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
-            <span className="text-sm font-semibold">
-              {mockUser.name
-                .split(' ')
-                .map((n) => n[0])
-                .join('')
-                .toUpperCase()
-                .slice(0, 2)}
-            </span>
-          </div>
-          {!collapsed && (
-            <>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{mockUser.name}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {mockUser.email}
-                </p>
-              </div>
-              <button className="shrink-0 text-muted-foreground hover:text-foreground">
-                <Settings className="h-4 w-4" />
-              </button>
-            </>
-          )}
-        </div>
-      </div>
+      <SidebarUser
+        collapsed={collapsed}
+        name={user?.name}
+        email={user?.email}
+        image={user?.image}
+      />
     </aside>
   )
 }
