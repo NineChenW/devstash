@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Sidebar } from '@/components/sidebar/Sidebar'
 import { SidebarDrawer } from '@/components/sidebar/SidebarDrawer'
+import type { SidebarUserData } from '@/components/sidebar/SidebarUser'
 import type { ItemTypeWithCount } from '@/lib/db/items'
 import type { CollectionWithTypes } from '@/lib/db/collections'
 
@@ -13,9 +14,10 @@ interface DashboardShellProps {
   children: React.ReactNode
   itemTypes: ItemTypeWithCount[]
   sidebarCollections: CollectionWithTypes[]
+  user: SidebarUserData | null
 }
 
-export function DashboardShell({ children, itemTypes, sidebarCollections }: DashboardShellProps) {
+export function DashboardShell({ children, itemTypes, sidebarCollections, user }: DashboardShellProps) {
   const [collapsed, setCollapsed] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
 
@@ -97,7 +99,7 @@ export function DashboardShell({ children, itemTypes, sidebarCollections }: Dash
       <div className="flex h-[calc(100vh-4rem)]">
         {/* Desktop Sidebar */}
         <div className="hidden md:block">
-          <Sidebar collapsed={collapsed} itemTypes={itemTypes} collections={sidebarCollections} />
+          <Sidebar collapsed={collapsed} itemTypes={itemTypes} collections={sidebarCollections} user={user} />
         </div>
 
         {/* Main Content */}
@@ -110,6 +112,7 @@ export function DashboardShell({ children, itemTypes, sidebarCollections }: Dash
         onClose={() => setDrawerOpen(false)}
         itemTypes={itemTypes}
         collections={sidebarCollections}
+        user={user}
       />
     </div>
   )
