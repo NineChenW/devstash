@@ -12,21 +12,37 @@ Do not violate any following rules:
 7. Update goals section with current feature requirements.
 8. Update notes section with current feature references.
 
-# Current Feature
+# Current Feature: Auth Phase 2 - Credentials (Email/Password) Provider
 
 <!--Feature Name-->
 
 ## Status
 
 <!--Not Started|In Progress|Completed-->
+Completed
 
 ## Goals
 
 <!--Goals & requirements-->
+- Add Credentials provider for email/password auth alongside existing GitHub OAuth.
+- Add a `password` field to the `User` model via a Prisma migration (if not already present).
+- In `src/auth.config.ts`, add a Credentials provider with an `authorize: () => null` placeholder (edge-safe).
+- In `src/auth.ts`, override the Credentials provider with real bcryptjs validation against the DB.
+- Implement `POST /api/auth/register` accepting `name`, `email`, `password`, `confirmPassword`:
+  - Validate that `password === confirmPassword`.
+  - Reject if a user with that email already exists.
+  - Hash password with bcryptjs, create the user, and return a success/error JSON response.
+- Verify via curl that registration works, that email/password sign-in at `/api/auth/signin` redirects to `/dashboard`, and that GitHub OAuth still works. Run `npm run build`.
 
 ## Notes
 
 <!--Any extra notes-->
+- Spec: `context/features/auth-phase-2-spec.md`.
+- Split-config pattern: keep `auth.config.ts` edge-safe (no bcrypt, no Prisma); do real Credentials validation only in `auth.ts`.
+- bcryptjs is already installed per the spec — no new dep needed.
+- Reference: Credentials provider docs — https://authjs.dev/getting-started/authentication/credentials
+- DB rule: use `prisma migrate dev` (never `db push`). Target Neon **development** branch (`br-snowy-bird-ab9i9xnj`) only.
+- Test curl payload: `{"name":"Test","email":"test@test.com","password":"password123","confirmPassword":"password123"}` against `http://localhost:3000/api/auth/register`.
 
 
 ## History
