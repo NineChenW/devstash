@@ -12,37 +12,21 @@ Do not violate any following rules:
 7. Update goals section with current feature requirements.
 8. Update notes section with current feature references.
 
-# Current Feature: Auth Phase 2 - Credentials (Email/Password) Provider
+# Current Feature
 
 <!--Feature Name-->
 
 ## Status
 
 <!--Not Started|In Progress|Completed-->
-Completed
 
 ## Goals
 
 <!--Goals & requirements-->
-- Add Credentials provider for email/password auth alongside existing GitHub OAuth.
-- Add a `password` field to the `User` model via a Prisma migration (if not already present).
-- In `src/auth.config.ts`, add a Credentials provider with an `authorize: () => null` placeholder (edge-safe).
-- In `src/auth.ts`, override the Credentials provider with real bcryptjs validation against the DB.
-- Implement `POST /api/auth/register` accepting `name`, `email`, `password`, `confirmPassword`:
-  - Validate that `password === confirmPassword`.
-  - Reject if a user with that email already exists.
-  - Hash password with bcryptjs, create the user, and return a success/error JSON response.
-- Verify via curl that registration works, that email/password sign-in at `/api/auth/signin` redirects to `/dashboard`, and that GitHub OAuth still works. Run `npm run build`.
 
 ## Notes
 
 <!--Any extra notes-->
-- Spec: `context/features/auth-phase-2-spec.md`.
-- Split-config pattern: keep `auth.config.ts` edge-safe (no bcrypt, no Prisma); do real Credentials validation only in `auth.ts`.
-- bcryptjs is already installed per the spec — no new dep needed.
-- Reference: Credentials provider docs — https://authjs.dev/getting-started/authentication/credentials
-- DB rule: use `prisma migrate dev` (never `db push`). Target Neon **development** branch (`br-snowy-bird-ab9i9xnj`) only.
-- Test curl payload: `{"name":"Test","email":"test@test.com","password":"password123","confirmPassword":"password123"}` against `http://localhost:3000/api/auth/register`.
 
 
 ## History
@@ -66,3 +50,4 @@ Earliest to latest.
 - **2026-04-18**: Add Pro Badge to Sidebar - Installed ShadCN Badge component at src/components/ui/badge.tsx. Added PRO_TYPES set (file, image) in Sidebar.tsx and rendered a small outlined PRO badge between the item-type title and the count for those types; count pinned right via ml-auto, badge hidden when sidebar is collapsed. Covers mobile drawer automatically since SidebarDrawer wraps Sidebar. Build verified and merged to main.
 - **2026-04-18**: Codebase Quick Wins Cleanup - Applied low-risk fixes from the code-scanner audit. Extracted shared iconMap to src/lib/icon-map.ts (removed duplicates from Sidebar, CollectionCard, PinnedItem, RecentItem). Dropped unnecessary 'use client' from PinnedItem and RecentItem. Added take: 20 bound to getRecentCollections. Guarded JSON.parse in DashboardShell against malformed localStorage. Removed unused mock exports (kept mockUser until auth lands). Dropped redundant @@index([email]) and @@index([name]) via Prisma migration drop_redundant_indexes. Added dashboard loading.tsx skeleton and error.tsx boundary. Build verified and merged to main.
 - **2026-04-19**: Auth Phase 1 - NextAuth + GitHub Provider - Installed next-auth@beta and @auth/prisma-adapter. Split config: src/auth.config.ts (edge-safe GitHub provider + jwt/session callbacks populating user.id) and src/auth.ts (PrismaAdapter + session strategy 'jwt'). Added /api/auth/[...nextauth] route handler re-exporting handlers.GET/POST. Created src/proxy.ts exporting `proxy = auth(...)` that redirects unauthenticated visitors to `/dashboard/*` to `/api/auth/signin?callbackUrl=...`. Extended Session.user with id via src/types/next-auth.d.ts. Build verified; /dashboard redirect confirmed via curl; default NextAuth sign-in page renders with GitHub button. Merged to main.
+- **2026-04-20**: Auth Phase 2 - Credentials (Email/Password) Provider - Added Credentials provider alongside GitHub using the split-config pattern: src/auth.config.ts declares a Credentials placeholder with `authorize: () => null` (edge-safe); src/auth.ts filters the placeholder by provider id and re-registers Credentials with a bcryptjs-backed authorize that looks up the user via Prisma and compares against the hashed password. Added POST /api/auth/register route that validates name/email/password/confirmPassword, rejects duplicate emails (409), enforces min 8-char passwords, hashes with bcryptjs (cost 10), and returns {success, user}. No migration needed — password column already exists from the earlier add_user_password migration. Verified via curl: register happy-path (201), duplicate (409), mismatched pw (400), short pw (400); credentials signin sets session cookie and /dashboard returns 200; wrong password redirects to /signin?error=CredentialsSignin with null session; GitHub provider still listed at /api/auth/providers; unauth /dashboard still redirects. Build verified and merged to main.
