@@ -12,7 +12,7 @@ Do not violate any following rules:
 7. Update goals section with current feature requirements.
 8. Update notes section with current feature references.
 
-# Current Feature: Toggle Email Verification
+# Current Feature
 
 <!--Feature Name-->
 
@@ -20,33 +20,13 @@ Do not violate any following rules:
 
 <!--Not Started|In Progress|Completed-->
 
-In Progress
-
 ## Goals
 
 <!--Goals & requirements-->
 
-- Add a flag that can easily enable/disable the email verification system introduced in the Resend phase.
-- When disabled: `POST /api/auth/register` must NOT attempt to send a verification email and must NOT block sign-in for unverified users. New registrations should be treated as verified (or the `emailVerified` gate should be skipped entirely in `authorize`).
-- When enabled: behavior stays exactly as today — token issued, email sent, `EmailNotVerifiedError` thrown in `authorize` for unverified credentials users, resend endpoint works.
-- The toggle should be checked at runtime (not hardcoded) so we can flip it per-environment without a code change.
-- GitHub OAuth path must remain unaffected either way.
-- Update `/api/auth/verify` and `/api/auth/verify/resend` to behave sensibly when the feature is off (either short-circuit with a clear response or continue to work harmlessly — decide during implementation).
-- UI toasts / "Resend verification" button on `SignInForm` should not appear or fire when the feature is disabled.
-
 ## Notes
 
 <!--Any extra notes-->
-
-- **Why now:** Resend has no custom domain linked, so in sandbox mode only the account owner's own email address can receive verification emails. Any other registrant fails to receive the email and is then locked out at sign-in by `EmailNotVerifiedError`. We need a kill-switch until a domain is added.
-- **Preferred option:** environment variable. Proposed name: `EMAIL_VERIFICATION_ENABLED` (string, truthy = `"true"`/`"1"`). Default should be **disabled** locally so dev users without a Resend domain aren't blocked; production can set it to `true` once a domain is verified.
-- **Open to alternatives:** a single `src/lib/features.ts` (or similar) constant that reads the env var once and exports a typed `isEmailVerificationEnabled` — keeps call sites tidy and avoids re-parsing `process.env` everywhere.
-- **Touch points to review:**
-  - `src/app/api/auth/register/route.ts` — skip token creation + email send when off; set `emailVerified: new Date()` at creation so the credentials authorize path lets the user in.
-  - `src/auth.ts` — skip the `EmailNotVerifiedError` branch in `authorize` when off.
-  - `src/app/api/auth/verify/route.ts` and `src/app/api/auth/verify/resend/route.ts` — decide: 404, 200-noop, or keep working.
-  - `src/components/auth/SignInForm.tsx` (or wherever the resend button + `?registered=1`/`?verified=1` toasts live) — don't surface the "Resend verification email" CTA when off, and soften the post-register toast copy so it doesn't promise an email that's not coming.
-- **Non-goals:** linking a domain to Resend, changing the token schema, adding a settings-UI toggle. This is strictly a feature flag.
 
 
 
@@ -74,3 +54,4 @@ Earliest to latest.
 - **2026-04-20**: Auth Phase 2 - Credentials (Email/Password) Provider - Added Credentials provider alongside GitHub using the split-config pattern: src/auth.config.ts declares a Credentials placeholder with `authorize: () => null` (edge-safe); src/auth.ts filters the placeholder by provider id and re-registers Credentials with a bcryptjs-backed authorize that looks up the user via Prisma and compares against the hashed password. Added POST /api/auth/register route that validates name/email/password/confirmPassword, rejects duplicate emails (409), enforces min 8-char passwords, hashes with bcryptjs (cost 10), and returns {success, user}. No migration needed — password column already exists from the earlier add_user_password migration. Verified via curl: register happy-path (201), duplicate (409), mismatched pw (400), short pw (400); credentials signin sets session cookie and /dashboard returns 200; wrong password redirects to /signin?error=CredentialsSignin with null session; GitHub provider still listed at /api/auth/providers; unauth /dashboard still redirects. Build verified and merged to main.
 - **2026-04-20**: Auth Phase 3 - Custom Sign-in / Register UI + Sidebar User - Added `pages: { signIn: "/sign-in" }` to src/auth.config.ts and updated src/proxy.ts to redirect unauthenticated `/dashboard/*` visitors to `/sign-in?callbackUrl=...`. Built custom `/sign-in` (credentials form + GitHub button via `signIn()`, honors `callbackUrl`, redirects signed-in users) and `/register` (name/email/password/confirm with client-side validation; posts to `/api/auth/register`; redirects to `/sign-in?registered=1`). Added `/profile` placeholder gated by `auth()`. Created reusable `UserAvatar` (image-or-initials fallback, cap 2 chars, `?` when empty) and `SidebarUser` client component with click-outside/Escape-close dropup containing a `signOut({ callbackUrl: "/sign-in" })` action; avatar wrapped in a Link to `/profile`. Threaded session data from `auth()` through DashboardShell → Sidebar / SidebarDrawer props; deleted src/lib/mock-data.ts. Added inline `GithubIcon` (lucide-react has no `Github` export in this version). Installed `sonner`, mounted `<Toaster>` in root layout, and fire a deduped success toast on `/sign-in` when `?registered=1` is present (then scrub the param from the URL). Kept `next.config.ts` `devIndicators: false`. Verified in-browser: sign-out clears session and lands on /sign-in; avatar → /profile works; register → /sign-in with toast → new user signs in and sees "P3" initials in sidebar. Build verified and merged to main.
 - **2026-04-21**: Email Verification on Register (Resend) - Installed `resend` and built verification on top of the existing `VerificationToken` table (24h TTL; no migration). Added src/lib/email.ts (Resend client + branded HTML/text template; from-address and app URL driven by EMAIL_FROM / APP_URL / NEXT_PUBLIC_APP_URL / AUTH_URL) and src/lib/verification-token.ts (createVerificationToken replaces prior rows for the identifier via deleteMany then inserts a fresh 32-byte hex token; consumeVerificationToken returns `{ok,email}` or `{ok:false, reason:"not-found"|"expired"}` and always deletes the row). POST /api/auth/register now issues a token and sends the email after user creation inside a try/catch so send failures are logged but non-fatal. Added GET /api/auth/verify (consumes token, sets `User.emailVerified`, redirects to `/sign-in?verified=1` or `/sign-in?verify=expired|invalid|missing`) and POST /api/auth/verify/resend (uniform 200 response to avoid email enumeration; only actually sends if a matching unverified user exists). src/auth.ts adds an `EmailNotVerifiedError extends CredentialsSignin` (code `"EmailNotVerified"`) thrown in `authorize` when the password is valid but `emailVerified` is null; GitHub OAuth users are unaffected. SignInForm handles `res.code === "EmailNotVerified"` by showing a "Resend verification email" button; updated toasts for `?registered=1` (new copy prompts verification), `?verified=1`, and `?verify=expired|invalid|missing`. Also added scripts/cleanup-users.ts — deletes every user except demo@devstash.io (relying on User cascade for accounts/sessions/items/collections/custom itemTypes) plus stale VerificationToken rows, with a production-URL guard and interactive `yes` confirmation (skippable via `--yes`). Build verified and merged to main.
+- **2026-04-21**: Toggle Email Verification Flag - Added a runtime kill-switch for the Resend verification flow, prompted by Resend sandbox mode only delivering to the account owner's own address. New `src/lib/features.ts` exports `isEmailVerificationEnabled()` which returns true only when `EMAIL_VERIFICATION_ENABLED` is `"true"`/`"1"` (case-insensitive, trimmed); any other value — including unset — disables verification. POST /api/auth/register now branches on the flag: when off, the user is created with `emailVerified: new Date()` and no token is issued / email sent; when on, behavior is identical to the prior feature. src/auth.ts gates the `EmailNotVerifiedError` throw behind the same flag so credentials sign-in succeeds for unverified users when off; GitHub OAuth is untouched. POST /api/auth/verify/resend short-circuits with a uniform 200 when off (preserves the enumeration-safe contract, skips the DB hit); GET /api/auth/verify is left functional so legacy tokens issued before the flip can still be consumed harmlessly. `/sign-in/page.tsx` now reads the flag server-side and threads it into `SignInForm` as `emailVerificationEnabled`; the `?registered=1` toast copy switches to "Account created — you can now sign in." when off so we don't promise an email that's not coming. The resend CTA remains naturally gated (only fires on `EmailNotVerified`, which can't happen when off). `.env.example` documents the new var with a "false" default (gitignored in this repo, so the file is edited locally only). Build verified and merged to main.
