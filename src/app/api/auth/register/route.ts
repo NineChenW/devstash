@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/prisma"
 import { createVerificationToken } from "@/lib/verification-token"
 import { sendVerificationEmail } from "@/lib/email"
+import { isEmailVerificationEnabled } from "@/lib/features"
 
 type RegisterBody = {
   name?: unknown
@@ -48,16 +49,24 @@ export async function POST(req: Request) {
   }
 
   const hashed = await bcrypt.hash(password, 10)
+  const verificationEnabled = isEmailVerificationEnabled()
   const user = await prisma.user.create({
-    data: { name, email, password: hashed },
+    data: {
+      name,
+      email,
+      password: hashed,
+      emailVerified: verificationEnabled ? null : new Date(),
+    },
     select: { id: true, name: true, email: true },
   })
 
-  try {
-    const token = await createVerificationToken(email)
-    await sendVerificationEmail(email, token)
-  } catch (err) {
-    console.error("verification email failed", err)
+  if (verificationEnabled) {
+    try {
+      const token = await createVerificationToken(email)
+      await sendVerificationEmail(email, token)
+    } catch (err) {
+      console.error("verification email failed", err)
+    }
   }
 
   return NextResponse.json({ success: true, user }, { status: 201 })

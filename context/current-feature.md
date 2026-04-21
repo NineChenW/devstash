@@ -12,7 +12,7 @@ Do not violate any following rules:
 7. Update goals section with current feature requirements.
 8. Update notes section with current feature references.
 
-# Current Feature
+# Current Feature: Toggle Email Verification
 
 <!--Feature Name-->
 
@@ -20,13 +20,33 @@ Do not violate any following rules:
 
 <!--Not Started|In Progress|Completed-->
 
+In Progress
+
 ## Goals
 
 <!--Goals & requirements-->
 
+- Add a flag that can easily enable/disable the email verification system introduced in the Resend phase.
+- When disabled: `POST /api/auth/register` must NOT attempt to send a verification email and must NOT block sign-in for unverified users. New registrations should be treated as verified (or the `emailVerified` gate should be skipped entirely in `authorize`).
+- When enabled: behavior stays exactly as today — token issued, email sent, `EmailNotVerifiedError` thrown in `authorize` for unverified credentials users, resend endpoint works.
+- The toggle should be checked at runtime (not hardcoded) so we can flip it per-environment without a code change.
+- GitHub OAuth path must remain unaffected either way.
+- Update `/api/auth/verify` and `/api/auth/verify/resend` to behave sensibly when the feature is off (either short-circuit with a clear response or continue to work harmlessly — decide during implementation).
+- UI toasts / "Resend verification" button on `SignInForm` should not appear or fire when the feature is disabled.
+
 ## Notes
 
 <!--Any extra notes-->
+
+- **Why now:** Resend has no custom domain linked, so in sandbox mode only the account owner's own email address can receive verification emails. Any other registrant fails to receive the email and is then locked out at sign-in by `EmailNotVerifiedError`. We need a kill-switch until a domain is added.
+- **Preferred option:** environment variable. Proposed name: `EMAIL_VERIFICATION_ENABLED` (string, truthy = `"true"`/`"1"`). Default should be **disabled** locally so dev users without a Resend domain aren't blocked; production can set it to `true` once a domain is verified.
+- **Open to alternatives:** a single `src/lib/features.ts` (or similar) constant that reads the env var once and exports a typed `isEmailVerificationEnabled` — keeps call sites tidy and avoids re-parsing `process.env` everywhere.
+- **Touch points to review:**
+  - `src/app/api/auth/register/route.ts` — skip token creation + email send when off; set `emailVerified: new Date()` at creation so the credentials authorize path lets the user in.
+  - `src/auth.ts` — skip the `EmailNotVerifiedError` branch in `authorize` when off.
+  - `src/app/api/auth/verify/route.ts` and `src/app/api/auth/verify/resend/route.ts` — decide: 404, 200-noop, or keep working.
+  - `src/components/auth/SignInForm.tsx` (or wherever the resend button + `?registered=1`/`?verified=1` toasts live) — don't surface the "Resend verification email" CTA when off, and soften the post-register toast copy so it doesn't promise an email that's not coming.
+- **Non-goals:** linking a domain to Resend, changing the token schema, adding a settings-UI toggle. This is strictly a feature flag.
 
 
 

@@ -9,7 +9,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { GithubIcon } from '@/components/icons/GithubIcon'
 
-export function SignInForm() {
+interface SignInFormProps {
+  emailVerificationEnabled: boolean
+}
+
+export function SignInForm({ emailVerificationEnabled }: SignInFormProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard'
@@ -21,9 +25,12 @@ export function SignInForm() {
     if (!justRegistered && !justVerified && !verifyError) return
 
     if (justRegistered) {
-      toast.success('Account created — check your email to verify before signing in.', {
-        id: 'registered-success',
-      })
+      toast.success(
+        emailVerificationEnabled
+          ? 'Account created — check your email to verify before signing in.'
+          : 'Account created — you can now sign in.',
+        { id: 'registered-success' },
+      )
     } else if (justVerified) {
       toast.success('Email verified — you can now sign in.', { id: 'verified-success' })
     } else if (verifyError === 'expired') {
@@ -42,7 +49,7 @@ export function SignInForm() {
     params.delete('verify')
     const query = params.toString()
     router.replace(query ? `/sign-in?${query}` : '/sign-in')
-  }, [justRegistered, justVerified, verifyError, router, searchParams])
+  }, [justRegistered, justVerified, verifyError, emailVerificationEnabled, router, searchParams])
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
