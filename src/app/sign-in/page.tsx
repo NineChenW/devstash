@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
+import { isEmailVerificationEnabled } from '@/lib/features'
 import { SignInForm } from './SignInForm'
 
 interface SignInPageProps {
@@ -15,7 +16,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
-      <SignInForm />
+      <SignInForm emailVerificationEnabled={isEmailVerificationEnabled()} />
     </main>
   )
 }
