@@ -14,24 +14,47 @@ export function SignInForm() {
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard'
   const justRegistered = searchParams.get('registered') === '1'
+  const justVerified = searchParams.get('verified') === '1'
+  const verifyError = searchParams.get('verify')
 
   useEffect(() => {
-    if (!justRegistered) return
-    toast.success('Account created — you can now sign in.', { id: 'registered-success' })
+    if (!justRegistered && !justVerified && !verifyError) return
+
+    if (justRegistered) {
+      toast.success('Account created — check your email to verify before signing in.', {
+        id: 'registered-success',
+      })
+    } else if (justVerified) {
+      toast.success('Email verified — you can now sign in.', { id: 'verified-success' })
+    } else if (verifyError === 'expired') {
+      toast.error('That verification link has expired. Request a new one below.', {
+        id: 'verify-expired',
+      })
+    } else if (verifyError === 'invalid' || verifyError === 'missing') {
+      toast.error('That verification link is invalid or has already been used.', {
+        id: 'verify-invalid',
+      })
+    }
+
     const params = new URLSearchParams(searchParams.toString())
     params.delete('registered')
+    params.delete('verified')
+    params.delete('verify')
     const query = params.toString()
     router.replace(query ? `/sign-in?${query}` : '/sign-in')
-  }, [justRegistered, router, searchParams])
+  }, [justRegistered, justVerified, verifyError, router, searchParams])
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [needsVerification, setNeedsVerification] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [resending, setResending] = useState(false)
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    setNeedsVerification(false)
 
     if (!email || !password) {
       setError('Email and password are required')
@@ -46,7 +69,12 @@ export function SignInForm() {
         redirect: false,
       })
       if (res?.error) {
-        setError('Invalid email or password')
+        if (res.code === 'EmailNotVerified') {
+          setNeedsVerification(true)
+          setError('Please verify your email before signing in.')
+        } else {
+          setError('Invalid email or password')
+        }
         return
       }
       router.push(callbackUrl)
@@ -55,6 +83,28 @@ export function SignInForm() {
       setError('Something went wrong. Please try again.')
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  async function onResend() {
+    if (!email) {
+      setError('Enter your email address first.')
+      return
+    }
+    setResending(true)
+    try {
+      await fetch('/api/auth/verify/resend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      toast.success('Verification email sent — check your inbox.', { id: 'resend-success' })
+    } catch {
+      toast.error('Could not send verification email. Try again in a moment.', {
+        id: 'resend-error',
+      })
+    } finally {
+      setResending(false)
     }
   }
 
@@ -118,6 +168,18 @@ export function SignInForm() {
           <p role="alert" className="text-sm text-destructive">
             {error}
           </p>
+        )}
+
+        {needsVerification && (
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={onResend}
+            disabled={resending}
+          >
+            {resending ? 'Sending…' : 'Resend verification email'}
+          </Button>
         )}
 
         <Button type="submit" className="w-full" disabled={submitting}>
