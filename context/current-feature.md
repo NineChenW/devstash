@@ -12,7 +12,7 @@ Do not violate any following rules:
 7. Update goals section with current feature requirements.
 8. Update notes section with current feature references.
 
-# Current Feature: Email Verification on Register
+# Current Feature
 
 <!--Feature Name-->
 
@@ -20,29 +20,13 @@ Do not violate any following rules:
 
 <!--Not Started|In Progress|Completed-->
 
-In Progress
-
 ## Goals
 
 <!--Goals & requirements-->
 
-- Send a verification email to the user after they register via the credentials flow.
-- Email contains a unique, time-limited link the user must click to verify ownership of the address.
-- Mark the user's email as verified (populate `User.emailVerified`) when the link is visited with a valid, unexpired token.
-- Block credentials sign-in for users whose email is not yet verified, with a clear error message.
-- Provide a way to resend the verification email if the original link expires or is lost.
-
 ## Notes
 
 <!--Any extra notes-->
-
-- Email provider: **Resend**. `RESEND_API_KEY` is already set in `.env`.
-- Use the existing `VerificationToken` Prisma model (`identifier`, `token`, `expires`) — no new migration needed unless additional fields are required.
-- Credentials registration path: `POST /api/auth/register` (src/app/api/auth/register/route.ts) — this is where the verification email should be triggered after the user row is created.
-- GitHub OAuth users are auto-verified by the provider; only the credentials flow needs this gate.
-- NextAuth v5 split config (src/auth.config.ts + src/auth.ts) — enforcement likely belongs in the Credentials `authorize` in src/auth.ts so edge runtime stays clean.
-- Consider a dedicated route (e.g. `/api/auth/verify?token=...`) that consumes the token, sets `emailVerified`, deletes the token, and redirects to `/sign-in?verified=1` (mirroring the existing `?registered=1` toast pattern).
-- Resend "from" address and app base URL should come from env vars, not hard-coded.
 
 
 
@@ -69,3 +53,4 @@ Earliest to latest.
 - **2026-04-19**: Auth Phase 1 - NextAuth + GitHub Provider - Installed next-auth@beta and @auth/prisma-adapter. Split config: src/auth.config.ts (edge-safe GitHub provider + jwt/session callbacks populating user.id) and src/auth.ts (PrismaAdapter + session strategy 'jwt'). Added /api/auth/[...nextauth] route handler re-exporting handlers.GET/POST. Created src/proxy.ts exporting `proxy = auth(...)` that redirects unauthenticated visitors to `/dashboard/*` to `/api/auth/signin?callbackUrl=...`. Extended Session.user with id via src/types/next-auth.d.ts. Build verified; /dashboard redirect confirmed via curl; default NextAuth sign-in page renders with GitHub button. Merged to main.
 - **2026-04-20**: Auth Phase 2 - Credentials (Email/Password) Provider - Added Credentials provider alongside GitHub using the split-config pattern: src/auth.config.ts declares a Credentials placeholder with `authorize: () => null` (edge-safe); src/auth.ts filters the placeholder by provider id and re-registers Credentials with a bcryptjs-backed authorize that looks up the user via Prisma and compares against the hashed password. Added POST /api/auth/register route that validates name/email/password/confirmPassword, rejects duplicate emails (409), enforces min 8-char passwords, hashes with bcryptjs (cost 10), and returns {success, user}. No migration needed — password column already exists from the earlier add_user_password migration. Verified via curl: register happy-path (201), duplicate (409), mismatched pw (400), short pw (400); credentials signin sets session cookie and /dashboard returns 200; wrong password redirects to /signin?error=CredentialsSignin with null session; GitHub provider still listed at /api/auth/providers; unauth /dashboard still redirects. Build verified and merged to main.
 - **2026-04-20**: Auth Phase 3 - Custom Sign-in / Register UI + Sidebar User - Added `pages: { signIn: "/sign-in" }` to src/auth.config.ts and updated src/proxy.ts to redirect unauthenticated `/dashboard/*` visitors to `/sign-in?callbackUrl=...`. Built custom `/sign-in` (credentials form + GitHub button via `signIn()`, honors `callbackUrl`, redirects signed-in users) and `/register` (name/email/password/confirm with client-side validation; posts to `/api/auth/register`; redirects to `/sign-in?registered=1`). Added `/profile` placeholder gated by `auth()`. Created reusable `UserAvatar` (image-or-initials fallback, cap 2 chars, `?` when empty) and `SidebarUser` client component with click-outside/Escape-close dropup containing a `signOut({ callbackUrl: "/sign-in" })` action; avatar wrapped in a Link to `/profile`. Threaded session data from `auth()` through DashboardShell → Sidebar / SidebarDrawer props; deleted src/lib/mock-data.ts. Added inline `GithubIcon` (lucide-react has no `Github` export in this version). Installed `sonner`, mounted `<Toaster>` in root layout, and fire a deduped success toast on `/sign-in` when `?registered=1` is present (then scrub the param from the URL). Kept `next.config.ts` `devIndicators: false`. Verified in-browser: sign-out clears session and lands on /sign-in; avatar → /profile works; register → /sign-in with toast → new user signs in and sees "P3" initials in sidebar. Build verified and merged to main.
+- **2026-04-21**: Email Verification on Register (Resend) - Installed `resend` and built verification on top of the existing `VerificationToken` table (24h TTL; no migration). Added src/lib/email.ts (Resend client + branded HTML/text template; from-address and app URL driven by EMAIL_FROM / APP_URL / NEXT_PUBLIC_APP_URL / AUTH_URL) and src/lib/verification-token.ts (createVerificationToken replaces prior rows for the identifier via deleteMany then inserts a fresh 32-byte hex token; consumeVerificationToken returns `{ok,email}` or `{ok:false, reason:"not-found"|"expired"}` and always deletes the row). POST /api/auth/register now issues a token and sends the email after user creation inside a try/catch so send failures are logged but non-fatal. Added GET /api/auth/verify (consumes token, sets `User.emailVerified`, redirects to `/sign-in?verified=1` or `/sign-in?verify=expired|invalid|missing`) and POST /api/auth/verify/resend (uniform 200 response to avoid email enumeration; only actually sends if a matching unverified user exists). src/auth.ts adds an `EmailNotVerifiedError extends CredentialsSignin` (code `"EmailNotVerified"`) thrown in `authorize` when the password is valid but `emailVerified` is null; GitHub OAuth users are unaffected. SignInForm handles `res.code === "EmailNotVerified"` by showing a "Resend verification email" button; updated toasts for `?registered=1` (new copy prompts verification), `?verified=1`, and `?verify=expired|invalid|missing`. Also added scripts/cleanup-users.ts — deletes every user except demo@devstash.io (relying on User cascade for accounts/sessions/items/collections/custom itemTypes) plus stale VerificationToken rows, with a production-URL guard and interactive `yes` confirmation (skippable via `--yes`). Build verified and merged to main.
