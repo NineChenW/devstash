@@ -51,3 +51,32 @@ export async function sendVerificationEmail(email: string, token: string) {
     throw new Error(`Resend error: ${error.message ?? "unknown"}`)
   }
 }
+
+export async function sendPasswordResetEmail(email: string, token: string) {
+  const resetUrl = `${getAppUrl()}/reset-password?token=${encodeURIComponent(token)}`
+
+  const { error } = await getResend().emails.send({
+    from: getFrom(),
+    to: email,
+    subject: "Reset your DevStash password",
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; color: #111;">
+        <h1 style="font-size: 20px; margin: 0 0 16px;">Reset your password</h1>
+        <p style="margin: 0 0 16px; line-height: 1.5;">
+          We received a request to reset the password for your DevStash account. Click the button below to choose a new password.
+        </p>
+        <p style="margin: 24px 0;">
+          <a href="${resetUrl}" style="display: inline-block; background: #111; color: #fff; text-decoration: none; padding: 10px 18px; border-radius: 6px; font-weight: 500;">Reset password</a>
+        </p>
+        <p style="margin: 0 0 8px; font-size: 13px; color: #555;">Or paste this link into your browser:</p>
+        <p style="margin: 0 0 24px; font-size: 13px; word-break: break-all;"><a href="${resetUrl}" style="color: #2563eb;">${resetUrl}</a></p>
+        <p style="margin: 0; font-size: 12px; color: #777;">This link expires in 1 hour. If you didn't request a password reset, you can safely ignore this email — your password won't change.</p>
+      </div>
+    `,
+    text: `Reset your DevStash password by opening this link: ${resetUrl}\n\nThis link expires in 1 hour. If you didn't request a reset, ignore this email.`,
+  })
+
+  if (error) {
+    throw new Error(`Resend error: ${error.message ?? "unknown"}`)
+  }
+}

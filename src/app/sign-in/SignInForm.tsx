@@ -19,10 +19,11 @@ export function SignInForm({ emailVerificationEnabled }: SignInFormProps) {
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard'
   const justRegistered = searchParams.get('registered') === '1'
   const justVerified = searchParams.get('verified') === '1'
+  const justReset = searchParams.get('reset') === '1'
   const verifyError = searchParams.get('verify')
 
   useEffect(() => {
-    if (!justRegistered && !justVerified && !verifyError) return
+    if (!justRegistered && !justVerified && !justReset && !verifyError) return
 
     if (justRegistered) {
       toast.success(
@@ -33,6 +34,8 @@ export function SignInForm({ emailVerificationEnabled }: SignInFormProps) {
       )
     } else if (justVerified) {
       toast.success('Email verified — you can now sign in.', { id: 'verified-success' })
+    } else if (justReset) {
+      toast.success('Password updated — you can now sign in.', { id: 'reset-success' })
     } else if (verifyError === 'expired') {
       toast.error('That verification link has expired. Request a new one below.', {
         id: 'verify-expired',
@@ -46,10 +49,11 @@ export function SignInForm({ emailVerificationEnabled }: SignInFormProps) {
     const params = new URLSearchParams(searchParams.toString())
     params.delete('registered')
     params.delete('verified')
+    params.delete('reset')
     params.delete('verify')
     const query = params.toString()
     router.replace(query ? `/sign-in?${query}` : '/sign-in')
-  }, [justRegistered, justVerified, verifyError, emailVerificationEnabled, router, searchParams])
+  }, [justRegistered, justVerified, justReset, verifyError, emailVerificationEnabled, router, searchParams])
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -157,9 +161,17 @@ export function SignInForm({ emailVerificationEnabled }: SignInFormProps) {
           />
         </div>
         <div className="space-y-1.5">
-          <label htmlFor="password" className="text-sm font-medium">
-            Password
-          </label>
+          <div className="flex items-center justify-between">
+            <label htmlFor="password" className="text-sm font-medium">
+              Password
+            </label>
+            <Link
+              href="/forgot-password"
+              className="text-xs text-muted-foreground underline-offset-4 hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
           <Input
             id="password"
             type="password"

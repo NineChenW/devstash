@@ -12,7 +12,7 @@ Do not violate any following rules:
 7. Update goals section with current feature requirements.
 8. Update notes section with current feature references.
 
-# Current Feature
+# Current Feature: Forgot Password
 
 <!--Feature Name-->
 
@@ -20,13 +20,34 @@ Do not violate any following rules:
 
 <!--Not Started|In Progress|Completed-->
 
+In Progress
+
 ## Goals
 
 <!--Goals & requirements-->
 
+- Add a "Forgot password?" link on the `/sign-in` page that navigates to a new `/forgot-password` route.
+- Build `/forgot-password` page with an email input that posts to a new `POST /api/auth/forgot-password` endpoint.
+- Generate a password reset token using the existing `VerificationToken` Prisma model (reusing the identifier/token/expires columns; no migration).
+- Use a distinct identifier scheme (e.g. `pwreset:<email>`) so password reset tokens don't collide with email verification tokens that already live in the same table.
+- Short TTL for reset tokens (e.g. 1 hour) — shorter than the 24h used for email verification.
+- Send the reset email via the existing Resend client (`src/lib/email.ts`) with a branded template that links to `/reset-password?token=...`.
+- Enumeration-safe: `POST /api/auth/forgot-password` always returns a uniform 200 response whether or not the email matches a user.
+- Build `/reset-password` page that validates the token on the client/server, shows a new-password + confirm form, and posts to `POST /api/auth/reset-password`.
+- `POST /api/auth/reset-password` consumes the token (single-use, delete-on-use), enforces the same 8-char minimum as register, hashes with bcryptjs (cost 10), updates `User.password`, and invalidates the token.
+- After a successful reset, redirect the user to `/sign-in?reset=1` and show a success toast.
+- Handle token error states (`expired`, `invalid`, `missing`) on `/reset-password` with clear messaging and a link back to `/forgot-password` to request a new one.
+
 ## Notes
 
 <!--Any extra notes-->
+
+- Reuse patterns from the email verification feature (2026-04-21): `src/lib/verification-token.ts` (`createVerificationToken` / `consumeVerificationToken` delete-on-use), `src/lib/email.ts` (Resend client + branded template), and the enumeration-safe uniform-200 pattern from `POST /api/auth/verify/resend`.
+- The `VerificationToken` table is reused as-is — `identifier` namespacing (`pwreset:<email>` vs plain `<email>`) keeps password reset tokens separate from email verification tokens without a schema change.
+- Consider whether `createVerificationToken` / `consumeVerificationToken` need a `purpose` parameter or a second set of helpers (e.g. `createPasswordResetToken`) so reset TTL (1h) can differ from verification TTL (24h) cleanly.
+- Not gated by `EMAIL_VERIFICATION_ENABLED` — password reset must work regardless of the verification flag. If Resend is still in sandbox mode, test with the owner's own email.
+- GitHub OAuth users don't have a password set, so the reset flow should still appear to succeed (enumeration safety) but no email is sent / no token issued for users without a `password` value.
+- Relevant files to reference during implementation: `src/app/sign-in/page.tsx`, `src/components/auth/SignInForm.tsx`, `src/app/api/auth/register/route.ts`, `src/app/api/auth/verify/resend/route.ts`, `src/lib/verification-token.ts`, `src/lib/email.ts`.
 
 
 
