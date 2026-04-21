@@ -12,7 +12,7 @@ Do not violate any following rules:
 7. Update goals section with current feature requirements.
 8. Update notes section with current feature references.
 
-# Current Feature
+# Current Feature: Email Verification on Register
 
 <!--Feature Name-->
 
@@ -20,13 +20,29 @@ Do not violate any following rules:
 
 <!--Not Started|In Progress|Completed-->
 
+In Progress
+
 ## Goals
 
 <!--Goals & requirements-->
 
+- Send a verification email to the user after they register via the credentials flow.
+- Email contains a unique, time-limited link the user must click to verify ownership of the address.
+- Mark the user's email as verified (populate `User.emailVerified`) when the link is visited with a valid, unexpired token.
+- Block credentials sign-in for users whose email is not yet verified, with a clear error message.
+- Provide a way to resend the verification email if the original link expires or is lost.
+
 ## Notes
 
 <!--Any extra notes-->
+
+- Email provider: **Resend**. `RESEND_API_KEY` is already set in `.env`.
+- Use the existing `VerificationToken` Prisma model (`identifier`, `token`, `expires`) — no new migration needed unless additional fields are required.
+- Credentials registration path: `POST /api/auth/register` (src/app/api/auth/register/route.ts) — this is where the verification email should be triggered after the user row is created.
+- GitHub OAuth users are auto-verified by the provider; only the credentials flow needs this gate.
+- NextAuth v5 split config (src/auth.config.ts + src/auth.ts) — enforcement likely belongs in the Credentials `authorize` in src/auth.ts so edge runtime stays clean.
+- Consider a dedicated route (e.g. `/api/auth/verify?token=...`) that consumes the token, sets `emailVerified`, deletes the token, and redirects to `/sign-in?verified=1` (mirroring the existing `?registered=1` toast pattern).
+- Resend "from" address and app base URL should come from env vars, not hard-coded.
 
 
 
