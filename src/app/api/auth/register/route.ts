@@ -4,6 +4,11 @@ import { prisma } from "@/lib/prisma"
 import { createVerificationToken } from "@/lib/verification-token"
 import { sendVerificationEmail } from "@/lib/email"
 import { isEmailVerificationEnabled } from "@/lib/features"
+import {
+  checkRateLimit,
+  getRequestIp,
+  rateLimitResponse,
+} from "@/lib/rate-limit"
 
 type RegisterBody = {
   name?: unknown
@@ -13,6 +18,9 @@ type RegisterBody = {
 }
 
 export async function POST(req: Request) {
+  const rl = await checkRateLimit("register", getRequestIp(req))
+  if (!rl.success) return rateLimitResponse(rl)
+
   let body: RegisterBody
   try {
     body = (await req.json()) as RegisterBody

@@ -4,10 +4,20 @@ import { PrismaAdapter } from "@auth/prisma-adapter"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/prisma"
 import { isEmailVerificationEnabled } from "@/lib/features"
+import {
+  buildRateLimitKey,
+  checkRateLimit,
+  getRequestIp,
+  minutesUntil,
+} from "@/lib/rate-limit"
 import authConfig from "./auth.config"
 
 class EmailNotVerifiedError extends CredentialsSignin {
   code = "EmailNotVerified"
+}
+
+class RateLimitedError extends CredentialsSignin {
+  code = "RateLimited"
 }
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
@@ -24,12 +34,24 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      authorize: async (credentials) => {
+      authorize: async (credentials, request) => {
         const email = typeof credentials?.email === "string" ? credentials.email : null
         const password = typeof credentials?.password === "string" ? credentials.password : null
         if (!email || !password) return null
 
-        const user = await prisma.user.findUnique({ where: { email } })
+        const normalizedEmail = email.trim().toLowerCase()
+        const rl = await checkRateLimit(
+          "login",
+          buildRateLimitKey(getRequestIp(request), normalizedEmail),
+        )
+        if (!rl.success) {
+          const mins = minutesUntil(rl.reset)
+          const err = new RateLimitedError()
+          err.message = `Too many sign-in attempts. Try again in ${mins} ${mins === 1 ? "minute" : "minutes"}.`
+          throw err
+        }
+
+        const user = await prisma.user.findUnique({ where: { email: normalizedEmail } })
         if (!user?.password) return null
 
         const valid = await bcrypt.compare(password, user.password)

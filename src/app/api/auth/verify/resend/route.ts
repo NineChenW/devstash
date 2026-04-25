@@ -3,6 +3,12 @@ import { prisma } from "@/lib/prisma"
 import { createVerificationToken } from "@/lib/verification-token"
 import { sendVerificationEmail } from "@/lib/email"
 import { isEmailVerificationEnabled } from "@/lib/features"
+import {
+  buildRateLimitKey,
+  checkRateLimit,
+  getRequestIp,
+  rateLimitResponse,
+} from "@/lib/rate-limit"
 
 type Body = { email?: unknown }
 
@@ -18,6 +24,12 @@ export async function POST(req: Request) {
   if (!email) {
     return NextResponse.json({ error: "Email is required" }, { status: 400 })
   }
+
+  const rl = await checkRateLimit(
+    "resend-verification",
+    buildRateLimitKey(getRequestIp(req), email),
+  )
+  if (!rl.success) return rateLimitResponse(rl)
 
   if (!isEmailVerificationEnabled()) {
     return NextResponse.json({ success: true }, { status: 200 })

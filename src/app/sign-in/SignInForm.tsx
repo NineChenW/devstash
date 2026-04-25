@@ -83,6 +83,10 @@ export function SignInForm({ emailVerificationEnabled }: SignInFormProps) {
         if (res.code === 'EmailNotVerified') {
           setNeedsVerification(true)
           setError('Please verify your email before signing in.')
+        } else if (res.code === 'RateLimited') {
+          const message = 'Too many sign-in attempts. Please try again in a few minutes.'
+          toast.error(message, { id: 'signin-rate-limit' })
+          setError(message)
         } else {
           setError('Invalid email or password')
         }
@@ -104,11 +108,18 @@ export function SignInForm({ emailVerificationEnabled }: SignInFormProps) {
     }
     setResending(true)
     try {
-      await fetch('/api/auth/verify/resend', {
+      const res = await fetch('/api/auth/verify/resend', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       })
+      if (res.status === 429) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null
+        toast.error(data?.error || 'Too many attempts. Please try again later.', {
+          id: 'resend-rate-limit',
+        })
+        return
+      }
       toast.success('Verification email sent — check your inbox.', { id: 'resend-success' })
     } catch {
       toast.error('Could not send verification email. Try again in a moment.', {
