@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { GithubIcon } from '@/components/icons/GithubIcon'
+import { signInWithGitHub } from '@/actions/auth'
 
 interface SignInFormProps {
   emailVerificationEnabled: boolean
@@ -137,15 +138,12 @@ export function SignInForm({ emailVerificationEnabled }: SignInFormProps) {
         <p className="text-sm text-muted-foreground">Sign in to your DevStash account</p>
       </div>
 
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full"
-        onClick={() => signIn('github', { callbackUrl })}
-      >
-        <GithubIcon className="mr-2 h-4 w-4" />
-        Sign in with GitHub
-      </Button>
+      <form action={signInWithGitHub}>
+        <Button type="submit" variant="outline" className="w-full">
+          <GithubIcon className="mr-2 h-4 w-4" />
+          Sign in with GitHub
+        </Button>
+      </form>
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
