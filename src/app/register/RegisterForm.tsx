@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
@@ -45,9 +46,15 @@ export function RegisterForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password, confirmPassword }),
       })
-      const data = (await res.json().catch(() => null)) as { error?: string } | null
+      const data = (await res.json().catch(() => null)) as
+        | { error?: string; code?: string }
+        | null
       if (!res.ok) {
-        setError(data?.error || 'Registration failed')
+        const message = data?.error || 'Registration failed'
+        if (res.status === 429) {
+          toast.error(message, { id: 'register-rate-limit' })
+        }
+        setError(message)
         return
       }
       router.push('/sign-in?registered=1')

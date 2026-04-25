@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
@@ -48,10 +49,14 @@ export function ResetPasswordForm({ token, email }: ResetPasswordFormProps) {
         | { error?: string; code?: string }
         | null
       if (!res.ok) {
+        const message = data?.error || 'Reset failed'
+        if (res.status === 429) {
+          toast.error(message, { id: 'reset-rate-limit' })
+        }
         if (data?.code === 'expired' || data?.code === 'invalid' || data?.code === 'missing') {
           setTokenCode(data.code)
         }
-        setError(data?.error || 'Reset failed')
+        setError(message)
         return
       }
       router.push('/sign-in?reset=1')

@@ -2,6 +2,11 @@ import { NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/prisma"
 import { consumePasswordResetToken } from "@/lib/verification-token"
+import {
+  checkRateLimit,
+  getRequestIp,
+  rateLimitResponse,
+} from "@/lib/rate-limit"
 
 type Body = {
   token?: unknown
@@ -10,6 +15,9 @@ type Body = {
 }
 
 export async function POST(req: Request) {
+  const rl = await checkRateLimit("reset-password", getRequestIp(req))
+  if (!rl.success) return rateLimitResponse(rl)
+
   let body: Body
   try {
     body = (await req.json()) as Body

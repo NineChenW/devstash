@@ -12,21 +12,42 @@ Do not violate any following rules:
 7. Update goals section with current feature requirements.
 8. Update notes section with current feature references.
 
-# Current Feature
+# Current Feature: Rate Limiting for Auth
 
 <!--Feature Name-->
 
 ## Status
 
 <!--Not Started|In Progress|Completed-->
+In Progress
 
 ## Goals
 
 <!--Goals & requirements-->
 
+- Add rate limiting to auth-related API routes to prevent brute force, credential stuffing, and abuse of email-sending endpoints.
+- Use Upstash Redis with `@upstash/ratelimit` (serverless-compatible) via a reusable `src/lib/rate-limit.ts` utility.
+- Use a sliding-window algorithm; return `{ success, remaining, reset }` from rate-limit checks.
+- Extract client IP from `x-forwarded-for` (Vercel) with a request fallback; combine IP + identifier (email) where the table requires it.
+- Protect the following endpoints with the limits below:
+  - `/api/auth/callback/credentials` (login) — 5 attempts / 15 min, key by IP + email
+  - `/api/auth/register` — 3 attempts / 1 hour, key by IP
+  - `/api/auth/forgot-password` — 3 attempts / 1 hour, key by IP
+  - `/api/auth/reset-password` — 5 attempts / 15 min, key by IP
+  - `/api/auth/resend-verification` — 3 attempts / 15 min, key by IP + email
+- Return 429 with `{ error: "Too many attempts. Please try again in X minutes." }` JSON and a `Retry-After` header.
+- Surface 429s on the frontend as toast notifications with the server message.
+- Fail open: allow the request if Upstash is unavailable.
+- Add `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` env vars (document in `.env.example`).
+
 ## Notes
 
 <!--Any extra notes-->
+
+- Spec: [context/features/rate-limiting-spec.md](context/features/rate-limiting-spec.md)
+- Login limiting is tricky with NextAuth credentials — the `/api/auth/callback/credentials` route is owned by NextAuth, so this may require a custom sign-in handler or guarding inside `authorize` (investigate during implementation).
+- Upstash free tier: 10k req/day, sufficient for auth limiting.
+- Consider a rate-limiting middleware refactor later; ship per-route checks first.
 
 
 

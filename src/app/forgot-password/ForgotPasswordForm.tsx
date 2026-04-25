@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
@@ -28,11 +29,18 @@ export function ForgotPasswordForm() {
 
     setSubmitting(true)
     try {
-      await fetch('/api/auth/forgot-password', {
+      const res = await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       })
+      if (res.status === 429) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null
+        const message = data?.error || 'Too many attempts. Please try again later.'
+        toast.error(message, { id: 'forgot-rate-limit' })
+        setError(message)
+        return
+      }
       setSubmitted(true)
     } catch {
       setError('Something went wrong. Please try again.')
