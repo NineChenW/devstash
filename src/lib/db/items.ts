@@ -94,3 +94,50 @@ export async function getRecentItems(userId: string, limit = 10): Promise<Dashbo
     createdAt: item.createdAt,
   }))
 }
+
+export interface ItemListItem extends DashboardItem {
+  isPinned: boolean
+}
+
+export interface ItemsByTypeResult {
+  type: { name: string; icon: string; color: string }
+  items: ItemListItem[]
+}
+
+export async function getItemsByType(
+  userId: string,
+  typeName: string,
+): Promise<ItemsByTypeResult | null> {
+  const type = await prisma.itemType.findFirst({
+    where: {
+      name: typeName,
+      OR: [{ isSystem: true }, { userId }],
+    },
+  })
+  if (!type) return null
+
+  const items = await prisma.item.findMany({
+    where: { userId, itemTypeId: type.id },
+    orderBy: [{ isPinned: 'desc' }, { updatedAt: 'desc' }],
+    include: {
+      itemType: true,
+      tags: true,
+    },
+  })
+
+  return {
+    type: { name: type.name, icon: type.icon, color: type.color },
+    items: items.map((item) => ({
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      typeIcon: item.itemType.icon,
+      typeColor: item.itemType.color,
+      typeName: item.itemType.name,
+      isFavorite: item.isFavorite,
+      isPinned: item.isPinned,
+      tags: item.tags.map((t) => t.name),
+      createdAt: item.createdAt,
+    })),
+  }
+}
