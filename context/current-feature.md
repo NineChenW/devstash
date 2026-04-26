@@ -12,7 +12,7 @@ Do not violate any following rules:
 7. Update goals section with current feature requirements.
 8. Update notes section with current feature references.
 
-# Current Feature: Items List View
+# Current Feature
 
 <!--Feature Name-->
 
@@ -20,29 +20,16 @@ Do not violate any following rules:
 
 <!--Not Started|In Progress|Completed-->
 
-In Progress
+Not Started
 
 ## Goals
 
 <!--Goals & requirements-->
 
-- Add dynamic route `/items/[type]` (e.g., `/items/snippets`, `/items/notes`) that lists items filtered by item type.
-- Fetch type-filtered items from the database for the signed-in user.
-- Render results as a responsive grid of `ItemCard` components — two columns on medium screens and up.
-- Color each card's left border using the item type's color.
-- Follow existing codebase patterns (server component data fetching via Prisma in `src/lib/db/`, shared `iconMap`, ShadCN UI conventions, Tailwind v4).
-
 ## Notes
 
 <!--Any extra notes-->
 
-- Spec source: `context/features/item-list-view-spec.md`.
-- Sidebar already links to `/items/[name]s` (e.g., `/items/snippets`) — this feature implements those destinations.
-- Existing related modules to mirror or reuse:
-  - `src/lib/db/items.ts` (extend with a type-filtered query rather than duplicating logic).
-  - `src/lib/icon-map.ts` for type icons.
-  - `src/components/items/PinnedItem.tsx` / `RecentItem.tsx` as references; `ItemCard` may need to be created if not yet present.
-- Type segment is plural in URLs (e.g., `snippets`) but the DB stores singular type names (`snippet`); handle the mapping and 404 unknown types.
 
 
 
@@ -78,3 +65,5 @@ Earliest to latest.
 - **2026-04-25**: Rate Limiting for Auth - Added Upstash sliding-window rate limiting on the auth surface to mitigate brute force, credential stuffing, and email-abuse. Installed `@upstash/ratelimit` + `@upstash/redis` and built `src/lib/rate-limit.ts` as the single utility: lazy `getRedis()` reads `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` at first use and memoizes `null` when unset; `getLimiter(profile)` builds one `Ratelimit` per profile (`login`, `register`, `forgot-password`, `reset-password`, `resend-verification`) with `Ratelimit.slidingWindow(limit, window)` and a `rl:<profile>` Redis prefix so buckets don't collide across endpoints. `checkRateLimit(profile, identifier)` returns `{ success, remaining, reset, limit }` and is hard-wired to fail open: missing creds short-circuit to `success:true`, and `limiter.limit()` errors are caught + logged so Upstash outages can't lock everyone out. Helpers: `getRequestIp(req)` parses `x-forwarded-for` (first hop) with `x-real-ip` and `127.0.0.1` fallbacks; `buildRateLimitKey(ip, extra)` lowercases the email tail; `minutesUntil(reset)` floors at 1; `rateLimitResponse(result)` returns 429 with `{ error: "Too many attempts. Please try again in N minutes.", code: "rate_limited" }` plus `Retry-After`, `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset` headers and grammatical singular/plural copy. Wired the limiter into POST `/api/auth/register` (3/hr by IP), POST `/api/auth/forgot-password` (3/hr by IP), POST `/api/auth/reset-password` (5/15min by IP), POST `/api/auth/verify/resend` (3/15min by IP+email — applied AFTER body parse + email validation so 400s for empty bodies fire first and garbage payloads can't poison the bucket). For credentials login, NextAuth owns `/api/auth/callback/credentials` so the guard lives inside `src/auth.ts` `authorize`: a new `RateLimitedError extends CredentialsSignin` (code `"RateLimited"`) is thrown when `checkRateLimit("login", ip+normalizedEmail)` fails, before the bcrypt compare; reads the request via `authorize`'s second argument. Frontend forms surface 429s as `sonner` toasts plus inline error text: `RegisterForm` / `ForgotPasswordForm` / `ResetPasswordForm` branch on `res.status === 429` and read `data.error` from the JSON; `SignInForm` recognizes `res.code === "RateLimited"` from `signIn('credentials')` and the resend-verification 429 from the same form. `.env.example` (gitignored locally) documents `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` with a fail-open note. Verified end-to-end against real Upstash: `register` 4th hit returns 429 with `Retry-After: 2127`, `X-RateLimit-Limit: 3`, `X-RateLimit-Remaining: 0` and the friendly minutes message; `forgot-password` keeps an independent bucket (200 after register exhausted); credentials login throws `CredentialsSignin: Too many sign-in attempts. Try again in 1 minute.` on the 6th attempt; build passes (`next build`, 17 routes). Heads-up while debugging: an earlier 4.5s consistent 500 across all routes turned out to be Privoxy intercepting localhost curl — not the app — `--noproxy '*'` confirms the dev server is healthy. Build verified and merged to main.
 
 - **2026-04-25**: Fix GitHub OAuth Redirect - Fixed the two-click GitHub sign-in bug where the first click authenticated successfully but failed to redirect to `/dashboard` (page bounced back to `/sign-in`). Root cause was the unreliable client-side redirect from `signIn('github', { callbackUrl })` in `next-auth/react` when the OAuth round-trip races with router state. Switched to the recommended NextAuth v5 pattern: added `src/actions/auth.ts` exporting a `'use server'` `signInWithGitHub` action that calls `signIn('github', { redirectTo: '/dashboard' })` from `@/auth` (server-side `signIn`, not the client export). Updated `src/app/sign-in/SignInForm.tsx` (note: real path — spec referenced a non-existent `src/components/auth/sign-in-form.tsx`) to import `signInWithGitHub` and replace the GitHub `<Button onClick={() => signIn('github', { callbackUrl })}>` with `<form action={signInWithGitHub}><Button type="submit" variant="outline" className="w-full">…</Button></form>`. Spec mentioned removing `isGitHubLoading` state and `handleGitHubSignIn` function — neither existed in this codebase (only an inline arrow handler), so nothing extra to delete. Credentials login left untouched — it uses `redirect: false` + manual `router.push(callbackUrl)` and works correctly. Tradeoff: `redirectTo` is hardcoded to `/dashboard` per spec, so the prior `?callbackUrl=...` preservation for GitHub sign-ins (e.g. `/dashboard/items` → `/sign-in?callbackUrl=/dashboard/items` → GitHub → back to `/dashboard/items`) is lost; only credentials login still honors `callbackUrl`. No `SessionProvider` needed. Build verified (`next build`, 17 routes, no TS errors). Merged to main.
+
+- **2026-04-26**: Items List View - Added a dynamic `/items/[type]` route that lists items filtered by item type (e.g. `/items/snippets`, `/items/notes`, `/items/links`, `/items/files`). The URL segment is plural and the DB stores singular type names, so the page validates the trailing `s` suffix (404s if absent — `/items/snippet` → 404) and slices it off to look up the type. Extended `src/lib/db/items.ts` with `getItemsByType(userId, typeName)` which finds the type via `prisma.itemType.findFirst({ where: { name, OR: [{ isSystem: true }, { userId }] } })` (covers system + user-owned custom types), returns `null` when the type doesn't exist (the page calls `notFound()`), and otherwise returns `{ type: { name, icon, color }, items }` ordered `isPinned desc, updatedAt desc` with each item carrying `typeIcon/typeColor/typeName`, `isFavorite`, `isPinned`, `tags`, and `createdAt`. New shared types `ItemListItem extends DashboardItem` (adds `isPinned`) and `ItemsByTypeResult` exported from the same module. Created `src/components/items/ItemCard.tsx` — server component (no `'use client'`), 3px left border in the type's color via `style={{ borderLeftColor, borderLeftWidth: '3px' }}` (Tailwind v4 + arbitrary hex from DB, so inline style not class), an icon tile filled with `${color}20`, type pill, optional pin/star indicators, line-clamp-2 description, tag chips, and date. Built `src/app/items/[type]/page.tsx` as a server component using the same DashboardShell pattern as `/dashboard` (sidebar + topbar shell, sidebar data via `getRecentCollections` + `getSystemItemTypesWithCounts`, demo user via `getDemoUserId` for parity with the dashboard — `session?.user` only feeds the sidebar avatar; the per-user-data plumbing is a wider refactor for later). Reads `params` as `Promise<{ type: string }>` per Next.js 16 (await it), grid is `grid-cols-1 gap-4 md:grid-cols-2`, header shows the type icon + plural name + item count with singular/plural copy, and renders an empty-state card when `items.length === 0`. Verified in browser via curl (`--noproxy '*'`): `/items/snippets|notes|links|files` → 200 with the right heading, type-colored borders (snippet blue `#3b82f6`, etc.), and md:2-col grid; `/items/bogus` → 404; `/items/snippet` (singular) → 404. Build passes (`next build`, 18 routes). Merged to main.
