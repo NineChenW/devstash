@@ -12,7 +12,7 @@ Do not violate any following rules:
 7. Update goals section with current feature requirements.
 8. Update notes section with current feature references.
 
-# Current Feature
+# Current Feature: Items List View
 
 <!--Feature Name-->
 
@@ -20,13 +20,29 @@ Do not violate any following rules:
 
 <!--Not Started|In Progress|Completed-->
 
+In Progress
+
 ## Goals
 
 <!--Goals & requirements-->
 
+- Add dynamic route `/items/[type]` (e.g., `/items/snippets`, `/items/notes`) that lists items filtered by item type.
+- Fetch type-filtered items from the database for the signed-in user.
+- Render results as a responsive grid of `ItemCard` components — two columns on medium screens and up.
+- Color each card's left border using the item type's color.
+- Follow existing codebase patterns (server component data fetching via Prisma in `src/lib/db/`, shared `iconMap`, ShadCN UI conventions, Tailwind v4).
+
 ## Notes
 
 <!--Any extra notes-->
+
+- Spec source: `context/features/item-list-view-spec.md`.
+- Sidebar already links to `/items/[name]s` (e.g., `/items/snippets`) — this feature implements those destinations.
+- Existing related modules to mirror or reuse:
+  - `src/lib/db/items.ts` (extend with a type-filtered query rather than duplicating logic).
+  - `src/lib/icon-map.ts` for type icons.
+  - `src/components/items/PinnedItem.tsx` / `RecentItem.tsx` as references; `ItemCard` may need to be created if not yet present.
+- Type segment is plural in URLs (e.g., `snippets`) but the DB stores singular type names (`snippet`); handle the mapping and 404 unknown types.
 
 
 
