@@ -16,38 +16,17 @@ Do not violate any following rules:
 
 <!--Feature Name-->
 
-Vitest Setup
-
 ## Status
 
 <!--Not Started|In Progress|Completed-->
-
-In Progress
 
 ## Goals
 
 <!--Goals & requirements-->
 
-Add a unit testing framework focused on server actions and utility/library code (no component tests yet).
-
-- Install `vitest` and `vite-tsconfig-paths` as devDependencies.
-- Add `vitest.config.ts` using the `node` test environment with `@/*` path-alias support.
-- Add `test` (watch) and `test:run` (CI-friendly one-shot) scripts to `package.json`.
-- Write sample tests for pure utilities to validate the setup: `src/lib/utils.ts`, `src/lib/features.ts`, and the pure helpers in `src/lib/rate-limit.ts` (`getRequestIp`, `buildRateLimitKey`, `minutesUntil`).
-- Co-locate tests next to source as `*.test.ts` (e.g. `src/lib/utils.test.ts`).
-- Update `context/ai-interaction.md` workflow so step 4 reflects that unit tests now exist.
-- Update `context/coding-standards.md` with a short Testing section.
-- Verify `npm run test:run` and `npm run build` both pass.
-
-Out of scope: component tests, DB-touching integration tests for server actions and data-access functions.
-
 ## Notes
 
 <!--Any extra notes-->
-
-- Server actions to date: only `src/actions/auth.ts::signInWithGitHub` (thin NextAuth wrapper). No meaningful logic to unit-test without mocking NextAuth — skipping for this pass; pattern lands when an action with real branching is added.
-- DB-backed modules (`src/lib/db/*`, `src/lib/verification-token.ts`, `src/lib/email.ts`, `src/lib/prisma.ts`) are out of scope here. Project standard prefers real-DB integration tests over Prisma mocks; that's a separate piece of work.
-- Tailwind v4 + Next 16 + React 19 are not exercised by this setup since we're staying in `node` env and avoiding component tests.
 
 
 ## History
@@ -84,3 +63,5 @@ Earliest to latest.
 - **2026-04-25**: Fix GitHub OAuth Redirect - Fixed the two-click GitHub sign-in bug where the first click authenticated successfully but failed to redirect to `/dashboard` (page bounced back to `/sign-in`). Root cause was the unreliable client-side redirect from `signIn('github', { callbackUrl })` in `next-auth/react` when the OAuth round-trip races with router state. Switched to the recommended NextAuth v5 pattern: added `src/actions/auth.ts` exporting a `'use server'` `signInWithGitHub` action that calls `signIn('github', { redirectTo: '/dashboard' })` from `@/auth` (server-side `signIn`, not the client export). Updated `src/app/sign-in/SignInForm.tsx` (note: real path — spec referenced a non-existent `src/components/auth/sign-in-form.tsx`) to import `signInWithGitHub` and replace the GitHub `<Button onClick={() => signIn('github', { callbackUrl })}>` with `<form action={signInWithGitHub}><Button type="submit" variant="outline" className="w-full">…</Button></form>`. Spec mentioned removing `isGitHubLoading` state and `handleGitHubSignIn` function — neither existed in this codebase (only an inline arrow handler), so nothing extra to delete. Credentials login left untouched — it uses `redirect: false` + manual `router.push(callbackUrl)` and works correctly. Tradeoff: `redirectTo` is hardcoded to `/dashboard` per spec, so the prior `?callbackUrl=...` preservation for GitHub sign-ins (e.g. `/dashboard/items` → `/sign-in?callbackUrl=/dashboard/items` → GitHub → back to `/dashboard/items`) is lost; only credentials login still honors `callbackUrl`. No `SessionProvider` needed. Build verified (`next build`, 17 routes, no TS errors). Merged to main.
 
 - **2026-04-26**: Items List View - Added a dynamic `/items/[type]` route that lists items filtered by item type (e.g. `/items/snippets`, `/items/notes`, `/items/links`, `/items/files`). The URL segment is plural and the DB stores singular type names, so the page validates the trailing `s` suffix (404s if absent — `/items/snippet` → 404) and slices it off to look up the type. Extended `src/lib/db/items.ts` with `getItemsByType(userId, typeName)` which finds the type via `prisma.itemType.findFirst({ where: { name, OR: [{ isSystem: true }, { userId }] } })` (covers system + user-owned custom types), returns `null` when the type doesn't exist (the page calls `notFound()`), and otherwise returns `{ type: { name, icon, color }, items }` ordered `isPinned desc, updatedAt desc` with each item carrying `typeIcon/typeColor/typeName`, `isFavorite`, `isPinned`, `tags`, and `createdAt`. New shared types `ItemListItem extends DashboardItem` (adds `isPinned`) and `ItemsByTypeResult` exported from the same module. Created `src/components/items/ItemCard.tsx` — server component (no `'use client'`), 3px left border in the type's color via `style={{ borderLeftColor, borderLeftWidth: '3px' }}` (Tailwind v4 + arbitrary hex from DB, so inline style not class), an icon tile filled with `${color}20`, type pill, optional pin/star indicators, line-clamp-2 description, tag chips, and date. Built `src/app/items/[type]/page.tsx` as a server component using the same DashboardShell pattern as `/dashboard` (sidebar + topbar shell, sidebar data via `getRecentCollections` + `getSystemItemTypesWithCounts`, demo user via `getDemoUserId` for parity with the dashboard — `session?.user` only feeds the sidebar avatar; the per-user-data plumbing is a wider refactor for later). Reads `params` as `Promise<{ type: string }>` per Next.js 16 (await it), grid is `grid-cols-1 gap-4 md:grid-cols-2`, header shows the type icon + plural name + item count with singular/plural copy, and renders an empty-state card when `items.length === 0`. Verified in browser via curl (`--noproxy '*'`): `/items/snippets|notes|links|files` → 200 with the right heading, type-colored borders (snippet blue `#3b82f6`, etc.), and md:2-col grid; `/items/bogus` → 404; `/items/snippet` (singular) → 404. Build passes (`next build`, 18 routes). Merged to main.
+
+- **2026-04-27**: Vitest Setup - Added unit testing scaffolding focused on server actions and pure utility/library code (no component or DB-touching tests). Created `vitest.config.ts` using the `node` test environment with `vite-tsconfig-paths` for `@/*` alias resolution and `include: ["src/**/*.test.ts"]`. Added `test` (watch) and `test:run` (one-shot) npm scripts; vitest 4 + vite-tsconfig-paths were already in `devDependencies` from a prior install. Wrote co-located sample tests: `src/lib/utils.test.ts` covers `cn` (clsx semantics + tailwind-merge conflict resolution), `src/lib/features.test.ts` covers `isEmailVerificationEnabled` env-var parsing (true/1 case-insensitive + whitespace, false otherwise — wraps each test in beforeEach/afterEach to restore the original env var so the suite is order-safe), and `src/lib/rate-limit.test.ts` covers the three pure helpers `getRequestIp` (x-forwarded-for first hop, x-real-ip fallback, 127.0.0.1 fallback, comma-only edge case), `buildRateLimitKey` (lowercase + trim of email tail, 'unknown' fallback for empty IP), and `minutesUntil` (uses `vi.useFakeTimers()` + `vi.setSystemTime()` for deterministic Date.now math; floor-at-1 + ceil partial minutes). Updated `context/ai-interaction.md` workflow step 4 to require Vitest tests for new server actions / lib code and `npm run test:run` before commit, and added a Testing section to `context/coding-standards.md` (scope, location convention, "no Prisma mocking" guidance, commands). Skipped tests for `src/actions/auth.ts::signInWithGitHub` (thin NextAuth wrapper, no branching) and DB-backed modules (real-DB integration tests are a separate piece of work). Verified `npm run test:run` (3 files / 22 tests pass in ~210ms) and `npm run build` (17 routes, no TS errors). Heads-up: vitest 4 emits an info notice that vite-tsconfig-paths could be replaced with the native `resolve.tsconfigPaths: true` option; left the plugin in per spec. Merged to main.
