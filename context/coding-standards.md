@@ -95,3 +95,14 @@ Example v4 configuration:
 - No commented-out code unless specified
 - No unused imports or variables
 - Keep functions under 50 lines when possible
+
+## Testing
+
+- Vitest is the unit test runner (`node` test environment, `@/*` path alias via `vite-tsconfig-paths`)
+- Co-locate tests next to source as `*.test.ts` (e.g. `src/lib/utils.test.ts`)
+- In scope: server actions and utility/library code (pure logic)
+- Out of scope for now: component tests, and integration tests that touch the database or other live services
+- Avoid mocking Prisma — when DB-touching code needs coverage, prefer real-DB integration tests (separate setup, not yet wired up)
+- Commands:
+  - `npm run test` — watch mode for local development
+  - `npm run test:run` — one-shot, used in the workflow before committing

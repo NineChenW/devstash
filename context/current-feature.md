@@ -16,21 +16,38 @@ Do not violate any following rules:
 
 <!--Feature Name-->
 
+Vitest Setup
+
 ## Status
 
 <!--Not Started|In Progress|Completed-->
 
-Not Started
+In Progress
 
 ## Goals
 
 <!--Goals & requirements-->
 
+Add a unit testing framework focused on server actions and utility/library code (no component tests yet).
+
+- Install `vitest` and `vite-tsconfig-paths` as devDependencies.
+- Add `vitest.config.ts` using the `node` test environment with `@/*` path-alias support.
+- Add `test` (watch) and `test:run` (CI-friendly one-shot) scripts to `package.json`.
+- Write sample tests for pure utilities to validate the setup: `src/lib/utils.ts`, `src/lib/features.ts`, and the pure helpers in `src/lib/rate-limit.ts` (`getRequestIp`, `buildRateLimitKey`, `minutesUntil`).
+- Co-locate tests next to source as `*.test.ts` (e.g. `src/lib/utils.test.ts`).
+- Update `context/ai-interaction.md` workflow so step 4 reflects that unit tests now exist.
+- Update `context/coding-standards.md` with a short Testing section.
+- Verify `npm run test:run` and `npm run build` both pass.
+
+Out of scope: component tests, DB-touching integration tests for server actions and data-access functions.
+
 ## Notes
 
 <!--Any extra notes-->
 
-
+- Server actions to date: only `src/actions/auth.ts::signInWithGitHub` (thin NextAuth wrapper). No meaningful logic to unit-test without mocking NextAuth — skipping for this pass; pattern lands when an action with real branching is added.
+- DB-backed modules (`src/lib/db/*`, `src/lib/verification-token.ts`, `src/lib/email.ts`, `src/lib/prisma.ts`) are out of scope here. Project standard prefers real-DB integration tests over Prisma mocks; that's a separate piece of work.
+- Tailwind v4 + Next 16 + React 19 are not exercised by this setup since we're staying in `node` env and avoiding component tests.
 
 
 ## History
