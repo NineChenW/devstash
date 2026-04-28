@@ -1,7 +1,7 @@
 ---
 name: feature
 description: Manage current feature workflow - start, review, explain or complete
-argument-hint: load|start|review|explain|complete
+argument-hint: load|start|review|explain|test|complete
 ---
 
 # Feature Workflow
@@ -32,6 +32,7 @@ Execute the requested action: $ARGUMENTS
 | `start` | Begin implementation, create branch |
 | `review` | Check goals met, code quality |
 | `explain` | Document what changed and why |
+| `test` | Check for testable logic for server actions and utilities |
 | `complete` | Commit, push, merge, reset |
 
 See [actions/](actions/) for detailed instructions.
