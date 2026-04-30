@@ -6,9 +6,10 @@ import { Copy, Pencil, Pin, Star, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Sheet } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Input } from '@/components/ui/input'
 import { iconMap, DefaultIcon } from '@/lib/icon-map'
-import { updateItem } from '@/actions/items'
+import { deleteItem, updateItem } from '@/actions/items'
 import type { ItemDetail } from '@/lib/db/items'
 
 interface ItemDrawerProps {
@@ -20,6 +21,7 @@ const TYPES_WITH_CONTENT = new Set(['snippet', 'prompt', 'command', 'note'])
 const TYPES_WITH_LANGUAGE = new Set(['snippet', 'command'])
 
 export function ItemDrawer({ itemId, onClose }: ItemDrawerProps) {
+  const router = useRouter()
   const open = itemId !== null
   const [item, setItem] = useState<ItemDetail | null>(null)
   const [loading, setLoading] = useState(false)
@@ -27,6 +29,8 @@ export function ItemDrawer({ itemId, onClose }: ItemDrawerProps) {
   const [favorite, setFavorite] = useState(false)
   const [pinned, setPinned] = useState(false)
   const [editing, setEditing] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     if (!itemId) {
@@ -82,32 +86,70 @@ export function ItemDrawer({ itemId, onClose }: ItemDrawerProps) {
     setEditing(false)
   }
 
+  async function handleConfirmDelete() {
+    if (!item || deleting) return
+    setDeleting(true)
+    try {
+      const result = await deleteItem(item.id)
+      if (!result.success) {
+        toast.error(result.error)
+        setDeleting(false)
+        return
+      }
+      toast.success('Item deleted')
+      setConfirmingDelete(false)
+      setDeleting(false)
+      onClose()
+      router.refresh()
+    } catch {
+      toast.error('Failed to delete item')
+      setDeleting(false)
+    }
+  }
+
   return (
-    <Sheet open={open} onClose={onClose} ariaLabel="Item details">
-      {loading && <DrawerSkeleton />}
-      {error && !loading && (
-        <div className="flex h-full items-center justify-center p-6">
-          <p className="text-sm text-muted-foreground">{error}</p>
-        </div>
-      )}
-      {item && !loading && !error && !editing && (
-        <DrawerContent
-          item={item}
-          favorite={favorite}
-          pinned={pinned}
-          onToggleFavorite={() => setFavorite((v) => !v)}
-          onTogglePin={() => setPinned((v) => !v)}
-          onEdit={() => setEditing(true)}
-        />
-      )}
-      {item && !loading && !error && editing && (
-        <DrawerEdit
-          item={item}
-          onCancel={() => setEditing(false)}
-          onSaved={handleSaved}
-        />
-      )}
-    </Sheet>
+    <>
+      <Sheet open={open} onClose={onClose} ariaLabel="Item details">
+        {loading && <DrawerSkeleton />}
+        {error && !loading && (
+          <div className="flex h-full items-center justify-center p-6">
+            <p className="text-sm text-muted-foreground">{error}</p>
+          </div>
+        )}
+        {item && !loading && !error && !editing && (
+          <DrawerContent
+            item={item}
+            favorite={favorite}
+            pinned={pinned}
+            onToggleFavorite={() => setFavorite((v) => !v)}
+            onTogglePin={() => setPinned((v) => !v)}
+            onEdit={() => setEditing(true)}
+            onDelete={() => setConfirmingDelete(true)}
+          />
+        )}
+        {item && !loading && !error && editing && (
+          <DrawerEdit
+            item={item}
+            onCancel={() => setEditing(false)}
+            onSaved={handleSaved}
+          />
+        )}
+      </Sheet>
+      <ConfirmDialog
+        open={confirmingDelete}
+        onClose={() => setConfirmingDelete(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete item"
+        description={
+          item
+            ? `“${item.title}” will be permanently deleted. This action cannot be undone.`
+            : 'This item will be permanently deleted. This action cannot be undone.'
+        }
+        confirmLabel="Delete"
+        pendingLabel="Deleting…"
+        pending={deleting}
+      />
+    </>
   )
 }
 
@@ -135,6 +177,7 @@ interface DrawerContentProps {
   onToggleFavorite: () => void
   onTogglePin: () => void
   onEdit: () => void
+  onDelete: () => void
 }
 
 function DrawerContent({
@@ -144,6 +187,7 @@ function DrawerContent({
   onToggleFavorite,
   onTogglePin,
   onEdit,
+  onDelete,
 }: DrawerContentProps) {
   const Icon = iconMap[item.type.icon] || DefaultIcon
   const fmtDate = (d: Date) =>
@@ -167,7 +211,6 @@ function DrawerContent({
     }
   }
 
-  const handleStub = (label: string) => () => toast(`${label} — coming soon`)
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -199,7 +242,7 @@ function DrawerContent({
         <ActionButton
           icon={<Trash2 className="h-4 w-4" />}
           label="Delete"
-          onClick={handleStub('Delete')}
+          onClick={onDelete}
           className="ml-auto text-destructive hover:text-destructive"
         />
       </div>
