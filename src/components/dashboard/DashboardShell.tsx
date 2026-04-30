@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Sidebar } from '@/components/sidebar/Sidebar'
 import { SidebarDrawer } from '@/components/sidebar/SidebarDrawer'
+import { ItemDrawerProvider } from '@/components/items/ItemDrawerContext'
 import type { SidebarUserData } from '@/components/sidebar/SidebarUser'
 import type { ItemTypeWithCount } from '@/lib/db/items'
 import type { CollectionWithTypes } from '@/lib/db/collections'
@@ -103,7 +104,9 @@ export function DashboardShell({ children, itemTypes, sidebarCollections, user }
         </div>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto p-6">
+          <ItemDrawerProvider>{children}</ItemDrawerProvider>
+        </main>
       </div>
 
       {/* Mobile Drawer */}

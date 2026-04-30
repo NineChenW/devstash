@@ -12,7 +12,7 @@ Do not violate any following rules:
 7. Update goals section with current feature requirements.
 8. Update notes section with current feature references.
 
-# Current Feature
+# Current Feature: Item Drawer
 
 <!--Feature Name-->
 
@@ -20,13 +20,42 @@ Do not violate any following rules:
 
 <!--Not Started|In Progress|Completed-->
 
+In Progress
+
 ## Goals
 
 <!--Goals & requirements-->
 
+- Add a right-side slide-in drawer (shadcn `Sheet`) that opens when an `ItemCard` is clicked, replacing any need for a separate item detail page.
+- Make the drawer work on both the dashboard (`/dashboard`) and the items list (`/items/[type]`) pages.
+- Render an action bar inside the drawer with Favorite (star, yellow when active), Pin, Copy, Edit (pencil), and Delete (trash, right-aligned) — layout per the screenshot. Wiring the actions themselves can be stubs/no-ops for now; only the visual layout and toggle states for star/pin are required.
+- Show the item's full detail in the drawer body (title, description, tags, type, dates, etc.). Item-type-specific content (code editor, file/image preview, link preview, etc.) is out of scope for this iteration — placeholder is fine.
+- Introduce a client wrapper component that owns drawer open/close state, since the pages it lives on are server components.
+- Card data (title, description, tags, type) keeps coming from the server component query as today.
+- Full item detail (content, collections, language, etc.) is fetched on click via a new `GET /api/items/[id]` route.
+- Add a query function in `src/lib/db/items.ts` that fetches a single item by id (scoped to the current user); the API route calls it after an `auth()` check.
+- Drawer shows a skeleton/loading state while the detail fetch is in flight; no page navigation, should feel snappy.
+- Clicking Edit (pencil) in the action bar flips the same drawer from view mode to inline edit mode — no separate page or modal.
+- In edit mode the action bar is replaced with Save / Cancel; Cancel discards changes and returns to view, Save persists via a server action and returns to view with refreshed data.
+- Editable fields for all types: title (required, trimmed), description (optional), tags (comma-separated input that converts to a string array on save).
+- Type-specific editable fields: content textarea for snippet/prompt/command/note; language input for snippet/command; URL input for link.
+- Non-editable in edit mode: item type, collections, created/updated timestamps (read-only display).
+- Server action `updateItem(itemId, data)` in `src/actions/items.ts` returns `{ success, data, error }`, validates input with Zod, calls `auth()`, enforces ownership, then calls a new `updateItem` query function in `src/lib/db/items.ts`.
+- Tag handling on update: disconnect all existing tags from the item, then connect-or-create the new tags by name.
+- After save, drawer shows toast and refreshes its `ItemDetail` (returned from the action — no second fetch); the page calls `router.refresh()` so the underlying card list reflects changes.
+
 ## Notes
 
 <!--Any extra notes-->
+
+- Reference screenshot: `context/screenshots/dashboard-ui-drawer.png`.
+- Spec files: `context/features/item-drawer-spec.md` (view mode), `context/features/item-drawer-edit-spec.md` (edit mode).
+- Related existing pieces: `src/components/items/ItemCard.tsx` (currently a server component — will need a thin client wrapper or a click handler around it), `src/app/dashboard/page.tsx`, `src/app/items/[type]/page.tsx`, `src/lib/db/items.ts`.
+- shadcn `Sheet` component is not installed yet; will need to be added via the shadcn CLI.
+- Auth: API route must enforce ownership — only return the item if `item.userId === session.user.id`; respond 401 unauthenticated, 404 when not found or not owned.
+- Edit mode keeps it simple — controlled inputs with local state, no form library; client-side disables Save while title is empty, server-side Zod is the source of truth.
+- Content textarea for edit mode is plain `<textarea>`; a real code editor comes in a later iteration.
+- Out of scope (later iterations): type-specific renderers (code editor, file/image preview, link unfurl), collection membership editing, real Favorite/Pin/Copy/Delete handlers.
 
 
 ## History

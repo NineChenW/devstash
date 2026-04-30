@@ -4,6 +4,7 @@ import { DashboardShell } from '@/components/dashboard/DashboardShell'
 import { CollectionCard } from '@/components/collections/CollectionCard'
 import { PinnedItem } from '@/components/items/PinnedItem'
 import { RecentItem } from '@/components/items/RecentItem'
+import { ItemTrigger } from '@/components/items/ItemTrigger'
 import { StatsCard } from '@/components/dashboard/StatsCard'
 import { getRecentCollections, getCollectionStats, getDemoUserId } from '@/lib/db/collections'
 import { getPinnedItems, getRecentItems, getSystemItemTypesWithCounts } from '@/lib/db/items'
@@ -81,18 +82,19 @@ export default async function Dashboard() {
           </div>
           <div className="space-y-3">
             {pinnedItems.map((item) => (
-              <PinnedItem
-                key={item.id}
-                id={item.id}
-                title={item.title}
-                description={item.description}
-                typeIcon={item.typeIcon}
-                typeColor={item.typeColor}
-                typeName={item.typeName}
-                isFavorite={item.isFavorite}
-                tags={item.tags}
-                createdAt={item.createdAt}
-              />
+              <ItemTrigger key={item.id} itemId={item.id}>
+                <PinnedItem
+                  id={item.id}
+                  title={item.title}
+                  description={item.description}
+                  typeIcon={item.typeIcon}
+                  typeColor={item.typeColor}
+                  typeName={item.typeName}
+                  isFavorite={item.isFavorite}
+                  tags={item.tags}
+                  createdAt={item.createdAt}
+                />
+              </ItemTrigger>
             ))}
           </div>
         </section>
@@ -106,16 +108,17 @@ export default async function Dashboard() {
         </div>
         <div className="space-y-2">
           {recentItems.map((item) => (
-            <RecentItem
-              key={item.id}
-              id={item.id}
-              title={item.title}
-              description={item.description}
-              typeIcon={item.typeIcon}
-              typeColor={item.typeColor}
-              typeName={item.typeName}
-              createdAt={item.createdAt}
-            />
+            <ItemTrigger key={item.id} itemId={item.id}>
+              <RecentItem
+                id={item.id}
+                title={item.title}
+                description={item.description}
+                typeIcon={item.typeIcon}
+                typeColor={item.typeColor}
+                typeName={item.typeName}
+                createdAt={item.createdAt}
+              />
+            </ItemTrigger>
           ))}
         </div>
       </section>
