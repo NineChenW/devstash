@@ -207,6 +207,20 @@ export async function updateItem(
   return getItemDetail(itemId, userId)
 }
 
+export async function deleteItem(
+  itemId: string,
+  userId: string,
+): Promise<boolean> {
+  const owned = await prisma.item.findFirst({
+    where: { id: itemId, userId },
+    select: { id: true },
+  })
+  if (!owned) return false
+
+  await prisma.item.delete({ where: { id: itemId } })
+  return true
+}
+
 export async function getItemsByType(
   userId: string,
   typeName: string,

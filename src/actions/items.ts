@@ -3,7 +3,11 @@
 import { z } from 'zod'
 import { auth } from '@/auth'
 import { getDemoUserId } from '@/lib/db/collections'
-import { updateItem as updateItemQuery, type ItemDetail } from '@/lib/db/items'
+import {
+  deleteItem as deleteItemQuery,
+  updateItem as updateItemQuery,
+  type ItemDetail,
+} from '@/lib/db/items'
 import { updateItemSchema, type UpdateItemPayload } from '@/lib/validations/items'
 
 export type UpdateItemResult =
@@ -51,5 +55,29 @@ export async function updateItem(
   } catch (err) {
     console.error('updateItem failed', err)
     return { success: false, error: 'Failed to update item' }
+  }
+}
+
+export type DeleteItemResult =
+  | { success: true }
+  | { success: false; error: string }
+
+export async function deleteItem(itemId: string): Promise<DeleteItemResult> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { success: false, error: 'Not authenticated' }
+  }
+
+  const ownerId = (await getDemoUserId()) ?? session.user.id
+
+  try {
+    const ok = await deleteItemQuery(itemId, ownerId)
+    if (!ok) {
+      return { success: false, error: 'Item not found' }
+    }
+    return { success: true }
+  } catch (err) {
+    console.error('deleteItem failed', err)
+    return { success: false, error: 'Failed to delete item' }
   }
 }
