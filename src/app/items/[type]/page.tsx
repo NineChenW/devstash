@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { iconMap, DefaultIcon } from '@/lib/icon-map'
 import { DashboardShell } from '@/components/dashboard/DashboardShell'
 import { ItemCard } from '@/components/items/ItemCard'
+import { ItemTrigger } from '@/components/items/ItemTrigger'
 import { auth } from '@/auth'
 import { getRecentCollections, getDemoUserId } from '@/lib/db/collections'
 import { getItemsByType, getSystemItemTypesWithCounts } from '@/lib/db/items'
@@ -73,19 +74,20 @@ export default async function ItemsByTypePage({ params }: ItemsByTypePageProps) 
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => (
-            <ItemCard
-              key={item.id}
-              id={item.id}
-              title={item.title}
-              description={item.description}
-              typeIcon={item.typeIcon}
-              typeColor={item.typeColor}
-              typeName={item.typeName}
-              isFavorite={item.isFavorite}
-              isPinned={item.isPinned}
-              tags={item.tags}
-              createdAt={item.createdAt}
-            />
+            <ItemTrigger key={item.id} itemId={item.id}>
+              <ItemCard
+                id={item.id}
+                title={item.title}
+                description={item.description}
+                typeIcon={item.typeIcon}
+                typeColor={item.typeColor}
+                typeName={item.typeName}
+                isFavorite={item.isFavorite}
+                isPinned={item.isPinned}
+                tags={item.tags}
+                createdAt={item.createdAt}
+              />
+            </ItemTrigger>
           ))}
         </div>
       )}

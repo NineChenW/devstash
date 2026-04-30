@@ -104,6 +104,109 @@ export interface ItemsByTypeResult {
   items: ItemListItem[]
 }
 
+export interface ItemDetail {
+  id: string
+  title: string
+  description: string | null
+  contentType: string
+  content: string | null
+  fileUrl: string | null
+  fileName: string | null
+  fileSize: number | null
+  url: string | null
+  language: string | null
+  isFavorite: boolean
+  isPinned: boolean
+  tags: string[]
+  collections: { id: string; name: string }[]
+  type: { name: string; icon: string; color: string }
+  createdAt: Date
+  updatedAt: Date
+}
+
+export async function getItemDetail(
+  itemId: string,
+  userId: string,
+): Promise<ItemDetail | null> {
+  const item = await prisma.item.findFirst({
+    where: { id: itemId, userId },
+    include: {
+      itemType: true,
+      tags: true,
+      collections: { include: { collection: true } },
+    },
+  })
+  if (!item) return null
+
+  return {
+    id: item.id,
+    title: item.title,
+    description: item.description,
+    contentType: item.contentType,
+    content: item.content,
+    fileUrl: item.fileUrl,
+    fileName: item.fileName,
+    fileSize: item.fileSize,
+    url: item.url,
+    language: item.language,
+    isFavorite: item.isFavorite,
+    isPinned: item.isPinned,
+    tags: item.tags.map((t) => t.name),
+    collections: item.collections.map((ic) => ({
+      id: ic.collection.id,
+      name: ic.collection.name,
+    })),
+    type: {
+      name: item.itemType.name,
+      icon: item.itemType.icon,
+      color: item.itemType.color,
+    },
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
+  }
+}
+
+export interface UpdateItemInput {
+  title: string
+  description: string | null
+  content: string | null
+  url: string | null
+  language: string | null
+  tags: string[]
+}
+
+export async function updateItem(
+  itemId: string,
+  userId: string,
+  data: UpdateItemInput,
+): Promise<ItemDetail | null> {
+  const owned = await prisma.item.findFirst({
+    where: { id: itemId, userId },
+    select: { id: true },
+  })
+  if (!owned) return null
+
+  await prisma.item.update({
+    where: { id: itemId },
+    data: {
+      title: data.title,
+      description: data.description,
+      content: data.content,
+      url: data.url,
+      language: data.language,
+      tags: {
+        set: [],
+        connectOrCreate: data.tags.map((name) => ({
+          where: { name },
+          create: { name },
+        })),
+      },
+    },
+  })
+
+  return getItemDetail(itemId, userId)
+}
+
 export async function getItemsByType(
   userId: string,
   typeName: string,
