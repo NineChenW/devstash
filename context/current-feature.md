@@ -12,7 +12,7 @@ Do not violate any following rules:
 7. Update goals section with current feature requirements.
 8. Update notes section with current feature references.
 
-# Current Feature
+# Current Feature: Code Editor
 
 <!--Feature Name-->
 
@@ -20,13 +20,29 @@ Do not violate any following rules:
 
 <!--Not Started|In Progress|Completed-->
 
+In Progress
+
 ## Goals
 
 <!--Goals & requirements-->
 
+- Create a `CodeEditor` component using Monaco Editor with a dark theme
+- Replace the `Textarea` with `CodeEditor` for snippet and command item types only
+- Keep the `Textarea` for note, prompt, and other non-code item types
+- Add macOS-style window dots (red/yellow/green) at the top of the editor
+- Add a quick copy button in the editor header
+- Show the language in the editor header next to the copy button
+- Support both display (readonly) and edit modes
+- Make the editor height fluid with a max height of 400px and a themed scrollbar
+
 ## Notes
 
 <!--Any extra notes-->
+
+- Spec source: `context/features/code-editor-spec.md`
+- Affected surfaces: `ItemDrawer` (view + edit modes) and `CreateItemDialog` (create mode) — both currently use `<textarea>` for the `content` field on snippet/command types
+- `CREATE_ITEM_TYPES` lives in `src/lib/validations/items.ts`; `TYPES_WITH_CONTENT` and `TYPES_WITH_LANGUAGE` are defined in `CreateItemDialog.tsx` and gate which fields render per type
+- Tailwind v4 is in use — no `tailwind.config.ts`; theme tokens live in `src/app/globals.css` via `@theme`. Custom scrollbar styling will likely need either CSS in `globals.css` or inline style overrides since `bg-popover`/`bg-background` render transparent in this project's setup (per the in-repo Modal/Dialog workarounds)
 
 
 ## History

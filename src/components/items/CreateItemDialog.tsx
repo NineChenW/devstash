@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input'
 import { iconMap, DefaultIcon } from '@/lib/icon-map'
 import { createItem } from '@/actions/items'
 import { CREATE_ITEM_TYPES, type CreateItemType } from '@/lib/validations/items'
+import { CodeEditor } from './CodeEditor'
 
 interface CreateItemDialogProps {
   open: boolean
@@ -34,6 +35,7 @@ const TYPE_META: Record<
 
 const TYPES_WITH_CONTENT = new Set<CreateItemType>(['snippet', 'prompt', 'command', 'note'])
 const TYPES_WITH_LANGUAGE = new Set<CreateItemType>(['snippet', 'command'])
+const TYPES_WITH_CODE_EDITOR = new Set<CreateItemType>(['snippet', 'command'])
 
 export function CreateItemDialog({ open, onClose }: CreateItemDialogProps) {
   const router = useRouter()
@@ -62,6 +64,7 @@ export function CreateItemDialog({ open, onClose }: CreateItemDialogProps) {
   const showContent = TYPES_WITH_CONTENT.has(typeName)
   const showLanguage = TYPES_WITH_LANGUAGE.has(typeName)
   const showUrl = typeName === 'link'
+  const useCodeEditor = TYPES_WITH_CODE_EDITOR.has(typeName)
 
   const titleTrimmed = title.trim()
   const urlTrimmed = url.trim()
@@ -173,16 +176,24 @@ export function CreateItemDialog({ open, onClose }: CreateItemDialogProps) {
 
             {showContent && (
               <Field label="Content" htmlFor="create-content">
-                <textarea
-                  id="create-content"
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  rows={8}
-                  placeholder={
-                    typeName === 'note' ? 'Write your note…' : 'Paste your code…'
-                  }
-                  className="w-full rounded-md border border-input bg-transparent px-3 py-2 font-mono text-xs leading-relaxed shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                />
+                {useCodeEditor ? (
+                  <CodeEditor
+                    value={content}
+                    onChange={setContent}
+                    language={language}
+                  />
+                ) : (
+                  <textarea
+                    id="create-content"
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    rows={8}
+                    placeholder={
+                      typeName === 'note' ? 'Write your note…' : 'Paste your code…'
+                    }
+                    className="w-full rounded-md border border-input bg-transparent px-3 py-2 font-mono text-xs leading-relaxed shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  />
+                )}
               </Field>
             )}
 

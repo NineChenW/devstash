@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { iconMap, DefaultIcon } from '@/lib/icon-map'
 import { deleteItem, updateItem } from '@/actions/items'
 import type { ItemDetail } from '@/lib/db/items'
+import { CodeEditor } from './CodeEditor'
 
 interface ItemDrawerProps {
   itemId: string | null
@@ -19,6 +20,7 @@ interface ItemDrawerProps {
 
 const TYPES_WITH_CONTENT = new Set(['snippet', 'prompt', 'command', 'note'])
 const TYPES_WITH_LANGUAGE = new Set(['snippet', 'command'])
+const TYPES_WITH_CODE_EDITOR = new Set(['snippet', 'command'])
 
 export function ItemDrawer({ itemId, onClose }: ItemDrawerProps) {
   const router = useRouter()
@@ -312,6 +314,7 @@ function DrawerEdit({ item, onCancel, onSaved }: DrawerEditProps) {
   const showContent = TYPES_WITH_CONTENT.has(typeName)
   const showLanguage = TYPES_WITH_LANGUAGE.has(typeName)
   const showUrl = typeName === 'link'
+  const useCodeEditor = TYPES_WITH_CODE_EDITOR.has(typeName)
 
   const [title, setTitle] = useState(item.title)
   const [description, setDescription] = useState(item.description ?? '')
@@ -399,13 +402,21 @@ function DrawerEdit({ item, onCancel, onSaved }: DrawerEditProps) {
 
         {showContent && (
           <Field label="Content" htmlFor="edit-content">
-            <textarea
-              id="edit-content"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              rows={10}
-              className="w-full rounded-md border border-input bg-transparent px-3 py-2 font-mono text-xs leading-relaxed shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-            />
+            {useCodeEditor ? (
+              <CodeEditor
+                value={content}
+                onChange={setContent}
+                language={language}
+              />
+            ) : (
+              <textarea
+                id="edit-content"
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                rows={10}
+                className="w-full rounded-md border border-input bg-transparent px-3 py-2 font-mono text-xs leading-relaxed shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+            )}
           </Field>
         )}
 
@@ -575,6 +586,9 @@ function ContentPreview({ item }: { item: ItemDetail }) {
   }
 
   if (item.content) {
+    if (TYPES_WITH_CODE_EDITOR.has(item.type.name)) {
+      return <CodeEditor value={item.content} language={item.language} readOnly />
+    }
     return (
       <pre className="overflow-x-auto rounded-md border border-[hsl(217.2_32.6%_22%)] bg-[hsl(217.2_32.6%_14%)] p-3 text-xs leading-relaxed">
         <code>{item.content}</code>
