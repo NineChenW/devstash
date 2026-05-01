@@ -4,11 +4,17 @@ import { z } from 'zod'
 import { auth } from '@/auth'
 import { getDemoUserId } from '@/lib/db/collections'
 import {
+  createItem as createItemQuery,
   deleteItem as deleteItemQuery,
   updateItem as updateItemQuery,
   type ItemDetail,
 } from '@/lib/db/items'
-import { updateItemSchema, type UpdateItemPayload } from '@/lib/validations/items'
+import {
+  createItemSchema,
+  updateItemSchema,
+  type CreateItemPayload,
+  type UpdateItemPayload,
+} from '@/lib/validations/items'
 
 export type UpdateItemResult =
   | { success: true; data: ItemDetail }
@@ -55,6 +61,52 @@ export async function updateItem(
   } catch (err) {
     console.error('updateItem failed', err)
     return { success: false, error: 'Failed to update item' }
+  }
+}
+
+export type CreateItemResult =
+  | { success: true; data: ItemDetail }
+  | { success: false; error: string; fieldErrors?: Record<string, string[]> }
+
+export async function createItem(payload: CreateItemPayload): Promise<CreateItemResult> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { success: false, error: 'Not authenticated' }
+  }
+
+  const parsed = createItemSchema.safeParse(payload)
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: 'Invalid input',
+      fieldErrors: z.flattenError(parsed.error).fieldErrors as Record<string, string[]>,
+    }
+  }
+
+  const { typeName, title, description, content, url, language, tags } = parsed.data
+  const dedupedTags = Array.from(new Set(tags))
+
+  const ownerId = (await getDemoUserId()) ?? session.user.id
+
+  try {
+    const created = await createItemQuery(ownerId, {
+      typeName,
+      title,
+      description: description ?? null,
+      content: content ?? null,
+      url: url ?? null,
+      language: language ?? null,
+      tags: dedupedTags,
+    })
+
+    if (!created) {
+      return { success: false, error: 'Item type not found' }
+    }
+
+    return { success: true, data: created }
+  } catch (err) {
+    console.error('createItem failed', err)
+    return { success: false, error: 'Failed to create item' }
   }
 }
 

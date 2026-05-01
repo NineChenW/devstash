@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Sidebar } from '@/components/sidebar/Sidebar'
 import { SidebarDrawer } from '@/components/sidebar/SidebarDrawer'
 import { ItemDrawerProvider } from '@/components/items/ItemDrawerContext'
+import { CreateItemDialog } from '@/components/items/CreateItemDialog'
 import type { SidebarUserData } from '@/components/sidebar/SidebarUser'
 import type { ItemTypeWithCount } from '@/lib/db/items'
 import type { CollectionWithTypes } from '@/lib/db/collections'
@@ -21,6 +22,7 @@ interface DashboardShellProps {
 export function DashboardShell({ children, itemTypes, sidebarCollections, user }: DashboardShellProps) {
   const [collapsed, setCollapsed] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [createOpen, setCreateOpen] = useState(false)
 
   useEffect(() => {
     const saved = localStorage.getItem('sidebar-collapsed')
@@ -88,7 +90,7 @@ export function DashboardShell({ children, itemTypes, sidebarCollections, user }
               <FolderPlus className="mr-2 h-4 w-4" />
               New Collection
             </Button>
-            <Button size="sm">
+            <Button size="sm" onClick={() => setCreateOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               New Item
             </Button>
@@ -117,6 +119,8 @@ export function DashboardShell({ children, itemTypes, sidebarCollections, user }
         collections={sidebarCollections}
         user={user}
       />
+
+      <CreateItemDialog open={createOpen} onClose={() => setCreateOpen(false)} />
     </div>
   )
 }
