@@ -15,31 +15,23 @@ import { Input } from '@/components/ui/input'
 import { iconMap, DefaultIcon } from '@/lib/icon-map'
 import { createItem } from '@/actions/items'
 import { CREATE_ITEM_TYPES, type CreateItemType } from '@/lib/validations/items'
+import { CREATE_TYPE_META } from '@/lib/item-type-meta'
 import { CodeEditor } from './CodeEditor'
 
 interface CreateItemDialogProps {
   open: boolean
   onClose: () => void
-}
-
-const TYPE_META: Record<
-  CreateItemType,
-  { label: string; icon: string; color: string }
-> = {
-  snippet: { label: 'Snippet', icon: 'Code', color: '#3b82f6' },
-  prompt: { label: 'Prompt', icon: 'Sparkles', color: '#8b5cf6' },
-  command: { label: 'Command', icon: 'Terminal', color: '#f97316' },
-  note: { label: 'Note', icon: 'StickyNote', color: '#fde047' },
-  link: { label: 'Link', icon: 'Link', color: '#10b981' },
+  defaultType?: CreateItemType
 }
 
 const TYPES_WITH_CONTENT = new Set<CreateItemType>(['snippet', 'prompt', 'command', 'note'])
 const TYPES_WITH_LANGUAGE = new Set<CreateItemType>(['snippet', 'command'])
 const TYPES_WITH_CODE_EDITOR = new Set<CreateItemType>(['snippet', 'command'])
 
-export function CreateItemDialog({ open, onClose }: CreateItemDialogProps) {
+export function CreateItemDialog({ open, onClose, defaultType }: CreateItemDialogProps) {
   const router = useRouter()
-  const [typeName, setTypeName] = useState<CreateItemType>('snippet')
+  const initialType: CreateItemType = defaultType ?? 'snippet'
+  const [typeName, setTypeName] = useState<CreateItemType>(initialType)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [content, setContent] = useState('')
@@ -49,8 +41,10 @@ export function CreateItemDialog({ open, onClose }: CreateItemDialogProps) {
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    if (!open) {
-      setTypeName('snippet')
+    if (open) {
+      setTypeName(initialType)
+    } else {
+      setTypeName(initialType)
       setTitle('')
       setDescription('')
       setContent('')
@@ -59,7 +53,7 @@ export function CreateItemDialog({ open, onClose }: CreateItemDialogProps) {
       setTagsInput('')
       setSubmitting(false)
     }
-  }, [open])
+  }, [open, initialType])
 
   const showContent = TYPES_WITH_CONTENT.has(typeName)
   const showLanguage = TYPES_WITH_LANGUAGE.has(typeName)
@@ -128,7 +122,7 @@ export function CreateItemDialog({ open, onClose }: CreateItemDialogProps) {
             <Field label="Type">
               <div className="grid grid-cols-5 gap-2">
                 {CREATE_ITEM_TYPES.map((t) => {
-                  const meta = TYPE_META[t]
+                  const meta = CREATE_TYPE_META[t]
                   const Icon = iconMap[meta.icon] || DefaultIcon
                   const active = typeName === t
                   return (

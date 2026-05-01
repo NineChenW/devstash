@@ -3,9 +3,11 @@ import { iconMap, DefaultIcon } from '@/lib/icon-map'
 import { DashboardShell } from '@/components/dashboard/DashboardShell'
 import { ItemCard } from '@/components/items/ItemCard'
 import { ItemTrigger } from '@/components/items/ItemTrigger'
+import { TypeAddButton } from '@/components/items/TypeAddButton'
 import { auth } from '@/auth'
 import { getRecentCollections, getDemoUserId } from '@/lib/db/collections'
 import { getItemsByType, getSystemItemTypesWithCounts } from '@/lib/db/items'
+import { CREATE_ITEM_TYPES, type CreateItemType } from '@/lib/validations/items'
 
 interface ItemsByTypePageProps {
   params: Promise<{ type: string }>
@@ -49,22 +51,26 @@ export default async function ItemsByTypePage({ params }: ItemsByTypePageProps) 
   const { type, items } = result
   const Icon = iconMap[type.icon] || DefaultIcon
   const heading = type.name.charAt(0).toUpperCase() + type.name.slice(1) + 's'
+  const isCreatable = (CREATE_ITEM_TYPES as readonly string[]).includes(type.name)
 
   return (
     <DashboardShell itemTypes={itemTypes} sidebarCollections={collections} user={sidebarUser}>
-      <div className="mb-8 flex items-center gap-3">
-        <div
-          className="flex h-10 w-10 items-center justify-center rounded-lg"
-          style={{ backgroundColor: `${type.color}20` }}
-        >
-          <Icon className="h-5 w-5" style={{ color: type.color }} />
+      <div className="mb-8 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div
+            className="flex h-10 w-10 items-center justify-center rounded-lg"
+            style={{ backgroundColor: `${type.color}20` }}
+          >
+            <Icon className="h-5 w-5" style={{ color: type.color }} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-semibold">{heading}</h1>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              {items.length} {items.length === 1 ? 'item' : 'items'}
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-semibold">{heading}</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            {items.length} {items.length === 1 ? 'item' : 'items'}
-          </p>
-        </div>
+        {isCreatable && <TypeAddButton type={type.name as CreateItemType} />}
       </div>
 
       {items.length === 0 ? (
