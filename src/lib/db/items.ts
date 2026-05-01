@@ -207,6 +207,62 @@ export async function updateItem(
   return getItemDetail(itemId, userId)
 }
 
+export interface CreateItemInput {
+  typeName: string
+  title: string
+  description: string | null
+  content: string | null
+  url: string | null
+  language: string | null
+  tags: string[]
+}
+
+const TYPE_CONTENT_TYPE: Record<string, string> = {
+  snippet: 'text',
+  prompt: 'text',
+  command: 'text',
+  note: 'text',
+  link: 'url',
+  file: 'file',
+  image: 'file',
+}
+
+export async function createItem(
+  userId: string,
+  data: CreateItemInput,
+): Promise<ItemDetail | null> {
+  const type = await prisma.itemType.findFirst({
+    where: {
+      name: data.typeName,
+      OR: [{ isSystem: true }, { userId }],
+    },
+    select: { id: true },
+  })
+  if (!type) return null
+
+  const created = await prisma.item.create({
+    data: {
+      title: data.title,
+      description: data.description,
+      contentType: TYPE_CONTENT_TYPE[data.typeName] ?? 'text',
+      content: data.content,
+      url: data.url,
+      language: data.language,
+      userId,
+      itemTypeId: type.id,
+      tags: {
+        connectOrCreate: data.tags.map((name) => ({
+          where: { name },
+          create: { name },
+        })),
+      },
+    },
+    select: { id: true },
+  })
+
+  return getItemDetail(created.id, userId)
+}
+
 export async function deleteItem(
   itemId: string,
   userId: string,

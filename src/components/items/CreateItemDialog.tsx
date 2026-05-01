@@ -1,0 +1,264 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { iconMap, DefaultIcon } from '@/lib/icon-map'
+import { createItem } from '@/actions/items'
+import { CREATE_ITEM_TYPES, type CreateItemType } from '@/lib/validations/items'
+
+interface CreateItemDialogProps {
+  open: boolean
+  onClose: () => void
+}
+
+const TYPE_META: Record<
+  CreateItemType,
+  { label: string; icon: string; color: string }
+> = {
+  snippet: { label: 'Snippet', icon: 'Code', color: '#3b82f6' },
+  prompt: { label: 'Prompt', icon: 'Sparkles', color: '#8b5cf6' },
+  command: { label: 'Command', icon: 'Terminal', color: '#f97316' },
+  note: { label: 'Note', icon: 'StickyNote', color: '#fde047' },
+  link: { label: 'Link', icon: 'Link', color: '#10b981' },
+}
+
+const TYPES_WITH_CONTENT = new Set<CreateItemType>(['snippet', 'prompt', 'command', 'note'])
+const TYPES_WITH_LANGUAGE = new Set<CreateItemType>(['snippet', 'command'])
+
+export function CreateItemDialog({ open, onClose }: CreateItemDialogProps) {
+  const router = useRouter()
+  const [typeName, setTypeName] = useState<CreateItemType>('snippet')
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [content, setContent] = useState('')
+  const [language, setLanguage] = useState('')
+  const [url, setUrl] = useState('')
+  const [tagsInput, setTagsInput] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (!open) {
+      setTypeName('snippet')
+      setTitle('')
+      setDescription('')
+      setContent('')
+      setLanguage('')
+      setUrl('')
+      setTagsInput('')
+      setSubmitting(false)
+    }
+  }, [open])
+
+  const showContent = TYPES_WITH_CONTENT.has(typeName)
+  const showLanguage = TYPES_WITH_LANGUAGE.has(typeName)
+  const showUrl = typeName === 'link'
+
+  const titleTrimmed = title.trim()
+  const urlTrimmed = url.trim()
+  const canSubmit =
+    titleTrimmed.length > 0 &&
+    !submitting &&
+    (!showUrl || urlTrimmed.length > 0)
+
+  const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
+    e.preventDefault()
+    if (!canSubmit) return
+
+    const tags = tagsInput
+      .split(',')
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0)
+
+    setSubmitting(true)
+    try {
+      const result = await createItem({
+        typeName,
+        title: titleTrimmed,
+        description: description.trim() ? description : null,
+        content: showContent && content.trim() ? content : null,
+        url: showUrl && urlTrimmed ? urlTrimmed : null,
+        language: showLanguage && language.trim() ? language : null,
+        tags,
+      })
+
+      if (!result.success) {
+        const msg =
+          result.fieldErrors?.url?.[0] ??
+          result.fieldErrors?.title?.[0] ??
+          result.error
+        toast.error(msg)
+        return
+      }
+
+      toast.success('Item created')
+      onClose()
+      router.refresh()
+    } catch {
+      toast.error('Failed to create item')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-lg border-[hsl(217.2_32.6%_25%)] bg-[hsl(217.2_32.6%_12%)] p-0">
+        <form onSubmit={handleSubmit} className="flex flex-col">
+          <DialogHeader className="border-b border-[hsl(217.2_32.6%_22%)] px-6 py-4">
+            <DialogTitle>New Item</DialogTitle>
+            <DialogDescription>
+              Save a new snippet, prompt, command, note, or link.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-5 px-6 py-5 max-h-[70vh] overflow-y-auto">
+            <Field label="Type">
+              <div className="grid grid-cols-5 gap-2">
+                {CREATE_ITEM_TYPES.map((t) => {
+                  const meta = TYPE_META[t]
+                  const Icon = iconMap[meta.icon] || DefaultIcon
+                  const active = typeName === t
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setTypeName(t)}
+                      aria-pressed={active}
+                      className={
+                        'flex flex-col items-center gap-1 rounded-md border p-2 text-xs transition-colors ' +
+                        (active
+                          ? 'border-[hsl(217.2_32.6%_45%)] bg-[hsl(217.2_32.6%_18%)] text-foreground'
+                          : 'border-[hsl(217.2_32.6%_22%)] text-muted-foreground hover:border-[hsl(217.2_32.6%_35%)] hover:text-foreground')
+                      }
+                    >
+                      <Icon className="h-4 w-4" style={{ color: meta.color }} />
+                      <span>{meta.label}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </Field>
+
+            <Field label="Title" htmlFor="create-title">
+              <Input
+                id="create-title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+                autoFocus
+                placeholder="Give it a name"
+              />
+            </Field>
+
+            <Field label="Description" htmlFor="create-description">
+              <textarea
+                id="create-description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={2}
+                placeholder="Optional"
+                className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+            </Field>
+
+            {showContent && (
+              <Field label="Content" htmlFor="create-content">
+                <textarea
+                  id="create-content"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  rows={8}
+                  placeholder={
+                    typeName === 'note' ? 'Write your note…' : 'Paste your code…'
+                  }
+                  className="w-full rounded-md border border-input bg-transparent px-3 py-2 font-mono text-xs leading-relaxed shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+              </Field>
+            )}
+
+            {showLanguage && (
+              <Field label="Language" htmlFor="create-language">
+                <Input
+                  id="create-language"
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value)}
+                  placeholder="e.g. typescript"
+                />
+              </Field>
+            )}
+
+            {showUrl && (
+              <Field label="URL" htmlFor="create-url">
+                <Input
+                  id="create-url"
+                  type="url"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  placeholder="https://…"
+                  required
+                />
+              </Field>
+            )}
+
+            <Field label="Tags" htmlFor="create-tags" hint="Comma-separated">
+              <Input
+                id="create-tags"
+                value={tagsInput}
+                onChange={(e) => setTagsInput(e.target.value)}
+                placeholder="react, hooks, ui"
+              />
+            </Field>
+          </div>
+
+          <div className="flex items-center justify-end gap-2 border-t border-[hsl(217.2_32.6%_22%)] px-6 py-4">
+            <Button type="button" variant="ghost" onClick={onClose} disabled={submitting}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={!canSubmit}>
+              {submitting ? 'Creating…' : 'Create'}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function Field({
+  label,
+  htmlFor,
+  hint,
+  children,
+}: {
+  label: string
+  htmlFor?: string
+  hint?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div>
+      <label
+        htmlFor={htmlFor}
+        className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+      >
+        {label}
+        {hint && (
+          <span className="ml-2 normal-case text-[10px] text-muted-foreground/70">
+            {hint}
+          </span>
+        )}
+      </label>
+      {children}
+    </div>
+  )
+}
