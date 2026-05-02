@@ -17,6 +17,7 @@ import { createItem } from '@/actions/items'
 import { CREATE_ITEM_TYPES, type CreateItemType } from '@/lib/validations/items'
 import { CREATE_TYPE_META } from '@/lib/item-type-meta'
 import { CodeEditor } from './CodeEditor'
+import { MarkdownEditor } from './MarkdownEditor'
 
 interface CreateItemDialogProps {
   open: boolean
@@ -27,6 +28,7 @@ interface CreateItemDialogProps {
 const TYPES_WITH_CONTENT = new Set<CreateItemType>(['snippet', 'prompt', 'command', 'note'])
 const TYPES_WITH_LANGUAGE = new Set<CreateItemType>(['snippet', 'command'])
 const TYPES_WITH_CODE_EDITOR = new Set<CreateItemType>(['snippet', 'command'])
+const TYPES_WITH_MARKDOWN_EDITOR = new Set<CreateItemType>(['note', 'prompt'])
 
 export function CreateItemDialog({ open, onClose, defaultType }: CreateItemDialogProps) {
   const router = useRouter()
@@ -59,6 +61,7 @@ export function CreateItemDialog({ open, onClose, defaultType }: CreateItemDialo
   const showLanguage = TYPES_WITH_LANGUAGE.has(typeName)
   const showUrl = typeName === 'link'
   const useCodeEditor = TYPES_WITH_CODE_EDITOR.has(typeName)
+  const useMarkdownEditor = TYPES_WITH_MARKDOWN_EDITOR.has(typeName)
 
   const titleTrimmed = title.trim()
   const urlTrimmed = url.trim()
@@ -176,15 +179,21 @@ export function CreateItemDialog({ open, onClose, defaultType }: CreateItemDialo
                     onChange={setContent}
                     language={language}
                   />
+                ) : useMarkdownEditor ? (
+                  <MarkdownEditor
+                    value={content}
+                    onChange={setContent}
+                    placeholder={
+                      typeName === 'note' ? 'Write your note in markdown…' : 'Write your prompt in markdown…'
+                    }
+                  />
                 ) : (
                   <textarea
                     id="create-content"
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     rows={8}
-                    placeholder={
-                      typeName === 'note' ? 'Write your note…' : 'Paste your code…'
-                    }
+                    placeholder="Paste your code…"
                     className="w-full rounded-md border border-input bg-transparent px-3 py-2 font-mono text-xs leading-relaxed shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 )}
