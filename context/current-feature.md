@@ -12,7 +12,7 @@ Do not violate any following rules:
 7. Update goals section with current feature requirements.
 8. Update notes section with current feature references.
 
-# Current Feature
+# Current Feature: Markdown Editor
 
 <!--Feature Name-->
 
@@ -20,13 +20,33 @@ Do not violate any following rules:
 
 <!--Not Started|In Progress|Completed-->
 
+In Progress
+
 ## Goals
 
 <!--Goals & requirements-->
 
+- Build a `MarkdownEditor` component with a tabbed Write/Preview interface and a copy button in the header (same style as `CodeEditor`).
+- Use `react-markdown` + `remark-gfm` for GitHub Flavored Markdown rendering.
+- Replace the plain `<textarea>` with `MarkdownEditor` for **note** and **prompt** content only; leave `CodeEditor` in place for **snippet** and **command**.
+- Support both edit mode (defaults to Write tab) and readonly mode (Preview-only, no Write tab).
+- Wire it into all three integration points: `CreateItemDialog` (note/prompt content), `ItemDrawer` edit mode (note/prompt content), and `ItemDrawer` view mode (note/prompt content, readonly).
+- Match the existing dark theme: `bg-[#1e1e1e]` container, `bg-[#2d2d2d]` header, fluid height capped at 400px (parity with `CodeEditor`).
+
 ## Notes
 
 <!--Any extra notes-->
+
+- Spec file: [context/features/markdown-editor-spec.md](context/features/markdown-editor-spec.md).
+- Preview styling needs a dedicated `.markdown-preview` CSS class (or equivalent) for reliable dark-mode rendering — Tailwind's `prose` utility is unreliable here. Required element styles:
+  - Headings h1–h6 with distinct sizes/weights.
+  - Code blocks: dark bg + monospace; inline code with subtle bg highlight.
+  - Ordered/unordered lists with proper indentation and visible bullets/numbers.
+  - Blockquotes with a left border accent.
+  - Links in blue with a hover state.
+  - Tables with borders + header row background.
+- Type set: only `note` and `prompt` (snippet/command stay on Monaco; link has no content field; file/image are Pro upload flow). The existing `TYPES_WITH_CONTENT` constant in `CreateItemDialog`/`ItemDrawer` already gates this — markdown branch keys off `typeName === 'note' || 'prompt'`.
+- The Copy button should mirror `CodeEditor`'s pattern (clipboard write + 1.5s `Check` icon swap, no toast — drawer's own Copy action handles the toast).
 
 
 ## History
