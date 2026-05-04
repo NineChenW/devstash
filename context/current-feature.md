@@ -12,7 +12,7 @@ Do not violate any following rules:
 7. Update goals section with current feature requirements.
 8. Update notes section with current feature references.
 
-# Current Feature
+# Current Feature: Image Gallery View
 
 <!--Feature Name-->
 
@@ -20,13 +20,27 @@ Do not violate any following rules:
 
 <!--Not Started|In Progress|Completed-->
 
+In Progress
+
 ## Goals
 
 <!--Goals & requirements-->
 
+- Create an image thumbnail card to replace the current item card on the image listing surface
+- Show an image grid/gallery with 3 columns
+- Display image thumbnails with a 16:9 aspect ratio (`aspect-video`)
+- Use `object-cover` to fill the card (edges may be cropped)
+- Add a subtle hover zoom effect (5% scale, 300ms transition)
+
 ## Notes
 
 <!--Any extra notes-->
+
+- Spec source: `context/features/image-display-spec.md`
+- Scope is the `/items/images` listing — keep the existing `ItemCard` for non-image item types
+- Thumbnails source from the existing R2 download proxy (`/api/files/<key>`, default `inline` disposition) — the URL is already on `Item.fileUrl` for image items
+- Card click should still open the existing `ItemDrawer` via `ItemTrigger`, mirroring how `ItemCard` is wired today
+- Empty state and "Add Image" header button (already gated by `CREATE_ITEM_TYPES`) stay as-is
 
 
 ## History

@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { iconMap, DefaultIcon } from '@/lib/icon-map'
 import { DashboardShell } from '@/components/dashboard/DashboardShell'
 import { ItemCard } from '@/components/items/ItemCard'
+import { ImageThumbnailCard } from '@/components/items/ImageThumbnailCard'
 import { ItemTrigger } from '@/components/items/ItemTrigger'
 import { TypeAddButton } from '@/components/items/TypeAddButton'
 import { auth } from '@/auth'
@@ -76,6 +77,20 @@ export default async function ItemsByTypePage({ params }: ItemsByTypePageProps) 
       {items.length === 0 ? (
         <div className="flex h-64 items-center justify-center rounded-xl border border-dashed">
           <p className="text-sm text-muted-foreground">No {heading.toLowerCase()} yet.</p>
+        </div>
+      ) : type.name === 'image' ? (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {items.map((item) => (
+            <ItemTrigger key={item.id} itemId={item.id}>
+              <ImageThumbnailCard
+                title={item.title}
+                fileUrl={item.fileUrl}
+                fileName={item.fileName}
+                isFavorite={item.isFavorite}
+                isPinned={item.isPinned}
+              />
+            </ItemTrigger>
+          ))}
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">

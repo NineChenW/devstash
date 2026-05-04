@@ -98,6 +98,8 @@ export async function getRecentItems(userId: string, limit = 10): Promise<Dashbo
 
 export interface ItemListItem extends DashboardItem {
   isPinned: boolean
+  fileUrl: string | null
+  fileName: string | null
 }
 
 export interface ItemsByTypeResult {
@@ -326,6 +328,8 @@ export async function getItemsByType(
       typeName: item.itemType.name,
       isFavorite: item.isFavorite,
       isPinned: item.isPinned,
+      fileUrl: item.fileUrl,
+      fileName: item.fileName,
       tags: item.tags.map((t) => t.name),
       createdAt: item.createdAt,
     })),
