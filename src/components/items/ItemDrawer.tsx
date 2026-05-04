@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Copy, Pencil, Pin, Star, Trash2 } from 'lucide-react'
+import { Copy, Download, Pencil, Pin, Star, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Sheet } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
@@ -242,6 +242,18 @@ function DrawerContent({
           active={pinned}
         />
         <ActionButton icon={<Copy className="h-4 w-4" />} label="Copy" onClick={handleCopy} />
+        {item.contentType === 'file' && item.fileUrl && (
+          <a
+            href={`${item.fileUrl}?download=1`}
+            download={item.fileName ?? undefined}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-foreground/80 hover:bg-accent hover:text-foreground"
+          >
+            <Download className="h-4 w-4" />
+            <span>Download</span>
+          </a>
+        )}
         <ActionButton icon={<Pencil className="h-4 w-4" />} label="Edit" onClick={onEdit} />
         <ActionButton
           icon={<Trash2 className="h-4 w-4" />}
@@ -584,14 +596,25 @@ function ContentPreview({ item }: { item: ItemDetail }) {
   }
 
   if (item.contentType === 'file') {
+    const isImage = item.type.name === 'image'
     return (
-      <div className="rounded-md border border-[hsl(217.2_32.6%_22%)] bg-[hsl(217.2_32.6%_14%)] p-3 text-sm">
-        <div className="font-medium">{item.fileName ?? 'Attached file'}</div>
-        {item.fileSize != null && (
-          <div className="mt-0.5 text-xs text-muted-foreground">
-            {formatBytes(item.fileSize)}
-          </div>
+      <div className="space-y-3">
+        {isImage && item.fileUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={item.fileUrl}
+            alt={item.fileName ?? item.title}
+            className="max-h-96 w-full rounded-md border border-[hsl(217.2_32.6%_22%)] bg-[hsl(217.2_32.6%_14%)] object-contain"
+          />
         )}
+        <div className="rounded-md border border-[hsl(217.2_32.6%_22%)] bg-[hsl(217.2_32.6%_14%)] p-3 text-sm">
+          <div className="break-all font-medium">{item.fileName ?? 'Attached file'}</div>
+          {item.fileSize != null && (
+            <div className="mt-0.5 text-xs text-muted-foreground">
+              {formatBytes(item.fileSize)}
+            </div>
+          )}
+        </div>
       </div>
     )
   }

@@ -117,7 +117,38 @@ describe('createItemSchema', () => {
   })
 
   it('rejects an unknown type', () => {
-    const result = createItemSchema.safeParse({ ...baseSnippet, typeName: 'file' })
+    const result = createItemSchema.safeParse({ ...baseSnippet, typeName: 'whatever' })
+    expect(result.success).toBe(false)
+  })
+
+  it('accepts a valid file payload with fileUrl', () => {
+    const result = createItemSchema.safeParse({
+      ...baseSnippet,
+      typeName: 'file',
+      fileUrl: '/api/files/users/u1/file/abc-doc.pdf',
+      fileName: 'doc.pdf',
+      fileSize: 1234,
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects a file payload without fileUrl', () => {
+    const result = createItemSchema.safeParse({
+      ...baseSnippet,
+      typeName: 'file',
+    })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      const issue = result.error.issues.find((i) => i.path[0] === 'fileUrl')
+      expect(issue).toBeDefined()
+    }
+  })
+
+  it('rejects an image payload without fileUrl', () => {
+    const result = createItemSchema.safeParse({
+      ...baseSnippet,
+      typeName: 'image',
+    })
     expect(result.success).toBe(false)
   })
 

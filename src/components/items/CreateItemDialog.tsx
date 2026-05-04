@@ -18,6 +18,7 @@ import { CREATE_ITEM_TYPES, type CreateItemType } from '@/lib/validations/items'
 import { CREATE_TYPE_META } from '@/lib/item-type-meta'
 import { CodeEditor } from './CodeEditor'
 import { MarkdownEditor } from './MarkdownEditor'
+import { FileUpload, uploadFile, type PendingFile } from './FileUpload'
 
 interface CreateItemDialogProps {
   open: boolean
@@ -29,6 +30,7 @@ const TYPES_WITH_CONTENT = new Set<CreateItemType>(['snippet', 'prompt', 'comman
 const TYPES_WITH_LANGUAGE = new Set<CreateItemType>(['snippet', 'command'])
 const TYPES_WITH_CODE_EDITOR = new Set<CreateItemType>(['snippet', 'command'])
 const TYPES_WITH_MARKDOWN_EDITOR = new Set<CreateItemType>(['note', 'prompt'])
+const TYPES_WITH_FILE_UPLOAD = new Set<CreateItemType>(['file', 'image'])
 
 export function CreateItemDialog({ open, onClose, defaultType }: CreateItemDialogProps) {
   const router = useRouter()
@@ -40,6 +42,8 @@ export function CreateItemDialog({ open, onClose, defaultType }: CreateItemDialo
   const [language, setLanguage] = useState('')
   const [url, setUrl] = useState('')
   const [tagsInput, setTagsInput] = useState('')
+  const [pendingFile, setPendingFile] = useState<PendingFile | null>(null)
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
@@ -53,13 +57,19 @@ export function CreateItemDialog({ open, onClose, defaultType }: CreateItemDialo
       setLanguage('')
       setUrl('')
       setTagsInput('')
+      if (pendingFile?.previewUrl) URL.revokeObjectURL(pendingFile.previewUrl)
+      setPendingFile(null)
+      setUploadProgress(null)
       setSubmitting(false)
     }
+    // pendingFile intentionally excluded — we only want this to fire on open/initialType change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialType])
 
   const showContent = TYPES_WITH_CONTENT.has(typeName)
   const showLanguage = TYPES_WITH_LANGUAGE.has(typeName)
   const showUrl = typeName === 'link'
+  const showFileUpload = TYPES_WITH_FILE_UPLOAD.has(typeName)
   const useCodeEditor = TYPES_WITH_CODE_EDITOR.has(typeName)
   const useMarkdownEditor = TYPES_WITH_MARKDOWN_EDITOR.has(typeName)
 
@@ -68,7 +78,8 @@ export function CreateItemDialog({ open, onClose, defaultType }: CreateItemDialo
   const canSubmit =
     titleTrimmed.length > 0 &&
     !submitting &&
-    (!showUrl || urlTrimmed.length > 0)
+    (!showUrl || urlTrimmed.length > 0) &&
+    (!showFileUpload || pendingFile !== null)
 
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault()
@@ -81,6 +92,30 @@ export function CreateItemDialog({ open, onClose, defaultType }: CreateItemDialo
 
     setSubmitting(true)
     try {
+      let fileUrl: string | null = null
+      let fileName: string | null = null
+      let fileSize: number | null = null
+
+      if (showFileUpload && pendingFile) {
+        setUploadProgress(0)
+        try {
+          const uploaded = await uploadFile(
+            pendingFile.file,
+            typeName === 'image' ? 'image' : 'file',
+            setUploadProgress,
+          )
+          fileUrl = uploaded.url
+          fileName = uploaded.fileName
+          fileSize = uploaded.fileSize
+        } catch (err) {
+          const message = err instanceof Error ? err.message : 'Upload failed'
+          toast.error(message)
+          return
+        } finally {
+          setUploadProgress(null)
+        }
+      }
+
       const result = await createItem({
         typeName,
         title: titleTrimmed,
@@ -89,10 +124,14 @@ export function CreateItemDialog({ open, onClose, defaultType }: CreateItemDialo
         url: showUrl && urlTrimmed ? urlTrimmed : null,
         language: showLanguage && language.trim() ? language : null,
         tags,
+        fileUrl,
+        fileName,
+        fileSize,
       })
 
       if (!result.success) {
         const msg =
+          result.fieldErrors?.fileUrl?.[0] ??
           result.fieldErrors?.url?.[0] ??
           result.fieldErrors?.title?.[0] ??
           result.error
@@ -123,7 +162,7 @@ export function CreateItemDialog({ open, onClose, defaultType }: CreateItemDialo
 
           <div className="space-y-5 px-6 py-5 max-h-[70vh] overflow-y-auto">
             <Field label="Type">
-              <div className="grid grid-cols-5 gap-2">
+              <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
                 {CREATE_ITEM_TYPES.map((t) => {
                   const meta = CREATE_TYPE_META[t]
                   const Icon = iconMap[meta.icon] || DefaultIcon
@@ -224,6 +263,17 @@ export function CreateItemDialog({ open, onClose, defaultType }: CreateItemDialo
               </Field>
             )}
 
+            {showFileUpload && (
+              <Field label={typeName === 'image' ? 'Image' : 'File'}>
+                <FileUpload
+                  kind={typeName === 'image' ? 'image' : 'file'}
+                  value={pendingFile}
+                  onChange={setPendingFile}
+                  progress={uploadProgress}
+                />
+              </Field>
+            )}
+
             <Field label="Tags" htmlFor="create-tags" hint="Comma-separated">
               <Input
                 id="create-tags"
@@ -239,7 +289,11 @@ export function CreateItemDialog({ open, onClose, defaultType }: CreateItemDialo
               Cancel
             </Button>
             <Button type="submit" disabled={!canSubmit}>
-              {submitting ? 'Creating…' : 'Create'}
+              {uploadProgress !== null
+                ? `Uploading ${uploadProgress}%`
+                : submitting
+                  ? 'Creating…'
+                  : 'Create'}
             </Button>
           </div>
         </form>

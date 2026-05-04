@@ -11,7 +11,15 @@ export const updateItemSchema = z.object({
 
 export type UpdateItemPayload = z.input<typeof updateItemSchema>
 
-export const CREATE_ITEM_TYPES = ['snippet', 'prompt', 'command', 'note', 'link'] as const
+export const CREATE_ITEM_TYPES = [
+  'snippet',
+  'prompt',
+  'command',
+  'note',
+  'link',
+  'file',
+  'image',
+] as const
 export type CreateItemType = (typeof CREATE_ITEM_TYPES)[number]
 
 export const createItemSchema = z
@@ -23,6 +31,9 @@ export const createItemSchema = z
     url: z.url('Must be a valid URL').nullable().optional(),
     language: z.string().nullable().optional(),
     tags: z.array(z.string().trim().min(1)),
+    fileUrl: z.string().min(1).nullable().optional(),
+    fileName: z.string().min(1).nullable().optional(),
+    fileSize: z.number().int().nonnegative().nullable().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.typeName === 'link' && !data.url) {
@@ -30,6 +41,13 @@ export const createItemSchema = z
         code: 'custom',
         path: ['url'],
         message: 'URL is required for link items',
+      })
+    }
+    if ((data.typeName === 'file' || data.typeName === 'image') && !data.fileUrl) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['fileUrl'],
+        message: 'A file is required',
       })
     }
   })
