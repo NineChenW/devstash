@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { deleteObject, isR2Configured } from '@/lib/r2'
 
 export interface DashboardItem {
   id: string
@@ -215,6 +216,9 @@ export interface CreateItemInput {
   url: string | null
   language: string | null
   tags: string[]
+  fileUrl?: string | null
+  fileName?: string | null
+  fileSize?: number | null
 }
 
 const TYPE_CONTENT_TYPE: Record<string, string> = {
@@ -248,6 +252,9 @@ export async function createItem(
       content: data.content,
       url: data.url,
       language: data.language,
+      fileUrl: data.fileUrl ?? null,
+      fileName: data.fileName ?? null,
+      fileSize: data.fileSize ?? null,
       userId,
       itemTypeId: type.id,
       tags: {
@@ -269,11 +276,21 @@ export async function deleteItem(
 ): Promise<boolean> {
   const owned = await prisma.item.findFirst({
     where: { id: itemId, userId },
-    select: { id: true },
+    select: { id: true, fileUrl: true },
   })
   if (!owned) return false
 
   await prisma.item.delete({ where: { id: itemId } })
+
+  if (owned.fileUrl && owned.fileUrl.startsWith('/api/files/') && isR2Configured()) {
+    const key = owned.fileUrl.slice('/api/files/'.length)
+    try {
+      await deleteObject(key)
+    } catch (err) {
+      console.error('R2 deleteObject failed for', key, err)
+    }
+  }
+
   return true
 }
 

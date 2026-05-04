@@ -9,4 +9,6 @@ export const CREATE_TYPE_META: Record<
   command: { label: 'Command', icon: 'Terminal', color: '#f97316' },
   note: { label: 'Note', icon: 'StickyNote', color: '#fde047' },
   link: { label: 'Link', icon: 'Link', color: '#10b981' },
+  file: { label: 'File', icon: 'File', color: '#6b7280' },
+  image: { label: 'Image', icon: 'Image', color: '#ec4899' },
 }

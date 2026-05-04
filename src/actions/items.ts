@@ -83,7 +83,18 @@ export async function createItem(payload: CreateItemPayload): Promise<CreateItem
     }
   }
 
-  const { typeName, title, description, content, url, language, tags } = parsed.data
+  const {
+    typeName,
+    title,
+    description,
+    content,
+    url,
+    language,
+    tags,
+    fileUrl,
+    fileName,
+    fileSize,
+  } = parsed.data
   const dedupedTags = Array.from(new Set(tags))
 
   const ownerId = (await getDemoUserId()) ?? session.user.id
@@ -97,6 +108,9 @@ export async function createItem(payload: CreateItemPayload): Promise<CreateItem
       url: url ?? null,
       language: language ?? null,
       tags: dedupedTags,
+      fileUrl: fileUrl ?? null,
+      fileName: fileName ?? null,
+      fileSize: fileSize ?? null,
     })
 
     if (!created) {
