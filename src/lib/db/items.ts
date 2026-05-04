@@ -100,6 +100,7 @@ export interface ItemListItem extends DashboardItem {
   isPinned: boolean
   fileUrl: string | null
   fileName: string | null
+  fileSize: number | null
 }
 
 export interface ItemsByTypeResult {
@@ -330,6 +331,7 @@ export async function getItemsByType(
       isPinned: item.isPinned,
       fileUrl: item.fileUrl,
       fileName: item.fileName,
+      fileSize: item.fileSize,
       tags: item.tags.map((t) => t.name),
       createdAt: item.createdAt,
     })),

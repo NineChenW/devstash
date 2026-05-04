@@ -3,6 +3,7 @@ import { iconMap, DefaultIcon } from '@/lib/icon-map'
 import { DashboardShell } from '@/components/dashboard/DashboardShell'
 import { ItemCard } from '@/components/items/ItemCard'
 import { ImageThumbnailCard } from '@/components/items/ImageThumbnailCard'
+import { FileListRow } from '@/components/items/FileListRow'
 import { ItemTrigger } from '@/components/items/ItemTrigger'
 import { TypeAddButton } from '@/components/items/TypeAddButton'
 import { auth } from '@/auth'
@@ -90,6 +91,22 @@ export default async function ItemsByTypePage({ params }: ItemsByTypePageProps) 
                 isPinned={item.isPinned}
               />
             </ItemTrigger>
+          ))}
+        </div>
+      ) : type.name === 'file' ? (
+        <div className="flex flex-col gap-2">
+          {items.map((item) => (
+            <FileListRow
+              key={item.id}
+              id={item.id}
+              title={item.title}
+              fileUrl={item.fileUrl}
+              fileName={item.fileName}
+              fileSize={item.fileSize}
+              isFavorite={item.isFavorite}
+              isPinned={item.isPinned}
+              createdAt={item.createdAt}
+            />
           ))}
         </div>
       ) : (

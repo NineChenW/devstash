@@ -12,7 +12,7 @@ Do not violate any following rules:
 7. Update goals section with current feature requirements.
 8. Update notes section with current feature references.
 
-# Current Feature
+# Current Feature: File List View
 
 <!--Feature Name-->
 
@@ -20,13 +20,31 @@ Do not violate any following rules:
 
 <!--Not Started|In Progress|Completed-->
 
+In Progress
+
 ## Goals
 
 <!--Goals & requirements-->
 
+- Replace the grid card layout on `/items/files` with a single-column list (Drive/Dropbox style)
+- Each row: file icon (by extension), file name, file size, upload date, download button
+- Row hover highlight
+- Clicking a row opens the existing `ItemDrawer`
+- Download button triggers direct download (stop propagation so it doesn't open the drawer)
+- Responsive: stack info vertically on mobile
+- Other item-type pages (snippets/prompts/commands/notes/links/images) remain unchanged
+
 ## Notes
 
 <!--Any extra notes-->
+
+- Spec: `context/features/file-display-spec.md`
+- Mirrors the Image Gallery View pattern: branch on `type.name === 'file'` in `src/app/items/[type]/page.tsx` to render a new list component instead of `ItemCard`; keep `ItemTrigger` wrapper so clicks still open `ItemDrawer`
+- Download URL pattern already in place: `${fileUrl}?download=1` (auth-gated proxy at `/api/files/[...key]` sets `Content-Disposition: attachment` when `?download=1` is present — used by the drawer's existing Download anchor)
+- `ItemListItem` in `src/lib/db/items.ts` already exposes `fileUrl` / `fileName` / `fileSize` / `createdAt` — no schema or query changes needed
+- `formatBytes` from `src/lib/file-constraints.ts` is the existing helper for file-size formatting
+- Use `getExtension(fileName)` from the same module to drive the icon lookup; fall back to a generic file icon when no match
+- New presentational component: `src/components/items/FileListRow.tsx` (server component); icon map can be local to the component (lucide-react icons keyed by extension)
 
 
 ## History
