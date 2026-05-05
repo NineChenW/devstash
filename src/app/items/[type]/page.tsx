@@ -120,6 +120,8 @@ export default async function ItemsByTypePage({ params }: ItemsByTypePageProps) 
                 typeIcon={item.typeIcon}
                 typeColor={item.typeColor}
                 typeName={item.typeName}
+                content={item.content}
+                url={item.url}
                 isFavorite={item.isFavorite}
                 isPinned={item.isPinned}
                 tags={item.tags}
