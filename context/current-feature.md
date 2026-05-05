@@ -14,9 +14,13 @@ Do not violate any following rules:
 
 # Current Feature
 
+Quick Copy Icon on Item Cards
+
 <!--Feature Name-->
 
 ## Status
+
+Completed
 
 <!--Not Started|In Progress|Completed-->
 
@@ -24,9 +28,25 @@ Do not violate any following rules:
 
 <!--Goals & requirements-->
 
+- Add a small "copy" icon button to the bottom-right corner of item cards on `/items/[type]` listings.
+- Clicking the icon copies the item's relevant content to the clipboard:
+  - Snippet / Prompt / Command / Note → `content`
+  - Link → `url`
+- The copy button must not open the item drawer when clicked (stop event propagation, since `ItemCard` is wrapped in `ItemTrigger`).
+- Show a `sonner` toast on successful copy ("Copied to clipboard") and on failure.
+- Brief visual confirmation on the button itself (e.g., swap `Copy` → `Check` icon for ~1.5s), matching the pattern already used by `CodeEditor` / `MarkdownEditor`.
+- Hide the button when there is nothing meaningful to copy (e.g., file/image items, or items with empty content).
+
 ## Notes
 
 <!--Any extra notes-->
+
+- Scope: primarily `src/components/items/ItemCard.tsx`. Consider whether to also add the button to dashboard `PinnedItem` / `RecentItem` cards — defer unless explicitly requested.
+- `ImageThumbnailCard` and `FileListRow` are intentionally out of scope (no plain-text content to copy; `FileListRow` already has a download anchor in the same corner).
+- Use `lucide-react`'s `Copy` and `Check` icons, consistent with the existing drawer Copy action and `CodeEditor` header.
+- The button must be a real `<button>` with `e.stopPropagation()` + `e.preventDefault()` on click — `ItemCard` lives inside an `ItemTrigger` `<button>`, and nested interactive elements need their event handling to be explicit so the drawer doesn't open behind the toast.
+- No DB / schema / server-action changes expected — pure client-side clipboard write.
+- Reference existing copy implementation: `ItemDrawer.tsx::handleCopy` (toast + clipboard pattern) and `CodeEditor.tsx` (icon swap pattern).
 
 
 ## History

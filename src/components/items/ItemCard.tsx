@@ -1,5 +1,6 @@
 import { Pin, Star } from 'lucide-react'
 import { iconMap, DefaultIcon } from '@/lib/icon-map'
+import { CopyButton } from './CopyButton'
 
 interface ItemCardProps {
   id: string
@@ -8,6 +9,8 @@ interface ItemCardProps {
   typeIcon: string
   typeColor: string
   typeName: string
+  content: string | null
+  url: string | null
   isFavorite: boolean
   isPinned: boolean
   tags: string[]
@@ -20,6 +23,8 @@ export function ItemCard({
   typeIcon,
   typeColor,
   typeName,
+  content,
+  url,
   isFavorite,
   isPinned,
   tags,
@@ -30,6 +35,9 @@ export function ItemCard({
     month: 'short',
     day: 'numeric',
   })
+
+  const copyText = (content ?? url ?? '').trim()
+  const showCopy = copyText.length > 0
 
   return (
     <div
@@ -67,16 +75,19 @@ export function ItemCard({
         <p className="line-clamp-2 text-sm text-muted-foreground">{description}</p>
       )}
 
-      {tags.length > 0 && (
-        <div className="mt-auto flex flex-wrap gap-1.5">
-          {tags.map((tag) => (
-            <span
-              key={tag}
-              className="rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground"
-            >
-              {tag}
-            </span>
-          ))}
+      {(tags.length > 0 || showCopy) && (
+        <div className="mt-auto flex items-end justify-between gap-2">
+          <div className="flex flex-wrap gap-1.5">
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className="rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+          {showCopy && <CopyButton text={copyText} label={`Copy ${typeName}`} />}
         </div>
       )}
     </div>
