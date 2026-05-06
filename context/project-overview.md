@@ -56,7 +56,7 @@ This creates context switching, lost knowledge, and inconsistent workflows. DevS
 | Language     | **TypeScript**                  | End-to-end type safety                                       |
 | Database     | **Neon (PostgreSQL)**           | Cloud-hosted Postgres                                        |
 | ORM          | **Prisma 7**                    | [Latest docs](https://www.prisma.io/docs) — fetch before use |
-| Cache        | **Redis**                       | TBD / optional                                               |
+| Cache        | **Upstash Redis**               | Sliding-window rate limiting on auth endpoints               |
 | File Storage | **Cloudflare R2**               | File & image uploads                                         |
 | Auth         | **NextAuth v5**                 | Email/password + GitHub OAuth                                |
 | AI           | **OpenAI `gpt-4o-mini`**        | Auto-tagging, summaries, explanations                        |
@@ -86,6 +86,7 @@ model User {
   email                String?      @unique
   emailVerified        DateTime?
   image                String?
+  password             String?      // bcrypt hash; null for OAuth-only accounts
   isPro                Boolean      @default(false)
   stripeCustomerId     String?      @unique
   stripeSubscriptionId String?      @unique
@@ -248,7 +249,7 @@ Full-text search across:
 | Favorites             | Star collections and items                    |
 | Pinning               | Pin items to appear at the top                |
 | Recently used         | Track `lastUsedAt` and surface recent items   |
-| Import                | Import code from a file directly into an item |
+| Import _(planned)_    | Import code from a file directly into an item |
 | Markdown editor       | Rich editing for text-based item types        |
 | File upload           | Upload files/images to Cloudflare R2 (pro)    |
 | Multi-collection      | Add/remove items to/from multiple collections |
@@ -256,7 +257,7 @@ Full-text search across:
 | Export                | Download data as JSON or ZIP (pro)            |
 | Dark mode             | Default; light mode also supported            |
 
-### F — AI Features _(Pro only)_
+### F — AI Features _(planned, Pro only)_
 
 | Feature           | Description                                  |
 | ----------------- | -------------------------------------------- |
@@ -364,7 +365,7 @@ Payments via **Stripe** — `stripeCustomerId` and `stripeSubscriptionId` stored
 
 ### Screenshots
 
-Refer to the screenshots below as a base for th dashboard UI.
+Refer to the screenshots below as a base for the dashboard UI.
 It does not have to be exact.
 Use it as a reference:
 
