@@ -16,17 +16,54 @@ Do not violate any following rules:
 
 <!--Feature Name-->
 
+Codebase Audit Quick Wins (2026-05-05)
+
 ## Status
 
 <!--Not Started|In Progress|Completed-->
+
+In Progress
 
 ## Goals
 
 <!--Goals & requirements-->
 
+Land seven low-risk fixes from the 2026-05-05 code audit (`docs/audit-results/CODEBASE_AUDIT_2026-05-05.md`) in a single cleanup branch. Each is small, independent, and verifiable via `npm run test:run` + `npm run build`. No new features.
+
+1. **Wire up middleware** — create `src/middleware.ts` with `export { proxy as middleware, config } from './proxy'`. The existing `proxy.ts` is currently dead code because Next.js only loads middleware from a file named `middleware.ts`. This activates the `/dashboard` auth gate that was already written but never running.
+
+2. **Validate `callbackUrl` in sign-in** — `src/app/sign-in/SignInForm.tsx:20`. The current `searchParams.get('callbackUrl') || '/dashboard'` is fed directly into `router.push()` after credentials sign-in, so `/sign-in?callbackUrl=https://evil.com` redirects off-site after login. Add an origin-check helper that rejects any non-relative URL and falls back to `/dashboard`. Use `new URL(raw, window.location.origin)` and compare `url.origin` to the page origin.
+
+3. **Assert R2 key shape in file proxy** — `src/app/api/files/[...key]/route.ts:21-23`. After joining and decoding the path segments, reject keys that don't start with `users/` or contain `..`:
+   ```ts
+   if (!key || key.includes('..') || !key.startsWith('users/')) {
+     return new Response('Not found', { status: 404 })
+   }
+   ```
+   The DB ownership check already gates real access; this is defense in depth that costs nothing.
+
+4. **Fix `sanitizeFileName` slice direction** — `src/lib/file-constraints.ts:108`. The current `name.trim().slice(-120)` keeps the *tail* 120 chars of long filenames, throwing away the meaningful start of the name. Change to `.slice(0, 120)`. Update or extend the existing `sanitizeFileName` test in `src/lib/file-constraints.test.ts` to cover the long-name case so this can't regress.
+
+5. **Dedupe `formatBytes`** — `src/components/items/ItemDrawer.tsx:639-643` defines a byte-for-byte copy of `formatBytes` from `src/lib/file-constraints.ts:99-103`. Delete the local copy and import from `@/lib/file-constraints`.
+
+6. **Bound unbounded `findMany` queries** — `src/lib/db/items.ts`. Add `take: 200` to both `getItemsByType` and `getPinnedItems` as a guardrail until cursor pagination lands. Add a short `// TODO: replace with cursor pagination` comment on each so the limit is visible when pagination work begins. Has zero effect on current users (demo has ~17 items).
+
+7. **Fix sidebar collapse flash** — `src/components/dashboard/DashboardShell.tsx:27-39`. The component starts with `collapsed: false`, then a `useEffect` reads `localStorage` and may flip it to `true`, causing a visible layout shift on first render. Replace with a `useState` lazy initializer that reads `localStorage` synchronously (guarded for SSR with `typeof window === 'undefined'` and a `try/catch` around `JSON.parse`). Remove the now-redundant read-only `useEffect`. Keep the existing `useEffect` that *writes* to `localStorage` on toggle.
+
+**Out of scope for this feature** (deliberately deferred):
+- The unused `id` prop on `ItemCard` (audit finding #14) — kept for now in case it becomes useful when the drawer opens via URL.
+- Larger refactors flagged in the audit (extract `TYPES_WITH_*` sets, combine ownership-check + update round-trips, refactor `getRecentCollections`, rate-limit + storage cap on `/api/upload`, gate `/items/*` in the proxy matcher). These are real but each warrants its own change.
+
 ## Notes
 
 <!--Any extra notes-->
+
+- Audit report: `docs/audit-results/CODEBASE_AUDIT_2026-05-05.md`.
+- Branch name: `fix/audit-quick-wins-2026-05-05` (per `context/ai-interaction.md` workflow).
+- Verification: `npm run test:run` + `npm run build` after the changes; for #2/#3 also confirm the rejection paths via curl with `--noproxy '*'`.
+- Per `coding-standards.md`, only #4 needs a Vitest case (it's a pure utility); the others are component/route changes which are out of test scope.
+- Per `ai-interaction.md`, ask before committing — wait for build to pass first.
+- **Goal #1 finding:** the audit's premise was wrong for Next.js 16. Next.js 16 renamed the middleware file to `proxy.ts` (see https://nextjs.org/docs/messages/middleware-to-proxy), so `src/proxy.ts` is already auto-loaded — it was never dead code. Adding `src/middleware.ts` made the build fail with `Both middleware file and proxy file are detected. Please use proxy.ts only.` Reverted by deleting `src/middleware.ts`. The `/dashboard` auth gate is verified active (curl `/dashboard` → 302 → `/sign-in?callbackUrl=/dashboard`); build output now shows `ƒ Proxy (Middleware)`.
 
 
 ## History

@@ -377,21 +377,26 @@ Use it as a reference:
 
 ## URL Structure
 
-| Route               | Description                           |
-| ------------------- | ------------------------------------- |
-| `/`                 | Dashboard / home                      |
-| `/items`            | All items                             |
-| `/items/snippets`   | Items filtered by type: snippet       |
-| `/items/prompts`    | Items filtered by type: prompt        |
-| `/items/commands`   | Items filtered by type: command       |
-| `/items/notes`      | Items filtered by type: note          |
-| `/items/links`      | Items filtered by type: link          |
-| `/items/files`      | Items filtered by type: file _(pro)_  |
-| `/items/images`     | Items filtered by type: image _(pro)_ |
-| `/collections`      | All collections                       |
-| `/collections/[id]` | Single collection view                |
-| `/search`           | Global search                         |
-| `/settings`         | User settings, billing, export        |
+| Route               | Description                                |
+| ------------------- | ------------------------------------------ |
+| `/`                 | Landing splash                             |
+| `/dashboard`        | Dashboard home (auth-gated)                |
+| `/items/snippets`   | Items filtered by type: snippet            |
+| `/items/prompts`    | Items filtered by type: prompt             |
+| `/items/commands`   | Items filtered by type: command            |
+| `/items/notes`      | Items filtered by type: note               |
+| `/items/links`      | Items filtered by type: link               |
+| `/items/files`      | Items filtered by type: file _(pro)_       |
+| `/items/images`     | Items filtered by type: image _(pro)_      |
+| `/sign-in`          | Sign-in (credentials + GitHub)             |
+| `/register`         | Account registration                       |
+| `/forgot-password`  | Request password reset link                |
+| `/reset-password`   | Set new password (token-gated)             |
+| `/profile`          | Profile + account (change pw, delete)      |
+| `/collections`      | All collections — _planned_                |
+| `/collections/[id]` | Single collection view — _planned_         |
+| `/search`           | Global search — _planned_                  |
+| `/settings`         | User settings, billing, export — _planned_ |
 
 ---
 
@@ -399,50 +404,72 @@ Use it as a reference:
 
 ```
 devstash/
-├── app/
-│   ├── (auth)/
-│   │   ├── login/
-│   │   └── register/
-│   ├── (dashboard)/
-│   │   ├── layout.tsx          # Sidebar + main shell
-│   │   ├── page.tsx            # Dashboard home
-│   │   ├── items/
-│   │   │   └── [type]/page.tsx # /items/snippets, etc.
-│   │   ├── collections/
-│   │   │   ├── page.tsx
-│   │   │   └── [id]/page.tsx
-│   │   └── search/page.tsx
-│   └── api/
-│       ├── auth/[...nextauth]/route.ts
-│       ├── items/route.ts
-│       ├── collections/route.ts
-│       ├── upload/route.ts      # R2 file uploads
-│       └── ai/
-│           ├── tag/route.ts
-│           ├── summarize/route.ts
-│           ├── explain/route.ts
-│           └── optimize/route.ts
-├── components/
-│   ├── sidebar/
-│   ├── items/
-│   │   ├── ItemCard.tsx
-│   │   ├── ItemDrawer.tsx       # Slide-over for item detail/edit
-│   │   └── ItemForm.tsx
-│   ├── collections/
-│   │   └── CollectionCard.tsx
-│   └── ui/                     # ShadCN components
-├── lib/
-│   ├── prisma.ts               # Prisma client singleton
-│   ├── auth.ts                 # NextAuth config
-│   ├── r2.ts                   # Cloudflare R2 client
-│   └── ai.ts                   # OpenAI client
+├── src/
+│   ├── app/
+│   │   ├── page.tsx                       # Landing splash
+│   │   ├── layout.tsx                     # Root layout + Toaster
+│   │   ├── globals.css                    # Tailwind v4 + theme tokens
+│   │   ├── dashboard/                     # Dashboard home (auth-gated via proxy.ts)
+│   │   ├── items/[type]/                  # /items/snippets, /items/files, ...
+│   │   ├── sign-in/
+│   │   ├── register/
+│   │   ├── forgot-password/
+│   │   ├── reset-password/
+│   │   ├── profile/
+│   │   └── api/
+│   │       ├── auth/
+│   │       │   ├── [...nextauth]/         # NextAuth handlers
+│   │       │   ├── register/
+│   │       │   ├── change-password/
+│   │       │   ├── forgot-password/
+│   │       │   ├── reset-password/
+│   │       │   ├── verify/                # GET consume + resend POST
+│   │       │   └── verify/resend/
+│   │       ├── account/                   # DELETE account
+│   │       ├── items/[id]/                # GET item detail
+│   │       ├── upload/                    # POST → Cloudflare R2
+│   │       └── files/[...key]/            # Auth-gated download proxy
+│   ├── actions/
+│   │   ├── auth.ts                        # signInWithGitHub server action
+│   │   └── items.ts                       # createItem / updateItem / deleteItem
+│   ├── components/
+│   │   ├── collections/CollectionCard.tsx
+│   │   ├── dashboard/                     # DashboardShell, StatsCard
+│   │   ├── icons/GithubIcon.tsx
+│   │   ├── items/                         # ItemCard, ItemDrawer, CreateItemDialog,
+│   │   │                                  # CodeEditor, MarkdownEditor, FileUpload,
+│   │   │                                  # ImageThumbnailCard, FileListRow, ...
+│   │   ├── profile/                       # ChangePasswordDialog, DeleteAccountDialog
+│   │   ├── sidebar/                       # Sidebar, SidebarDrawer, SidebarUser
+│   │   ├── user/UserAvatar.tsx
+│   │   └── ui/                            # button, dialog, modal, sheet, input, ...
+│   ├── lib/
+│   │   ├── prisma.ts                      # Prisma client singleton (Neon adapter)
+│   │   ├── email.ts                       # Resend client + templates
+│   │   ├── r2.ts                          # Cloudflare R2 client (lazy)
+│   │   ├── rate-limit.ts                  # Upstash sliding-window limiter
+│   │   ├── verification-token.ts          # Email verify + password reset tokens
+│   │   ├── features.ts                    # Runtime feature flags
+│   │   ├── file-constraints.ts            # Upload size/MIME allowlist
+│   │   ├── icon-map.ts                    # Lucide icon name → component
+│   │   ├── item-type-meta.ts              # Type → label/icon/color
+│   │   ├── utils.ts                       # cn() helper
+│   │   ├── db/                            # collections.ts, items.ts, profile.ts
+│   │   └── validations/items.ts           # Zod schemas for create/update
+│   ├── auth.ts                            # NextAuth (Node) — Credentials + Prisma adapter
+│   ├── auth.config.ts                     # Edge-safe config (GitHub provider, callbacks)
+│   ├── proxy.ts                           # Auth gate for /dashboard/*
+│   ├── types/next-auth.d.ts
+│   └── generated/prisma/                  # Prisma client output (gitignored)
 ├── prisma/
 │   ├── schema.prisma
-│   └── migrations/
-└── types/
-    └── index.ts
+│   ├── migrations/
+│   └── seed.ts
+├── scripts/                               # cleanup-users.ts, test-db.ts
+├── context/                               # project-overview, coding-standards, ai-interaction, current-feature, features/, fixes/
+└── docs/                                  # audit-results, architecture notes
 ```
 
 ---
 
-_Last updated: April 2026_
+_Last updated: May 2026_

@@ -14,10 +14,16 @@ interface SignInFormProps {
   emailVerificationEnabled: boolean
 }
 
+function safeCallbackUrl(raw: string | null): string {
+  if (!raw) return '/dashboard'
+  if (!raw.startsWith('/') || raw.startsWith('//')) return '/dashboard'
+  return raw
+}
+
 export function SignInForm({ emailVerificationEnabled }: SignInFormProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard'
+  const callbackUrl = safeCallbackUrl(searchParams.get('callbackUrl'))
   const justRegistered = searchParams.get('registered') === '1'
   const justVerified = searchParams.get('verified') === '1'
   const justReset = searchParams.get('reset') === '1'

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Menu, PanelLeft, PanelLeftClose, FolderPlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,22 +21,18 @@ interface DashboardShellProps {
 }
 
 export function DashboardShell({ children, itemTypes, sidebarCollections, user }: DashboardShellProps) {
-  const [collapsed, setCollapsed] = useState(false)
-  const [drawerOpen, setDrawerOpen] = useState(false)
-
-  useEffect(() => {
-    const saved = localStorage.getItem('sidebar-collapsed')
-    if (saved !== null) {
-      try {
-        const parsed = JSON.parse(saved)
-        if (typeof parsed === 'boolean') {
-          setCollapsed(parsed)
-        }
-      } catch {
-        // ignore malformed localStorage value
-      }
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false
+    const saved = window.localStorage.getItem('sidebar-collapsed')
+    if (saved === null) return false
+    try {
+      const parsed = JSON.parse(saved)
+      return typeof parsed === 'boolean' ? parsed : false
+    } catch {
+      return false
     }
-  }, [])
+  })
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   useEffect(() => {
     localStorage.setItem('sidebar-collapsed', JSON.stringify(collapsed))

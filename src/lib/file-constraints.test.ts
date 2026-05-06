@@ -57,6 +57,14 @@ describe('sanitizeFileName', () => {
     expect(sanitizeFileName('   ')).toBe('file')
     expect(sanitizeFileName('')).toBe('file')
   })
+
+  it('keeps the start of long names, not the tail', () => {
+    const longName = 'a'.repeat(200) + '.pdf'
+    const result = sanitizeFileName(longName)
+    expect(result).toHaveLength(120)
+    expect(result.startsWith('a')).toBe(true)
+    expect(result.endsWith('.pdf')).toBe(false)
+  })
 })
 
 describe('validateUpload — image', () => {

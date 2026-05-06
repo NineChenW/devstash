@@ -105,7 +105,7 @@ export function formatBytes(n: number): string {
 const SAFE_FILENAME_RE = /[^A-Za-z0-9._-]+/g
 
 export function sanitizeFileName(name: string): string {
-  const trimmed = name.trim().slice(-120)
+  const trimmed = name.trim().slice(0, 120)
   const cleaned = trimmed.replace(SAFE_FILENAME_RE, '_').replace(/^_+|_+$/g, '')
   return cleaned.length > 0 ? cleaned : 'file'
 }
