@@ -20,7 +20,9 @@ export async function GET(
 
   const { key: segments } = await params
   const key = segments.map((s) => decodeURIComponent(s)).join('/')
-  if (!key) return new Response('Not found', { status: 404 })
+  if (!key || key.includes('..') || !key.startsWith('users/')) {
+    return new Response('Not found', { status: 404 })
+  }
 
   const ownerId = (await getDemoUserId()) ?? session.user.id
 

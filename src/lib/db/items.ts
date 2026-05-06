@@ -53,6 +53,7 @@ export async function getPinnedItems(userId: string): Promise<DashboardItem[]> {
   const items = await prisma.item.findMany({
     where: { userId, isPinned: true },
     orderBy: { updatedAt: 'desc' },
+    take: 200, // TODO: replace with cursor pagination
     include: {
       itemType: true,
       tags: true,
@@ -314,6 +315,7 @@ export async function getItemsByType(
   const items = await prisma.item.findMany({
     where: { userId, itemTypeId: type.id },
     orderBy: [{ isPinned: 'desc' }, { updatedAt: 'desc' }],
+    take: 200, // TODO: replace with cursor pagination
     include: {
       itemType: true,
       tags: true,

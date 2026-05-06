@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Input } from '@/components/ui/input'
 import { iconMap, DefaultIcon } from '@/lib/icon-map'
+import { formatBytes } from '@/lib/file-constraints'
 import { deleteItem, updateItem } from '@/actions/items'
 import type { ItemDetail } from '@/lib/db/items'
 import { CodeEditor } from './CodeEditor'
@@ -634,12 +635,6 @@ function ContentPreview({ item }: { item: ItemDetail }) {
   }
 
   return <p className="text-sm text-muted-foreground">No content.</p>
-}
-
-function formatBytes(n: number) {
-  if (n < 1024) return `${n} B`
-  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`
-  return `${(n / (1024 * 1024)).toFixed(1)} MB`
 }
 
 interface ActionButtonProps {
