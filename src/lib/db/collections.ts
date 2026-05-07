@@ -78,6 +78,42 @@ export async function getRecentCollections(userId: string): Promise<CollectionWi
   })
 }
 
+export interface CreateCollectionInput {
+  name: string
+  description: string | null
+}
+
+export interface CreatedCollection {
+  id: string
+  name: string
+  description: string | null
+  isFavorite: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
+export async function createCollection(
+  userId: string,
+  data: CreateCollectionInput,
+): Promise<CreatedCollection> {
+  const created = await prisma.collection.create({
+    data: {
+      name: data.name,
+      description: data.description,
+      userId,
+    },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      isFavorite: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  })
+  return created
+}
+
 export async function getCollectionStats(userId: string) {
   const [totalItems, totalCollections, favoriteItems, favoriteCollections] = await Promise.all([
     prisma.item.count({ where: { userId } }),

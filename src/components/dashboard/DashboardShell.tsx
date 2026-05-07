@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Menu, PanelLeft, PanelLeftClose, FolderPlus } from 'lucide-react'
+import { Menu, PanelLeft, PanelLeftClose } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Sidebar } from '@/components/sidebar/Sidebar'
@@ -9,6 +9,8 @@ import { SidebarDrawer } from '@/components/sidebar/SidebarDrawer'
 import { ItemDrawerProvider } from '@/components/items/ItemDrawerContext'
 import { CreateItemProvider } from '@/components/items/CreateItemContext'
 import { TopBarNewItemButton } from '@/components/items/TopBarNewItemButton'
+import { CreateCollectionProvider } from '@/components/collections/CreateCollectionContext'
+import { TopBarNewCollectionButton } from '@/components/collections/TopBarNewCollectionButton'
 import type { SidebarUserData } from '@/components/sidebar/SidebarUser'
 import type { ItemTypeWithCount } from '@/lib/db/items'
 import type { CollectionWithTypes } from '@/lib/db/collections'
@@ -45,6 +47,7 @@ export function DashboardShell({ children, itemTypes, sidebarCollections, user }
   return (
     <div className="min-h-screen bg-background">
       <CreateItemProvider>
+       <CreateCollectionProvider>
         {/* Top Bar */}
         <header className="border-b">
           <div className="flex h-16 items-center px-4">
@@ -83,10 +86,7 @@ export function DashboardShell({ children, itemTypes, sidebarCollections, user }
             </div>
 
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">
-                <FolderPlus className="mr-2 h-4 w-4" />
-                New Collection
-              </Button>
+              <TopBarNewCollectionButton />
               <TopBarNewItemButton />
             </div>
           </div>
@@ -113,6 +113,7 @@ export function DashboardShell({ children, itemTypes, sidebarCollections, user }
           collections={sidebarCollections}
           user={user}
         />
+       </CreateCollectionProvider>
       </CreateItemProvider>
     </div>
   )

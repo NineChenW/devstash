@@ -12,7 +12,7 @@ Do not violate any following rules:
 7. Update goals section with current feature requirements.
 8. Update notes section with current feature references.
 
-# Current Feature
+# Current Feature: Collection Create
 
 <!--Feature Name-->
 
@@ -20,13 +20,32 @@ Do not violate any following rules:
 
 <!--Not Started|In Progress|Completed-->
 
-Not Started
+In Progress
 
 ## Goals
 
 <!--Goals & requirements-->
 
+- Add a "New Collection" button to the top bar that opens a modal dialog.
+- Modal collects the fields needed to create a collection (name + description).
+- Submit creates a collection scoped to the current user and fires a sonner toast on success / failure.
+- After save, every surface that reflects collections (sidebar Recents/Favorites, dashboard Recent Collections + Stats) updates without a hard navigation.
+- Server-side reads go through `src/lib/db/collections.ts`; client-side mutations go through an API route (mirroring the existing items pattern).
+
 ## Notes
+
+- Follow the existing items create pattern as the reference implementation:
+  - Server action lives in `src/actions/` returning `{ success, data | error, fieldErrors? }`.
+  - DB query in `src/lib/db/collections.ts` (already exists with read helpers — extend with a `createCollection` mutation).
+  - Zod validation schema in `src/lib/validations/` (new file `collections.ts` to mirror `items.ts`).
+  - Client modal under `src/components/collections/` mirroring `CreateItemDialog` (shadcn `Dialog`, custom dark-surface bg override).
+  - Spec calls for an API route for client-side calls — items currently use server actions directly from the client form. Default to the items pattern (server action) for parity, unless something forces a real route handler. Confirm with user during start if ambiguous.
+- Collections are user-scoped per `prisma/schema.prisma` (`Collection.userId`, cascade on user delete). `name` has no DB-level uniqueness, but the modal should still validate trimmed non-empty name.
+- The existing top bar "New Item" button uses `useCreateItem()` from `CreateItemContext`. Mirror with a `useCreateCollection()` context provider, or open the dialog from a sibling button — whichever keeps the top bar slim.
+- After a successful create, call `router.refresh()` so server-rendered surfaces (sidebar collection list, dashboard stats card) re-fetch.
+- Free-plan limit is 3 collections per `project-overview.md` Monetization, but the dev rule says "all users have access to all features regardless of `isPro`" — skip the gate for now.
+- Optional `defaultTypeId` exists on `Collection` for pre-selecting a type when adding items to that collection — not surfaced in the create modal for this pass; keep the field nullable and revisit later.
+- Test scope per `coding-standards.md`: Vitest cases for the new Zod schema; no component tests; skip Prisma-touching action/db tests.
 
 <!--Any extra notes-->
 
