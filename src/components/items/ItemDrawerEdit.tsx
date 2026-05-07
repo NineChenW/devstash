@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -12,8 +12,11 @@ import {
 } from '@/lib/item-type-meta'
 import { updateItem } from '@/actions/items'
 import type { ItemDetail } from '@/lib/db/items'
-import { ItemFormFields } from './ItemFormFields'
+import { Field, ItemFormFields } from './ItemFormFields'
 import { DetailRow, ItemHeader, Section, fmtLongDate } from './ItemDrawerLayout'
+import { CollectionSelect } from '@/components/collections/CollectionSelect'
+import { listMyCollections } from '@/actions/collections'
+import type { UserCollectionOption } from '@/lib/db/collections'
 
 interface ItemDrawerEditProps {
   item: ItemDetail
@@ -36,6 +39,29 @@ export function ItemDrawerEdit({ item, onCancel, onSaved }: ItemDrawerEditProps)
   const [url, setUrl] = useState(item.url ?? '')
   const [tagsInput, setTagsInput] = useState(item.tags.join(', '))
   const [submitting, setSubmitting] = useState(false)
+  const [collections, setCollections] = useState<UserCollectionOption[]>([])
+  const [collectionsLoading, setCollectionsLoading] = useState(true)
+  const [selectedCollectionIds, setSelectedCollectionIds] = useState<string[]>(() =>
+    item.collections.map((c) => c.id),
+  )
+
+  useEffect(() => {
+    let cancelled = false
+    setCollectionsLoading(true)
+    listMyCollections()
+      .then((list) => {
+        if (!cancelled) setCollections(list)
+      })
+      .catch((err) => {
+        console.error('listMyCollections failed', err)
+      })
+      .finally(() => {
+        if (!cancelled) setCollectionsLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const titleTrimmed = title.trim()
   const canSave = titleTrimmed.length > 0 && !submitting
@@ -53,6 +79,7 @@ export function ItemDrawerEdit({ item, onCancel, onSaved }: ItemDrawerEditProps)
         url: showUrl && url.trim() ? url : null,
         language: showLanguage && language.trim() ? language : null,
         tags: parseTagsInput(tagsInput),
+        collectionIds: selectedCollectionIds,
       })
 
       if (!result.success) {
@@ -100,6 +127,16 @@ export function ItemDrawerEdit({ item, onCancel, onSaved }: ItemDrawerEditProps)
           tagsInput={tagsInput}
           setTagsInput={setTagsInput}
           contentRows={10}
+          extraAfterTags={
+            <Field label="Collections">
+              <CollectionSelect
+                collections={collections}
+                value={selectedCollectionIds}
+                onChange={setSelectedCollectionIds}
+                loading={collectionsLoading}
+              />
+            </Field>
+          }
         />
 
         <Section title="Details">
@@ -108,12 +145,6 @@ export function ItemDrawerEdit({ item, onCancel, onSaved }: ItemDrawerEditProps)
               label="Type"
               value={`${typeName.charAt(0).toUpperCase()}${typeName.slice(1)}s`}
             />
-            {item.collections.length > 0 && (
-              <DetailRow
-                label="Collections"
-                value={item.collections.map((c) => c.name).join(', ')}
-              />
-            )}
             <DetailRow label="Created" value={fmtLongDate(item.createdAt)} />
             <DetailRow label="Updated" value={fmtLongDate(item.updatedAt)} />
           </div>

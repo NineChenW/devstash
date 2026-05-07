@@ -24,6 +24,9 @@ import { firstFieldError, parseTagsInput } from '@/lib/item-utils'
 import { uploadFile } from '@/lib/upload'
 import { Field, ItemFormFields } from './ItemFormFields'
 import { FileUpload, type PendingFile } from './FileUpload'
+import { CollectionSelect } from '@/components/collections/CollectionSelect'
+import { listMyCollections } from '@/actions/collections'
+import type { UserCollectionOption } from '@/lib/db/collections'
 
 interface CreateItemDialogProps {
   open: boolean
@@ -44,6 +47,9 @@ export function CreateItemDialog({ open, onClose, defaultType }: CreateItemDialo
   const [pendingFile, setPendingFile] = useState<PendingFile | null>(null)
   const [uploadProgress, setUploadProgress] = useState<number | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [collections, setCollections] = useState<UserCollectionOption[]>([])
+  const [collectionsLoading, setCollectionsLoading] = useState(false)
+  const [selectedCollectionIds, setSelectedCollectionIds] = useState<string[]>([])
 
   useEffect(() => {
     if (open) {
@@ -60,10 +66,30 @@ export function CreateItemDialog({ open, onClose, defaultType }: CreateItemDialo
       setPendingFile(null)
       setUploadProgress(null)
       setSubmitting(false)
+      setSelectedCollectionIds([])
     }
     // pendingFile intentionally excluded — we only want this to fire on open/initialType change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialType])
+
+  useEffect(() => {
+    if (!open) return
+    let cancelled = false
+    setCollectionsLoading(true)
+    listMyCollections()
+      .then((list) => {
+        if (!cancelled) setCollections(list)
+      })
+      .catch((err) => {
+        console.error('listMyCollections failed', err)
+      })
+      .finally(() => {
+        if (!cancelled) setCollectionsLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [open])
 
   const showContent = TYPES_WITH_CONTENT.has(typeName)
   const showLanguage = TYPES_WITH_LANGUAGE.has(typeName)
@@ -119,6 +145,7 @@ export function CreateItemDialog({ open, onClose, defaultType }: CreateItemDialo
         fileUrl,
         fileName,
         fileSize,
+        collectionIds: selectedCollectionIds,
       })
 
       if (!result.success) {
@@ -209,6 +236,16 @@ export function CreateItemDialog({ open, onClose, defaultType }: CreateItemDialo
                     />
                   </Field>
                 ) : null
+              }
+              extraAfterTags={
+                <Field label="Collections">
+                  <CollectionSelect
+                    collections={collections}
+                    value={selectedCollectionIds}
+                    onChange={setSelectedCollectionIds}
+                    loading={collectionsLoading}
+                  />
+                </Field>
               }
             />
           </div>

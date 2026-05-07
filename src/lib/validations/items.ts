@@ -7,6 +7,7 @@ export const updateItemSchema = z.object({
   url: z.url('Must be a valid URL').nullable().optional(),
   language: z.string().nullable().optional(),
   tags: z.array(z.string().trim().min(1)),
+  collectionIds: z.array(z.string().min(1)).optional(),
 })
 
 export type UpdateItemPayload = z.input<typeof updateItemSchema>
@@ -34,6 +35,7 @@ export const createItemSchema = z
     fileUrl: z.string().min(1).nullable().optional(),
     fileName: z.string().min(1).nullable().optional(),
     fileSize: z.number().int().nonnegative().nullable().optional(),
+    collectionIds: z.array(z.string().min(1)).optional(),
   })
   .superRefine((data, ctx) => {
     if (data.typeName === 'link' && !data.url) {
