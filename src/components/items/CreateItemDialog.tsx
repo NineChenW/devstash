@@ -11,26 +11,25 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { iconMap, DefaultIcon } from '@/lib/icon-map'
 import { createItem } from '@/actions/items'
 import { CREATE_ITEM_TYPES, type CreateItemType } from '@/lib/validations/items'
-import { CREATE_TYPE_META } from '@/lib/item-type-meta'
-import { CodeEditor } from './CodeEditor'
-import { MarkdownEditor } from './MarkdownEditor'
-import { FileUpload, uploadFile, type PendingFile } from './FileUpload'
+import {
+  CREATE_TYPE_META,
+  TYPES_WITH_CONTENT,
+  TYPES_WITH_FILE_UPLOAD,
+  TYPES_WITH_LANGUAGE,
+} from '@/lib/item-type-meta'
+import { firstFieldError, parseTagsInput } from '@/lib/item-utils'
+import { uploadFile } from '@/lib/upload'
+import { Field, ItemFormFields } from './ItemFormFields'
+import { FileUpload, type PendingFile } from './FileUpload'
 
 interface CreateItemDialogProps {
   open: boolean
   onClose: () => void
   defaultType?: CreateItemType
 }
-
-const TYPES_WITH_CONTENT = new Set<CreateItemType>(['snippet', 'prompt', 'command', 'note'])
-const TYPES_WITH_LANGUAGE = new Set<CreateItemType>(['snippet', 'command'])
-const TYPES_WITH_CODE_EDITOR = new Set<CreateItemType>(['snippet', 'command'])
-const TYPES_WITH_MARKDOWN_EDITOR = new Set<CreateItemType>(['note', 'prompt'])
-const TYPES_WITH_FILE_UPLOAD = new Set<CreateItemType>(['file', 'image'])
 
 export function CreateItemDialog({ open, onClose, defaultType }: CreateItemDialogProps) {
   const router = useRouter()
@@ -70,8 +69,6 @@ export function CreateItemDialog({ open, onClose, defaultType }: CreateItemDialo
   const showLanguage = TYPES_WITH_LANGUAGE.has(typeName)
   const showUrl = typeName === 'link'
   const showFileUpload = TYPES_WITH_FILE_UPLOAD.has(typeName)
-  const useCodeEditor = TYPES_WITH_CODE_EDITOR.has(typeName)
-  const useMarkdownEditor = TYPES_WITH_MARKDOWN_EDITOR.has(typeName)
 
   const titleTrimmed = title.trim()
   const urlTrimmed = url.trim()
@@ -84,11 +81,6 @@ export function CreateItemDialog({ open, onClose, defaultType }: CreateItemDialo
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault()
     if (!canSubmit) return
-
-    const tags = tagsInput
-      .split(',')
-      .map((t) => t.trim())
-      .filter((t) => t.length > 0)
 
     setSubmitting(true)
     try {
@@ -123,19 +115,16 @@ export function CreateItemDialog({ open, onClose, defaultType }: CreateItemDialo
         content: showContent && content.trim() ? content : null,
         url: showUrl && urlTrimmed ? urlTrimmed : null,
         language: showLanguage && language.trim() ? language : null,
-        tags,
+        tags: parseTagsInput(tagsInput),
         fileUrl,
         fileName,
         fileSize,
       })
 
       if (!result.success) {
-        const msg =
-          result.fieldErrors?.fileUrl?.[0] ??
-          result.fieldErrors?.url?.[0] ??
-          result.fieldErrors?.title?.[0] ??
-          result.error
-        toast.error(msg)
+        toast.error(
+          firstFieldError(result.fieldErrors, 'fileUrl', 'url', 'title') ?? result.error,
+        )
         return
       }
 
@@ -188,100 +177,40 @@ export function CreateItemDialog({ open, onClose, defaultType }: CreateItemDialo
               </div>
             </Field>
 
-            <Field label="Title" htmlFor="create-title">
-              <Input
-                id="create-title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-                autoFocus
-                placeholder="Give it a name"
-              />
-            </Field>
-
-            <Field label="Description" htmlFor="create-description">
-              <textarea
-                id="create-description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={2}
-                placeholder="Optional"
-                className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-              />
-            </Field>
-
-            {showContent && (
-              <Field label="Content" htmlFor="create-content">
-                {useCodeEditor ? (
-                  <CodeEditor
-                    value={content}
-                    onChange={setContent}
-                    language={language}
-                  />
-                ) : useMarkdownEditor ? (
-                  <MarkdownEditor
-                    value={content}
-                    onChange={setContent}
-                    placeholder={
-                      typeName === 'note' ? 'Write your note in markdown…' : 'Write your prompt in markdown…'
-                    }
-                  />
-                ) : (
-                  <textarea
-                    id="create-content"
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    rows={8}
-                    placeholder="Paste your code…"
-                    className="w-full rounded-md border border-input bg-transparent px-3 py-2 font-mono text-xs leading-relaxed shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                  />
-                )}
-              </Field>
-            )}
-
-            {showLanguage && (
-              <Field label="Language" htmlFor="create-language">
-                <Input
-                  id="create-language"
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                  placeholder="e.g. typescript"
-                />
-              </Field>
-            )}
-
-            {showUrl && (
-              <Field label="URL" htmlFor="create-url">
-                <Input
-                  id="create-url"
-                  type="url"
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  placeholder="https://…"
-                  required
-                />
-              </Field>
-            )}
-
-            {showFileUpload && (
-              <Field label={typeName === 'image' ? 'Image' : 'File'}>
-                <FileUpload
-                  kind={typeName === 'image' ? 'image' : 'file'}
-                  value={pendingFile}
-                  onChange={setPendingFile}
-                  progress={uploadProgress}
-                />
-              </Field>
-            )}
-
-            <Field label="Tags" htmlFor="create-tags" hint="Comma-separated">
-              <Input
-                id="create-tags"
-                value={tagsInput}
-                onChange={(e) => setTagsInput(e.target.value)}
-                placeholder="react, hooks, ui"
-              />
-            </Field>
+            <ItemFormFields
+              typeName={typeName}
+              idPrefix="create"
+              title={title}
+              setTitle={setTitle}
+              description={description}
+              setDescription={setDescription}
+              content={content}
+              setContent={setContent}
+              language={language}
+              setLanguage={setLanguage}
+              url={url}
+              setUrl={setUrl}
+              tagsInput={tagsInput}
+              setTagsInput={setTagsInput}
+              titlePlaceholder="Give it a name"
+              descriptionPlaceholder="Optional"
+              descriptionRows={2}
+              contentPlaceholder="Paste your code…"
+              contentRows={8}
+              urlRequired
+              extraBeforeTags={
+                showFileUpload ? (
+                  <Field label={typeName === 'image' ? 'Image' : 'File'}>
+                    <FileUpload
+                      kind={typeName === 'image' ? 'image' : 'file'}
+                      value={pendingFile}
+                      onChange={setPendingFile}
+                      progress={uploadProgress}
+                    />
+                  </Field>
+                ) : null
+              }
+            />
           </div>
 
           <div className="flex items-center justify-end gap-2 border-t border-[hsl(217.2_32.6%_22%)] px-6 py-4">
@@ -299,34 +228,5 @@ export function CreateItemDialog({ open, onClose, defaultType }: CreateItemDialo
         </form>
       </DialogContent>
     </Dialog>
-  )
-}
-
-function Field({
-  label,
-  htmlFor,
-  hint,
-  children,
-}: {
-  label: string
-  htmlFor?: string
-  hint?: string
-  children: React.ReactNode
-}) {
-  return (
-    <div>
-      <label
-        htmlFor={htmlFor}
-        className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-      >
-        {label}
-        {hint && (
-          <span className="ml-2 normal-case text-[10px] text-muted-foreground/70">
-            {hint}
-          </span>
-        )}
-      </label>
-      {children}
-    </div>
   )
 }

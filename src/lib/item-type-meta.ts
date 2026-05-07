@@ -12,3 +12,14 @@ export const CREATE_TYPE_META: Record<
   file: { label: 'File', icon: 'File', color: '#6b7280' },
   image: { label: 'Image', icon: 'Image', color: '#ec4899' },
 }
+
+export const TYPES_WITH_CONTENT: ReadonlySet<string> = new Set([
+  'snippet',
+  'prompt',
+  'command',
+  'note',
+])
+export const TYPES_WITH_LANGUAGE: ReadonlySet<string> = new Set(['snippet', 'command'])
+export const TYPES_WITH_CODE_EDITOR: ReadonlySet<string> = new Set(['snippet', 'command'])
+export const TYPES_WITH_MARKDOWN_EDITOR: ReadonlySet<string> = new Set(['note', 'prompt'])
+export const TYPES_WITH_FILE_UPLOAD: ReadonlySet<string> = new Set(['file', 'image'])
