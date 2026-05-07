@@ -114,71 +114,31 @@ export function Sidebar({ collapsed, itemTypes, collections, user }: SidebarProp
 
           {collectionsOpen && (
             <>
-              {/* Favorites */}
               {favoriteCollections.length > 0 && (
-                <div className="mb-4">
-                  {!collapsed && (
-                    <h3 className="mb-1 px-2 text-xs font-medium text-muted-foreground">
-                      Favorites
-                    </h3>
-                  )}
-                  <nav className="space-y-0.5">
-                    {favoriteCollections.map((collection) => (
-                      <Link
-                        key={collection.id}
-                        href={`/collections/${collection.id}`}
-                        className={cn(
-                          'flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors',
-                          collapsed ? 'justify-center' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                        )}
-                        title={collapsed ? collection.name : undefined}
-                      >
-                        <FolderOpen className="h-4 w-4 shrink-0" />
-                        {!collapsed && (
-                          <>
-                            <span className="flex-1 truncate">{collection.name}</span>
-                            <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
-                          </>
-                        )}
-                      </Link>
-                    ))}
-                  </nav>
-                </div>
+                <CollectionNavSection
+                  heading="Favorites"
+                  collections={favoriteCollections}
+                  collapsed={collapsed}
+                  className="mb-4"
+                  leading={() => <FolderOpen className="h-4 w-4 shrink-0" />}
+                  trailing={() => <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />}
+                />
               )}
 
-              {/* Recents */}
               {recentCollections.length > 0 && (
-                <div>
-                  {!collapsed && (
-                    <h3 className="mb-1 px-2 text-xs font-medium text-muted-foreground">
-                      Recents
-                    </h3>
+                <CollectionNavSection
+                  heading="Recents"
+                  collections={recentCollections}
+                  collapsed={collapsed}
+                  leading={(c) => (
+                    <span
+                      className="h-2.5 w-2.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: c.dominantColor }}
+                    />
                   )}
-                  <nav className="space-y-0.5">
-                    {recentCollections.map((collection) => (
-                      <Link
-                        key={collection.id}
-                        href={`/collections/${collection.id}`}
-                        className={cn(
-                          'flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors',
-                          collapsed ? 'justify-center' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                        )}
-                        title={collapsed ? collection.name : undefined}
-                      >
-                        <span
-                          className="h-2.5 w-2.5 shrink-0 rounded-full"
-                          style={{ backgroundColor: collection.dominantColor }}
-                        />
-                        {!collapsed && (
-                          <span className="flex-1 truncate">{collection.name}</span>
-                        )}
-                      </Link>
-                    ))}
-                  </nav>
-                </div>
+                />
               )}
 
-              {/* View all collections */}
               {!collapsed && (
                 <Link
                   href="/collections"
@@ -199,5 +159,54 @@ export function Sidebar({ collapsed, itemTypes, collections, user }: SidebarProp
         image={user?.image}
       />
     </aside>
+  )
+}
+
+interface CollectionNavSectionProps {
+  heading: string
+  collections: CollectionWithTypes[]
+  collapsed: boolean
+  leading: (collection: CollectionWithTypes) => React.ReactNode
+  trailing?: (collection: CollectionWithTypes) => React.ReactNode
+  className?: string
+}
+
+function CollectionNavSection({
+  heading,
+  collections,
+  collapsed,
+  leading,
+  trailing,
+  className,
+}: CollectionNavSectionProps) {
+  return (
+    <div className={className}>
+      {!collapsed && (
+        <h3 className="mb-1 px-2 text-xs font-medium text-muted-foreground">{heading}</h3>
+      )}
+      <nav className="space-y-0.5">
+        {collections.map((collection) => (
+          <Link
+            key={collection.id}
+            href={`/collections/${collection.id}`}
+            className={cn(
+              'flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors',
+              collapsed
+                ? 'justify-center'
+                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+            )}
+            title={collapsed ? collection.name : undefined}
+          >
+            {leading(collection)}
+            {!collapsed && (
+              <>
+                <span className="flex-1 truncate">{collection.name}</span>
+                {trailing?.(collection)}
+              </>
+            )}
+          </Link>
+        ))}
+      </nav>
+    </div>
   )
 }

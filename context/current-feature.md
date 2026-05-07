@@ -16,19 +16,57 @@ Do not violate any following rules:
 
 <!--Feature Name-->
 
+Items UI Refactor — Reduce Duplication (2026-05-06)
+
 ## Status
 
 <!--Not Started|In Progress|Completed-->
 
-Not Started
+In Progress
 
 ## Goals
 
 <!--Goals & requirements-->
 
+Land the 8 refactoring opportunities surfaced by the code-scanner pass on 2026-05-06. No behavior changes — pure restructuring to eliminate copy-paste, shrink oversized files, and make pure utilities Vitest-testable. Verifiable via `npm run test:run` + `npm run build` + manual browser regression of drawer view/edit, create dialog, sidebar, and file upload.
+
+**High impact** (do first, biggest readability/reuse wins):
+
+1. **Dedupe `TYPES_WITH_*` sets** — `TYPES_WITH_CONTENT`, `TYPES_WITH_LANGUAGE`, `TYPES_WITH_CODE_EDITOR`, `TYPES_WITH_MARKDOWN_EDITOR` are defined identically in [src/components/items/ItemDrawer.tsx:23-26](src/components/items/ItemDrawer.tsx#L23-L26) and [src/components/items/CreateItemDialog.tsx:29-33](src/components/items/CreateItemDialog.tsx#L29-L33); `CreateItemDialog` adds a fifth, `TYPES_WITH_FILE_UPLOAD`. Move all five into [src/lib/item-type-meta.ts](src/lib/item-type-meta.ts) (which already owns `CREATE_TYPE_META`) and import from both components.
+
+2. **Extract shared `ItemFormFields`** — `DrawerEdit` ([ItemDrawer.tsx:325-508](src/components/items/ItemDrawer.tsx#L325-L508)) and `CreateItemDialog` ([CreateItemDialog.tsx:35-303](src/components/items/CreateItemDialog.tsx#L35-L303)) reimplement the same conditional field block (title / description / content / language / url / tags) and even duplicate the small `Field` helper component verbatim. Pull the field block + `Field` helper into a new `src/components/items/ItemFormFields.tsx` accepting `{ typeName, content, setContent, language, setLanguage, url, setUrl, ... }` props. Both consumers import from it.
+
+3. **Move `uploadFile` out of `FileUpload.tsx`** — the XHR utility at [FileUpload.tsx:184-222](src/components/items/FileUpload.tsx#L184-L222) is pure network code in a UI module; `CreateItemDialog` imports a network helper from a component file. Move `uploadFile` + the `UploadResponse` interface to a new `src/lib/upload.ts` and update the import in `CreateItemDialog.tsx`. Bonus: becomes Vitest-testable with a mocked `XMLHttpRequest`.
+
+**Medium impact** (cleaner once #2 lands):
+
+4. **Split `ItemDrawer.tsx` (664 → ~160 lines)** — pull `DrawerEdit` into `src/components/items/ItemDrawerEdit.tsx` and `ContentPreview` into `src/components/items/ItemContentPreview.tsx`. Helper components (`Field`, `Section`, `DetailRow`, `ActionButton`) move to wherever they fit — `Field` ends up in `ItemFormFields.tsx` from #2; the rest stay co-located with whichever component owns them or move to a small `src/components/items/drawer-internals.tsx` if shared.
+
+5. **Extract `parseTagsInput` + `firstFieldError`** — both `handleSubmit`s ([ItemDrawer.tsx:346-383](src/components/items/ItemDrawer.tsx#L346-L383) and [CreateItemDialog.tsx:84-150](src/components/items/CreateItemDialog.tsx#L84-L150)) repeat the comma-split → trim → filter → `Array.from(new Set(...))` dedup pattern and the `result.fieldErrors?.url?.[0] ?? .title?.[0] ?? result.error` priority chain. Extract both as pure functions in a new `src/lib/item-utils.ts` (or alongside `parseTagsInput` in `item-type-meta.ts` if it stays small). Add Vitest cases — both are pure and easy to cover.
+
+6. **Dedupe Sidebar collection nav rendering** — Favorites and Recents lists in [src/components/sidebar/Sidebar.tsx:126-179](src/components/sidebar/Sidebar.tsx#L126-L179) differ only in the leading indicator (`<Star>` vs colored `<span>` dot). Extract `CollectionNavItem` accepting `{ collection, collapsed, indicator }` where `indicator` is a React node; collapses ~55 lines to ~20.
+
+**Low impact** (cosmetic, do last):
+
+7. **`normalizeItemDates` helper** — same `{ ...item, createdAt: new Date(...), updatedAt: new Date(...) }` spread duplicated at [ItemDrawer.tsx:60-65](src/components/items/ItemDrawer.tsx#L60-L65) and [ItemDrawer.tsx:83-88](src/components/items/ItemDrawer.tsx#L83-L88). One-liner extraction in the same file.
+
+8. **Lift `fmtLongDate` out of render** — `toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })` is inlined three times across `ItemDrawer.tsx` (the `fmtDate` arrow inside `DrawerContent` at [line 198-203](src/components/items/ItemDrawer.tsx#L198-L203) and twice more in `DrawerEdit`). Define one module-level `fmtLongDate` (or export from `src/lib/utils.ts`) and use everywhere.
+
+**Out of scope:**
+
+- Functional changes — no copy edits, no new fields, no UX changes. If a refactor surfaces a real bug, document it and defer the fix to its own change.
+- The `set-state-in-effect` lint warnings in `DashboardShell` / `MarkdownEditor` / `sheet` (4 pre-existing on `main`) — known and tracked separately.
+- Renaming or moving `item-type-meta.ts` itself — keep the existing file path so import diffs stay small.
+- Component tests — out of scope per `coding-standards.md`. The new pure utilities (`parseTagsInput`, `firstFieldError`, optionally `uploadFile`) get Vitest coverage; refactored components are verified manually in the browser.
+
 ## Notes
 
 <!--Any extra notes-->
+
+- Source: code-scanner pass on 2026-05-06.
+- **Suggested branch strategy:** one feature branch `refactor/items-ui-dedup-2026-05-06` with multiple commits in order #1 → #3 → #6 → (then the big block) #2/#4/#5/#7/#8. The first three are independent one-file changes that can land safely; #2 + #4 + #5 + #7 + #8 reinforce each other and should land together (doing #2 alone leaves an awkward seam with `ItemDrawer.tsx`'s existing edit form). If the branch grows risky during review, the big block can be split off late.
+- **Verification per commit:** `npm run test:run` after each (existing 67 + any new pure-utility cases must pass) and `npm run build` after each (catches missed import updates). After #2/#4/#5 specifically: open the dashboard, click an item to verify view-mode renders for snippet/note/link/file/image, click Edit and verify each type's content field renders the right component (CodeEditor for snippet/command, MarkdownEditor for note/prompt, plain textarea fallback otherwise, URL field for link, FileUpload for file/image), Save persists, Cancel reverts. Open New Item dialog, switch through all 7 types, create one of each.
+- **Per `ai-interaction.md`:** ask before committing — wait for build to pass first.
 
 ## History
 
