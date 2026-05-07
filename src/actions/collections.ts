@@ -5,12 +5,21 @@ import { auth } from '@/auth'
 import {
   createCollection as createCollectionQuery,
   getDemoUserId,
+  getUserCollections,
   type CreatedCollection,
+  type UserCollectionOption,
 } from '@/lib/db/collections'
 import {
   createCollectionSchema,
   type CreateCollectionPayload,
 } from '@/lib/validations/collections'
+
+export async function listMyCollections(): Promise<UserCollectionOption[]> {
+  const session = await auth()
+  if (!session?.user?.id) return []
+  const ownerId = (await getDemoUserId()) ?? session.user.id
+  return getUserCollections(ownerId)
+}
 
 export type CreateCollectionResult =
   | { success: true; data: CreatedCollection }

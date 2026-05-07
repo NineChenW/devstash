@@ -180,6 +180,7 @@ export interface UpdateItemInput {
   url: string | null
   language: string | null
   tags: string[]
+  collectionIds?: string[]
 }
 
 export async function updateItem(
@@ -193,25 +194,54 @@ export async function updateItem(
   })
   if (!owned) return null
 
-  await prisma.item.update({
-    where: { id: itemId },
-    data: {
-      title: data.title,
-      description: data.description,
-      content: data.content,
-      url: data.url,
-      language: data.language,
-      tags: {
-        set: [],
-        connectOrCreate: data.tags.map((name) => ({
-          where: { name },
-          create: { name },
-        })),
+  const ownedCollectionIds = data.collectionIds
+    ? await filterUserCollectionIds(userId, data.collectionIds)
+    : null
+
+  await prisma.$transaction(async (tx) => {
+    await tx.item.update({
+      where: { id: itemId },
+      data: {
+        title: data.title,
+        description: data.description,
+        content: data.content,
+        url: data.url,
+        language: data.language,
+        tags: {
+          set: [],
+          connectOrCreate: data.tags.map((name) => ({
+            where: { name },
+            create: { name },
+          })),
+        },
       },
-    },
+    })
+
+    if (ownedCollectionIds !== null) {
+      await tx.itemCollection.deleteMany({ where: { itemId } })
+      if (ownedCollectionIds.length > 0) {
+        await tx.itemCollection.createMany({
+          data: ownedCollectionIds.map((collectionId) => ({ itemId, collectionId })),
+          skipDuplicates: true,
+        })
+      }
+    }
   })
 
   return getItemDetail(itemId, userId)
+}
+
+async function filterUserCollectionIds(
+  userId: string,
+  collectionIds: string[],
+): Promise<string[]> {
+  const unique = Array.from(new Set(collectionIds))
+  if (unique.length === 0) return []
+  const owned = await prisma.collection.findMany({
+    where: { userId, id: { in: unique } },
+    select: { id: true },
+  })
+  return owned.map((c) => c.id)
 }
 
 export interface CreateItemInput {
@@ -225,6 +255,7 @@ export interface CreateItemInput {
   fileUrl?: string | null
   fileName?: string | null
   fileSize?: number | null
+  collectionIds?: string[]
 }
 
 const TYPE_CONTENT_TYPE: Record<string, string> = {
@@ -250,6 +281,10 @@ export async function createItem(
   })
   if (!type) return null
 
+  const ownedCollectionIds = data.collectionIds
+    ? await filterUserCollectionIds(userId, data.collectionIds)
+    : []
+
   const created = await prisma.item.create({
     data: {
       title: data.title,
@@ -269,6 +304,12 @@ export async function createItem(
           create: { name },
         })),
       },
+      collections:
+        ownedCollectionIds.length > 0
+          ? {
+              create: ownedCollectionIds.map((collectionId) => ({ collectionId })),
+            }
+          : undefined,
     },
     select: { id: true },
   })

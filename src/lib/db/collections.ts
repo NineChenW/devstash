@@ -78,6 +78,30 @@ export async function getRecentCollections(userId: string): Promise<CollectionWi
   })
 }
 
+export interface UserCollectionOption {
+  id: string
+  name: string
+  itemCount: number
+}
+
+export async function getUserCollections(userId: string): Promise<UserCollectionOption[]> {
+  const collections = await prisma.collection.findMany({
+    where: { userId },
+    orderBy: { name: 'asc' },
+    select: {
+      id: true,
+      name: true,
+      _count: { select: { items: true } },
+    },
+  })
+
+  return collections.map((c) => ({
+    id: c.id,
+    name: c.name,
+    itemCount: c._count.items,
+  }))
+}
+
 export interface CreateCollectionInput {
   name: string
   description: string | null

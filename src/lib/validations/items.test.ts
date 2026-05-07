@@ -69,6 +69,46 @@ describe('updateItemSchema', () => {
     const result = updateItemSchema.safeParse({ ...base, tags: ['react', '   '] })
     expect(result.success).toBe(false)
   })
+
+  it('accepts an omitted collectionIds field', () => {
+    const result = updateItemSchema.safeParse(base)
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.collectionIds).toBeUndefined()
+    }
+  })
+
+  it('accepts an empty collectionIds array', () => {
+    const result = updateItemSchema.safeParse({ ...base, collectionIds: [] })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.collectionIds).toEqual([])
+    }
+  })
+
+  it('accepts a populated collectionIds array', () => {
+    const result = updateItemSchema.safeParse({
+      ...base,
+      collectionIds: ['c1', 'c2'],
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.collectionIds).toEqual(['c1', 'c2'])
+    }
+  })
+
+  it('rejects empty-string collection ids', () => {
+    const result = updateItemSchema.safeParse({ ...base, collectionIds: ['c1', ''] })
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects non-string collection ids', () => {
+    const result = updateItemSchema.safeParse({
+      ...base,
+      collectionIds: ['c1', 42 as unknown as string],
+    })
+    expect(result.success).toBe(false)
+  })
 })
 
 describe('createItemSchema', () => {
@@ -181,5 +221,45 @@ describe('createItemSchema', () => {
     const prompt = createItemSchema.safeParse({ ...baseSnippet, typeName: 'prompt' })
     expect(note.success).toBe(true)
     expect(prompt.success).toBe(true)
+  })
+
+  it('accepts an omitted collectionIds field', () => {
+    const result = createItemSchema.safeParse(baseSnippet)
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.collectionIds).toBeUndefined()
+    }
+  })
+
+  it('accepts an empty collectionIds array', () => {
+    const result = createItemSchema.safeParse({ ...baseSnippet, collectionIds: [] })
+    expect(result.success).toBe(true)
+  })
+
+  it('accepts a populated collectionIds array', () => {
+    const result = createItemSchema.safeParse({
+      ...baseSnippet,
+      collectionIds: ['c1', 'c2'],
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.collectionIds).toEqual(['c1', 'c2'])
+    }
+  })
+
+  it('rejects empty-string collection ids', () => {
+    const result = createItemSchema.safeParse({
+      ...baseSnippet,
+      collectionIds: ['c1', ''],
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects non-string collection ids', () => {
+    const result = createItemSchema.safeParse({
+      ...baseSnippet,
+      collectionIds: ['c1', 99 as unknown as string],
+    })
+    expect(result.success).toBe(false)
   })
 })

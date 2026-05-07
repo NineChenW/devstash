@@ -38,8 +38,9 @@ export async function updateItem(
     }
   }
 
-  const { title, description, content, url, language, tags } = parsed.data
+  const { title, description, content, url, language, tags, collectionIds } = parsed.data
   const dedupedTags = Array.from(new Set(tags))
+  const dedupedCollectionIds = collectionIds ? Array.from(new Set(collectionIds)) : undefined
 
   const ownerId = (await getDemoUserId()) ?? session.user.id
 
@@ -51,6 +52,7 @@ export async function updateItem(
       url: url ?? null,
       language: language ?? null,
       tags: dedupedTags,
+      collectionIds: dedupedCollectionIds,
     })
 
     if (!updated) {
@@ -94,8 +96,10 @@ export async function createItem(payload: CreateItemPayload): Promise<CreateItem
     fileUrl,
     fileName,
     fileSize,
+    collectionIds,
   } = parsed.data
   const dedupedTags = Array.from(new Set(tags))
+  const dedupedCollectionIds = collectionIds ? Array.from(new Set(collectionIds)) : undefined
 
   const ownerId = (await getDemoUserId()) ?? session.user.id
 
@@ -111,6 +115,7 @@ export async function createItem(payload: CreateItemPayload): Promise<CreateItem
       fileUrl: fileUrl ?? null,
       fileName: fileName ?? null,
       fileSize: fileSize ?? null,
+      collectionIds: dedupedCollectionIds,
     })
 
     if (!created) {

@@ -36,6 +36,8 @@ interface ItemFormFieldsProps {
 
   /** Optional slot rendered between the URL field and the Tags field. */
   extraBeforeTags?: React.ReactNode
+  /** Optional slot rendered after the Tags field. */
+  extraAfterTags?: React.ReactNode
 }
 
 export function ItemFormFields({
@@ -60,6 +62,7 @@ export function ItemFormFields({
   contentRows = 10,
   urlRequired = false,
   extraBeforeTags,
+  extraAfterTags,
 }: ItemFormFieldsProps) {
   const showContent = TYPES_WITH_CONTENT.has(typeName)
   const showLanguage = TYPES_WITH_LANGUAGE.has(typeName)
@@ -152,6 +155,8 @@ export function ItemFormFields({
           placeholder="react, hooks, ui"
         />
       </Field>
+
+      {extraAfterTags}
     </>
   )
 }
