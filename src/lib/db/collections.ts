@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import type { ItemListItem } from '@/lib/db/items'
 
 export interface CollectionWithTypes {
   id: string
@@ -10,6 +11,60 @@ export interface CollectionWithTypes {
   typeIcons: { icon: string; color: string }[]
   createdAt: Date
   updatedAt: Date
+}
+
+interface CollectionWithItemTypes {
+  id: string
+  name: string
+  description: string | null
+  isFavorite: boolean
+  createdAt: Date
+  updatedAt: Date
+  items: { item: { itemType: { id: string; icon: string; color: string } } }[]
+}
+
+function toCollectionWithTypes(collection: CollectionWithItemTypes): CollectionWithTypes {
+  const itemTypes = collection.items.map((ic) => ic.item.itemType)
+
+  const typeCounts = new Map<string, { count: number; icon: string; color: string }>()
+  for (const type of itemTypes) {
+    const existing = typeCounts.get(type.id)
+    if (existing) {
+      existing.count++
+    } else {
+      typeCounts.set(type.id, { count: 1, icon: type.icon, color: type.color })
+    }
+  }
+
+  let dominantColor = '#3b82f6'
+  let maxCount = 0
+  for (const [, value] of typeCounts) {
+    if (value.count > maxCount) {
+      maxCount = value.count
+      dominantColor = value.color
+    }
+  }
+
+  const seen = new Set<string>()
+  const typeIcons: { icon: string; color: string }[] = []
+  for (const type of itemTypes) {
+    if (!seen.has(type.id)) {
+      seen.add(type.id)
+      typeIcons.push({ icon: type.icon, color: type.color })
+    }
+  }
+
+  return {
+    id: collection.id,
+    name: collection.name,
+    description: collection.description,
+    isFavorite: collection.isFavorite,
+    itemCount: collection.items.length,
+    dominantColor,
+    typeIcons,
+    createdAt: collection.createdAt,
+    updatedAt: collection.updatedAt,
+  }
 }
 
 export async function getRecentCollections(userId: string): Promise<CollectionWithTypes[]> {
@@ -30,52 +85,86 @@ export async function getRecentCollections(userId: string): Promise<CollectionWi
     },
   })
 
-  return collections.map((collection) => {
-    const itemTypes = collection.items.map((ic) => ic.item.itemType)
+  return collections.map(toCollectionWithTypes)
+}
 
-    // Count occurrences of each type to find dominant
-    const typeCounts = new Map<string, { count: number; icon: string; color: string }>()
-    for (const type of itemTypes) {
-      const existing = typeCounts.get(type.id)
-      if (existing) {
-        existing.count++
-      } else {
-        typeCounts.set(type.id, { count: 1, icon: type.icon, color: type.color })
-      }
-    }
+export async function getAllCollections(userId: string): Promise<CollectionWithTypes[]> {
+  const collections = await prisma.collection.findMany({
+    where: { userId },
+    orderBy: [{ isFavorite: 'desc' }, { name: 'asc' }],
+    include: {
+      items: {
+        include: {
+          item: {
+            include: {
+              itemType: true,
+            },
+          },
+        },
+      },
+    },
+  })
 
-    // Find dominant type (most used)
-    let dominantColor = '#3b82f6'
-    let maxCount = 0
-    for (const [, value] of typeCounts) {
-      if (value.count > maxCount) {
-        maxCount = value.count
-        dominantColor = value.color
-      }
-    }
+  return collections.map(toCollectionWithTypes)
+}
 
-    // Unique type icons
-    const seen = new Set<string>()
-    const typeIcons: { icon: string; color: string }[] = []
-    for (const type of itemTypes) {
-      if (!seen.has(type.id)) {
-        seen.add(type.id)
-        typeIcons.push({ icon: type.icon, color: type.color })
-      }
-    }
+export interface CollectionWithItems {
+  collection: CollectionWithTypes
+  items: ItemListItem[]
+}
 
-    return {
+export async function getCollectionWithItems(
+  collectionId: string,
+  userId: string,
+): Promise<CollectionWithItems | null> {
+  const collection = await prisma.collection.findFirst({
+    where: { id: collectionId, userId },
+    include: {
+      items: {
+        orderBy: { addedAt: 'desc' },
+        include: {
+          item: {
+            include: {
+              itemType: true,
+              tags: true,
+            },
+          },
+        },
+      },
+    },
+  })
+  if (!collection) return null
+
+  const items: ItemListItem[] = collection.items.map(({ item }) => ({
+    id: item.id,
+    title: item.title,
+    description: item.description,
+    typeIcon: item.itemType.icon,
+    typeColor: item.itemType.color,
+    typeName: item.itemType.name,
+    isFavorite: item.isFavorite,
+    isPinned: item.isPinned,
+    content: item.content,
+    url: item.url,
+    fileUrl: item.fileUrl,
+    fileName: item.fileName,
+    fileSize: item.fileSize,
+    tags: item.tags.map((t) => t.name),
+    createdAt: item.createdAt,
+  }))
+
+  return {
+    collection: toCollectionWithTypes({
       id: collection.id,
       name: collection.name,
       description: collection.description,
       isFavorite: collection.isFavorite,
-      itemCount: collection.items.length,
-      dominantColor,
-      typeIcons,
       createdAt: collection.createdAt,
       updatedAt: collection.updatedAt,
-    }
-  })
+      items: collection.items.map((ic) => ({ item: { itemType: ic.item.itemType } })),
+    }),
+    items,
+  }
 }
 
 export interface UserCollectionOption {

@@ -12,7 +12,7 @@ Do not violate any following rules:
 7. Update goals section with current feature requirements.
 8. Update notes section with current feature references.
 
-# Current Feature
+# Current Feature: Collections Pages
 
 <!--Feature Name-->
 
@@ -20,13 +20,30 @@ Do not violate any following rules:
 
 <!--Not Started|In Progress|Completed-->
 
+In Progress
+
 ## Goals
 
 <!--Goals & requirements-->
 
+- Create the `/collections` page that lists all of the signed-in user's collections
+- Create the `/collections/[id]` page that shows the items belonging to a specific collection
+- Reuse existing card components — `CollectionCard` for the listing page, and the existing item cards (`ItemCard` / `ImageThumbnailCard` / `FileListRow`) for items inside a collection, mirroring `/items/[type]`'s rendering branches
+- Link "View all collections" in the sidebar to `/collections`
+- Link every collection card (sidebar entries + dashboard's Recent Collections grid + the new `/collections` listing) to its own `/collections/[id]` page
+- Both pages must be auth-gated (consistent with `/dashboard` and `/items/[type]`) and use `DashboardShell` for layout
+- 404 when the `[id]` doesn't belong to the current user (don't leak existence)
+
 ## Notes
 
 <!--Any extra notes-->
+
+- Existing data layer: `src/lib/db/collections.ts` already has `getRecentCollections`, `createCollection`, `getUserCollections`, and the `CollectionWithTypes` shape — likely need a new helper for "all collections for listing" and another for "single collection detail with items"
+- Item rendering on `/collections/[id]` should match `/items/[type]` per-type branching: image → `ImageThumbnailCard`, file → `FileListRow`, everything else → `ItemCard` (so a mixed-type collection renders each item appropriately)
+- Sidebar's "View all collections" Link in `Sidebar.tsx` already points to `/collections` (string href); just need the route to actually exist
+- Collection cards already link via `<Link href={`/collections/${collection.id}`}>` in `CollectionCard.tsx` and the sidebar `CollectionNavSection` — verify and don't break them
+- Out of scope: collection edit/delete/rename UI, removing items from a collection, collection-level favorite toggle from these pages
+- The dashboard's demo-user shortcut (`getDemoUserId() ?? session.user.id`) should be used consistently with the rest of the app for parity
 
 ## History
 
