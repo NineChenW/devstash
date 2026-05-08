@@ -6,3 +6,10 @@ export const createCollectionSchema = z.object({
 })
 
 export type CreateCollectionPayload = z.input<typeof createCollectionSchema>
+
+export const updateCollectionSchema = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(80, 'Name must be 80 characters or fewer'),
+  description: z.string().trim().max(500, 'Description must be 500 characters or fewer').nullable().optional(),
+})
+
+export type UpdateCollectionPayload = z.input<typeof updateCollectionSchema>

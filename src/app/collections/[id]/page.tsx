@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { FolderOpen, Star } from 'lucide-react'
 import { auth } from '@/auth'
 import { DashboardShell } from '@/components/dashboard/DashboardShell'
+import { CollectionActions } from '@/components/collections/CollectionActions'
 import { ItemCard } from '@/components/items/ItemCard'
 import { ImageThumbnailCard } from '@/components/items/ImageThumbnailCard'
 import { FileListRow } from '@/components/items/FileListRow'
@@ -98,6 +99,14 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
             <p className="mt-2 text-sm text-muted-foreground">{collection.description}</p>
           )}
         </div>
+        <CollectionActions
+          collection={{
+            id: collection.id,
+            name: collection.name,
+            description: collection.description,
+            isFavorite: collection.isFavorite,
+          }}
+        />
       </div>
 
       {items.length === 0 ? (
