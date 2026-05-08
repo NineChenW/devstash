@@ -39,13 +39,19 @@ export function Sidebar({ collapsed, itemTypes, collections, user }: SidebarProp
       )}
     >
       {/* Logo */}
-      <div className="flex h-16 items-center gap-2 border-b px-4">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-purple-600">
-          <FolderOpen className="h-4 w-4 text-white" />
-        </div>
-        {!collapsed && (
-          <span className="text-lg font-semibold">DevStash</span>
-        )}
+      <div className="flex h-16 items-center border-b px-4">
+        <Link
+          href="/dashboard"
+          className="flex items-center gap-2 rounded-md transition-opacity hover:opacity-80"
+          title="Back to dashboard"
+        >
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-purple-600">
+            <FolderOpen className="h-4 w-4 text-white" />
+          </div>
+          {!collapsed && (
+            <span className="text-lg font-semibold">DevStash</span>
+          )}
+        </Link>
       </div>
 
       <div className="flex-1 overflow-y-auto py-4">
