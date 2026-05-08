@@ -1,8 +1,15 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
-import { Star, MoreHorizontal } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import { Star } from 'lucide-react'
 import { iconMap, DefaultIcon } from '@/lib/icon-map'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { deleteCollection } from '@/actions/collections'
+import { CollectionCardMenu } from './CollectionCardMenu'
+import { EditCollectionDialog } from './EditCollectionDialog'
 
 interface CollectionCardProps {
   id: string
@@ -23,47 +30,91 @@ export function CollectionCard({
   isFavorite,
   dominantColor,
 }: CollectionCardProps) {
+  const router = useRouter()
+  const [editing, setEditing] = useState(false)
+  const [confirming, setConfirming] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  async function handleConfirmDelete() {
+    setDeleting(true)
+    try {
+      const result = await deleteCollection(id)
+      if (!result.success) {
+        toast.error(result.error)
+        return
+      }
+      toast.success('Collection deleted')
+      setConfirming(false)
+      router.refresh()
+    } catch {
+      toast.error('Failed to delete collection')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   return (
-    <Link
-      href={`/collections/${id}`}
-      className="group relative flex flex-col rounded-xl border bg-card p-5 transition-colors hover:bg-accent/50"
-      style={{ borderLeftColor: dominantColor, borderLeftWidth: '2px' }}
-    >
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <h3 className="font-semibold">{name}</h3>
-            {isFavorite && (
-              <Star className="h-3.5 w-3.5 fill-yellow-500 text-yellow-500" />
-            )}
-          </div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {itemCount} items
-          </p>
-        </div>
-        <button
-          className="rounded-md p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-accent hover:text-accent-foreground group-hover:opacity-100"
-          onClick={(e) => e.preventDefault()}
-        >
-          <MoreHorizontal className="h-4 w-4" />
-        </button>
-      </div>
-
-      <p className="mt-3 text-sm text-muted-foreground">{description}</p>
-
-      <div className="mt-4 flex gap-1.5">
-        {typeIcons.slice(0, 4).map((type, index) => {
-          const Icon = iconMap[type.icon] || DefaultIcon
-          return (
-            <div
-              key={index}
-              className="flex h-6 w-6 items-center justify-center rounded bg-muted/50"
-            >
-              <Icon className="h-3.5 w-3.5" style={{ color: type.color }} />
+    <div className="group relative">
+      <Link
+        href={`/collections/${id}`}
+        className="flex flex-col rounded-xl border bg-card p-5 transition-colors hover:bg-accent/50"
+        style={{ borderLeftColor: dominantColor, borderLeftWidth: '2px' }}
+      >
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold">{name}</h3>
+              {isFavorite && (
+                <Star className="h-3.5 w-3.5 fill-yellow-500 text-yellow-500" />
+              )}
             </div>
-          )
-        })}
+            <p className="mt-1 text-sm text-muted-foreground">{itemCount} items</p>
+          </div>
+          {/* Spacer so the absolutely-positioned menu trigger doesn't overlap text */}
+          <div className="h-6 w-6 shrink-0" aria-hidden="true" />
+        </div>
+
+        <p className="mt-3 text-sm text-muted-foreground">{description}</p>
+
+        <div className="mt-4 flex gap-1.5">
+          {typeIcons.slice(0, 4).map((type, index) => {
+            const Icon = iconMap[type.icon] || DefaultIcon
+            return (
+              <div
+                key={index}
+                className="flex h-6 w-6 items-center justify-center rounded bg-muted/50"
+              >
+                <Icon className="h-3.5 w-3.5" style={{ color: type.color }} />
+              </div>
+            )
+          })}
+        </div>
+      </Link>
+
+      <div className="absolute right-3 top-3 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+        <CollectionCardMenu
+          isFavorite={isFavorite}
+          onEdit={() => setEditing(true)}
+          onDelete={() => setConfirming(true)}
+          onFavorite={() => toast.message('Favorites coming soon')}
+        />
       </div>
-    </Link>
+
+      <EditCollectionDialog
+        open={editing}
+        onClose={() => setEditing(false)}
+        collection={{ id, name, description }}
+      />
+      <ConfirmDialog
+        open={confirming}
+        onClose={() => setConfirming(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete collection?"
+        description={`"${name}" will be deleted. Items in this collection will not be deleted — they will simply no longer belong to it.`}
+        confirmLabel="Delete"
+        pendingLabel="Deleting…"
+        pending={deleting}
+      />
+    </div>
   )
 }

@@ -12,7 +12,7 @@ Do not violate any following rules:
 7. Update goals section with current feature requirements.
 8. Update notes section with current feature references.
 
-# Current Feature
+# Current Feature: Collection Edit / Delete / Favorite Actions
 
 <!--Feature Name-->
 
@@ -20,13 +20,40 @@ Do not violate any following rules:
 
 <!--Not Started|In Progress|Completed-->
 
+In Progress
+
 ## Goals
 
 <!--Goals & requirements-->
 
+- Add Edit, Delete, and Favorite action buttons on `/collections/[id]` (collection detail page).
+- Favorite is icon/button only — do NOT implement the toggle behavior yet.
+- Edit opens a modal that lets the user change the collection's metadata (name, description).
+- Delete shows a confirmation dialog before removing the collection.
+- Deleting a collection must NOT delete its items — only the collection (and its `ItemCollection` join rows) is removed; items continue to exist and remain visible elsewhere.
+- On `/collections` cards and the dashboard's Recent Collections cards, the existing 3-dots (`MoreHorizontal`) icon should open a dropdown with Edit, Delete, and Favorite actions.
+- Clicking anywhere else on a collection card should navigate to that collection's detail page (current behavior preserved).
+- Edit/delete actions originating from card dropdowns must use the same modal/confirmation flows as the detail page.
+
 ## Notes
 
 <!--Any extra notes-->
+
+- Existing routes/components: `src/app/collections/page.tsx`, `src/app/collections/[id]/page.tsx`, `src/components/collections/CollectionCard.tsx`, dashboard's Recent Collections render in `DashboardShell` / `src/lib/db/collections.ts`.
+- Existing patterns to reuse:
+  - `CreateCollectionDialog` (shadcn `Dialog` + name/description form) — pattern for the Edit modal.
+  - `ConfirmDialog` (`src/components/ui/confirm-dialog.tsx`, used by item delete) — pattern for the delete confirmation.
+  - Server action shape `{ success, data | error, fieldErrors? }` from `src/actions/collections.ts::createCollection`.
+- New work likely needed:
+  - `updateCollection(collectionId, { name, description })` and `deleteCollection(collectionId)` DB queries in `src/lib/db/collections.ts` (ownership pre-check, then `prisma.collection.update` / `prisma.collection.delete`).
+  - Matching server actions in `src/actions/collections.ts` with `auth()` gate + demo-user resolution.
+  - `updateCollectionSchema` in `src/lib/validations/collections.ts` (mirror `createCollectionSchema`'s name/description rules).
+  - Cascade behavior: `ItemCollection.collectionId` already has `onDelete: Cascade`, so `prisma.collection.delete` will drop join rows automatically — items themselves are untouched (intended).
+- Dropdown primitive: project does not currently have shadcn `DropdownMenu` installed. Either install it via `npx shadcn add dropdown-menu` (preferred — matches the rest of the shadcn surface) or build a small click-outside / Escape-close popover in the same style as `SidebarUser.tsx` and `CollectionSelect.tsx`.
+- Card click vs dropdown click: `CollectionCard` is currently a `<Link>`. The dropdown trigger and menu items need `e.stopPropagation()` + `e.preventDefault()` so clicking the 3-dots / menu items does not also navigate to the collection page.
+- Vitest scope: add cases for `updateCollectionSchema` (mirroring the existing `createCollectionSchema` tests in `src/lib/validations/collections.test.ts`). DB queries + server actions remain untested per the project's "no Prisma mocking" stance.
+- Dev rule honored: free-plan limits (3-collection cap) intentionally not enforced.
+- Out of scope: actually wiring the favorite toggle (tracked separately), bulk operations, undo on delete.
 
 ## History
 

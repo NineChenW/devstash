@@ -227,6 +227,54 @@ export async function createCollection(
   return created
 }
 
+export interface UpdateCollectionInput {
+  name: string
+  description: string | null
+}
+
+export async function updateCollection(
+  collectionId: string,
+  userId: string,
+  data: UpdateCollectionInput,
+): Promise<CreatedCollection | null> {
+  const owned = await prisma.collection.findFirst({
+    where: { id: collectionId, userId },
+    select: { id: true },
+  })
+  if (!owned) return null
+
+  const updated = await prisma.collection.update({
+    where: { id: collectionId },
+    data: {
+      name: data.name,
+      description: data.description,
+    },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      isFavorite: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  })
+  return updated
+}
+
+export async function deleteCollection(
+  collectionId: string,
+  userId: string,
+): Promise<boolean> {
+  const owned = await prisma.collection.findFirst({
+    where: { id: collectionId, userId },
+    select: { id: true },
+  })
+  if (!owned) return false
+
+  await prisma.collection.delete({ where: { id: collectionId } })
+  return true
+}
+
 export async function getCollectionStats(userId: string) {
   const [totalItems, totalCollections, favoriteItems, favoriteCollections] = await Promise.all([
     prisma.item.count({ where: { userId } }),
