@@ -9,6 +9,7 @@ import { useItemDrawer } from '@/components/items/ItemDrawerContext'
 import { iconMap, DefaultIcon } from '@/lib/icon-map'
 import { fetchSearchData } from '@/actions/search'
 import type { SearchData } from '@/lib/db/search'
+import { searchFilter } from '@/lib/search-filter'
 
 interface CommandPaletteProps {
   open: boolean
@@ -62,6 +63,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
           label="Global search"
           className="flex flex-col"
           loop
+          filter={searchFilter}
         >
           <div className="flex items-center gap-2 border-b border-[hsl(217.2_32.6%_22%)] px-4">
             <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
