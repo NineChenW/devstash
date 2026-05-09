@@ -1,5 +1,10 @@
 import { prisma } from '@/lib/prisma'
 import type { ItemListItem } from '@/lib/db/items'
+import {
+  COLLECTIONS_PER_PAGE,
+  DASHBOARD_COLLECTIONS_LIMIT,
+  ITEMS_PER_PAGE,
+} from '@/lib/pagination'
 
 export interface CollectionWithTypes {
   id: string
@@ -71,13 +76,13 @@ export async function getRecentCollections(userId: string): Promise<CollectionWi
   const collections = await prisma.collection.findMany({
     where: { userId },
     orderBy: { updatedAt: 'desc' },
-    take: 20,
+    take: DASHBOARD_COLLECTIONS_LIMIT,
     include: {
       items: {
-        include: {
+        select: {
           item: {
-            include: {
-              itemType: true,
+            select: {
+              itemType: { select: { id: true, icon: true, color: true } },
             },
           },
         },
@@ -88,45 +93,63 @@ export async function getRecentCollections(userId: string): Promise<CollectionWi
   return collections.map(toCollectionWithTypes)
 }
 
-export async function getAllCollections(userId: string): Promise<CollectionWithTypes[]> {
-  const collections = await prisma.collection.findMany({
-    where: { userId },
-    orderBy: [{ isFavorite: 'desc' }, { name: 'asc' }],
-    include: {
-      items: {
-        include: {
-          item: {
-            include: {
-              itemType: true,
+export interface AllCollectionsResult {
+  collections: CollectionWithTypes[]
+  total: number
+}
+
+export async function getAllCollections(
+  userId: string,
+  page = 1,
+): Promise<AllCollectionsResult> {
+  const skip = (Math.max(1, page) - 1) * COLLECTIONS_PER_PAGE
+  const where = { userId }
+  const [collections, total] = await Promise.all([
+    prisma.collection.findMany({
+      where,
+      orderBy: [{ isFavorite: 'desc' }, { name: 'asc' }],
+      skip,
+      take: COLLECTIONS_PER_PAGE,
+      include: {
+        items: {
+          select: {
+            item: {
+              select: {
+                itemType: { select: { id: true, icon: true, color: true } },
+              },
             },
           },
         },
       },
-    },
-  })
+    }),
+    prisma.collection.count({ where }),
+  ])
 
-  return collections.map(toCollectionWithTypes)
+  return {
+    collections: collections.map(toCollectionWithTypes),
+    total,
+  }
 }
 
 export interface CollectionWithItems {
   collection: CollectionWithTypes
   items: ItemListItem[]
+  total: number
 }
 
 export async function getCollectionWithItems(
   collectionId: string,
   userId: string,
+  page = 1,
 ): Promise<CollectionWithItems | null> {
   const collection = await prisma.collection.findFirst({
     where: { id: collectionId, userId },
     include: {
       items: {
-        orderBy: { addedAt: 'desc' },
-        include: {
+        select: {
           item: {
-            include: {
-              itemType: true,
-              tags: true,
+            select: {
+              itemType: { select: { id: true, icon: true, color: true } },
             },
           },
         },
@@ -135,7 +158,24 @@ export async function getCollectionWithItems(
   })
   if (!collection) return null
 
-  const items: ItemListItem[] = collection.items.map(({ item }) => ({
+  const total = collection.items.length
+  const skip = (Math.max(1, page) - 1) * ITEMS_PER_PAGE
+  const sliceRows = await prisma.itemCollection.findMany({
+    where: { collectionId },
+    orderBy: { addedAt: 'desc' },
+    skip,
+    take: ITEMS_PER_PAGE,
+    include: {
+      item: {
+        include: {
+          itemType: true,
+          tags: true,
+        },
+      },
+    },
+  })
+
+  const items: ItemListItem[] = sliceRows.map(({ item }) => ({
     id: item.id,
     title: item.title,
     description: item.description,
@@ -164,6 +204,7 @@ export async function getCollectionWithItems(
       items: collection.items.map((ic) => ({ item: { itemType: ic.item.itemType } })),
     }),
     items,
+    total,
   }
 }
 

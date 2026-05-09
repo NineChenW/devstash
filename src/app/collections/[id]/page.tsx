@@ -13,16 +13,24 @@ import {
   getRecentCollections,
 } from '@/lib/db/collections'
 import { getSystemItemTypesWithCounts, type ItemListItem } from '@/lib/db/items'
+import { Pagination } from '@/components/ui/pagination'
+import { ITEMS_PER_PAGE, parsePageParam } from '@/lib/pagination'
 
 interface CollectionPageProps {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ page?: string | string[] }>
 }
 
 const GRID_CLASS = 'grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'
 const LIST_CLASS = 'flex flex-col gap-2'
 
-export default async function CollectionPage({ params }: CollectionPageProps) {
+export default async function CollectionPage({
+  params,
+  searchParams,
+}: CollectionPageProps) {
   const { id } = await params
+  const { page: pageParam } = await searchParams
+  const page = parsePageParam(pageParam)
 
   const session = await auth()
   const sidebarUser = session?.user
@@ -42,7 +50,7 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
   }
 
   const [result, sidebarCollections, itemTypes] = await Promise.all([
-    getCollectionWithItems(id, userId),
+    getCollectionWithItems(id, userId, page),
     getRecentCollections(userId),
     getSystemItemTypesWithCounts(userId),
   ])
@@ -51,7 +59,7 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
     notFound()
   }
 
-  const { collection, items } = result
+  const { collection, items, total } = result
 
   const groups = [
     {
@@ -93,7 +101,7 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
             )}
           </div>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            {items.length} {items.length === 1 ? 'item' : 'items'}
+            {total} {total === 1 ? 'item' : 'items'}
           </p>
           {collection.description && (
             <p className="mt-2 text-sm text-muted-foreground">{collection.description}</p>
@@ -128,6 +136,14 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
           ))}
         </div>
       )}
+
+      <Pagination
+        className="mt-8"
+        currentPage={page}
+        total={total}
+        perPage={ITEMS_PER_PAGE}
+        basePath={`/collections/${id}`}
+      />
     </DashboardShell>
   )
 }

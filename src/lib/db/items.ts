@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { deleteObject, isR2Configured } from '@/lib/r2'
+import { ITEMS_PER_PAGE, DASHBOARD_RECENT_ITEMS_LIMIT } from '@/lib/pagination'
 
 export interface DashboardItem {
   id: string
@@ -73,7 +74,10 @@ export async function getPinnedItems(userId: string): Promise<DashboardItem[]> {
   }))
 }
 
-export async function getRecentItems(userId: string, limit = 10): Promise<DashboardItem[]> {
+export async function getRecentItems(
+  userId: string,
+  limit = DASHBOARD_RECENT_ITEMS_LIMIT,
+): Promise<DashboardItem[]> {
   const items = await prisma.item.findMany({
     where: { userId },
     orderBy: [{ lastUsedAt: { sort: 'desc', nulls: 'last' } }, { createdAt: 'desc' }],
@@ -109,6 +113,7 @@ export interface ItemListItem extends DashboardItem {
 export interface ItemsByTypeResult {
   type: { name: string; icon: string; color: string }
   items: ItemListItem[]
+  total: number
 }
 
 export interface ItemDetail {
@@ -344,6 +349,7 @@ export async function deleteItem(
 export async function getItemsByType(
   userId: string,
   typeName: string,
+  page = 1,
 ): Promise<ItemsByTypeResult | null> {
   const type = await prisma.itemType.findFirst({
     where: {
@@ -353,15 +359,21 @@ export async function getItemsByType(
   })
   if (!type) return null
 
-  const items = await prisma.item.findMany({
-    where: { userId, itemTypeId: type.id },
-    orderBy: [{ isPinned: 'desc' }, { updatedAt: 'desc' }],
-    take: 200, // TODO: replace with cursor pagination
-    include: {
-      itemType: true,
-      tags: true,
-    },
-  })
+  const skip = (Math.max(1, page) - 1) * ITEMS_PER_PAGE
+  const where = { userId, itemTypeId: type.id }
+  const [items, total] = await Promise.all([
+    prisma.item.findMany({
+      where,
+      orderBy: [{ isPinned: 'desc' }, { updatedAt: 'desc' }],
+      skip,
+      take: ITEMS_PER_PAGE,
+      include: {
+        itemType: true,
+        tags: true,
+      },
+    }),
+    prisma.item.count({ where }),
+  ])
 
   return {
     type: { name: type.name, icon: type.icon, color: type.color },
@@ -382,5 +394,6 @@ export async function getItemsByType(
       tags: item.tags.map((t) => t.name),
       createdAt: item.createdAt,
     })),
+    total,
   }
 }
