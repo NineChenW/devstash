@@ -10,13 +10,21 @@ import { auth } from '@/auth'
 import { getRecentCollections, getDemoUserId } from '@/lib/db/collections'
 import { getItemsByType, getSystemItemTypesWithCounts } from '@/lib/db/items'
 import { CREATE_ITEM_TYPES, type CreateItemType } from '@/lib/validations/items'
+import { Pagination } from '@/components/ui/pagination'
+import { ITEMS_PER_PAGE, parsePageParam } from '@/lib/pagination'
 
 interface ItemsByTypePageProps {
   params: Promise<{ type: string }>
+  searchParams: Promise<{ page?: string | string[] }>
 }
 
-export default async function ItemsByTypePage({ params }: ItemsByTypePageProps) {
+export default async function ItemsByTypePage({
+  params,
+  searchParams,
+}: ItemsByTypePageProps) {
   const { type: typeParam } = await params
+  const { page: pageParam } = await searchParams
+  const page = parsePageParam(pageParam)
 
   if (!typeParam.endsWith('s')) {
     notFound()
@@ -41,7 +49,7 @@ export default async function ItemsByTypePage({ params }: ItemsByTypePageProps) 
   }
 
   const [result, collections, itemTypes] = await Promise.all([
-    getItemsByType(userId, singularType),
+    getItemsByType(userId, singularType, page),
     getRecentCollections(userId),
     getSystemItemTypesWithCounts(userId),
   ])
@@ -50,7 +58,7 @@ export default async function ItemsByTypePage({ params }: ItemsByTypePageProps) 
     notFound()
   }
 
-  const { type, items } = result
+  const { type, items, total } = result
   const Icon = iconMap[type.icon] || DefaultIcon
   const heading = type.name.charAt(0).toUpperCase() + type.name.slice(1) + 's'
   const isCreatable = (CREATE_ITEM_TYPES as readonly string[]).includes(type.name)
@@ -68,7 +76,7 @@ export default async function ItemsByTypePage({ params }: ItemsByTypePageProps) 
           <div>
             <h1 className="text-2xl font-semibold">{heading}</h1>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              {items.length} {items.length === 1 ? 'item' : 'items'}
+              {total} {total === 1 ? 'item' : 'items'}
             </p>
           </div>
         </div>
@@ -131,6 +139,14 @@ export default async function ItemsByTypePage({ params }: ItemsByTypePageProps) 
           ))}
         </div>
       )}
+
+      <Pagination
+        className="mt-8"
+        currentPage={page}
+        total={total}
+        perPage={ITEMS_PER_PAGE}
+        basePath={`/items/${typeParam}`}
+      />
     </DashboardShell>
   )
 }

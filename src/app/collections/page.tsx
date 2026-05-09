@@ -8,8 +8,16 @@ import {
   getRecentCollections,
 } from '@/lib/db/collections'
 import { getSystemItemTypesWithCounts } from '@/lib/db/items'
+import { Pagination } from '@/components/ui/pagination'
+import { COLLECTIONS_PER_PAGE, parsePageParam } from '@/lib/pagination'
 
-export default async function CollectionsPage() {
+interface CollectionsPageProps {
+  searchParams: Promise<{ page?: string | string[] }>
+}
+
+export default async function CollectionsPage({ searchParams }: CollectionsPageProps) {
+  const { page: pageParam } = await searchParams
+  const page = parsePageParam(pageParam)
   const session = await auth()
   const sidebarUser = session?.user
     ? { name: session.user.name, email: session.user.email, image: session.user.image }
@@ -27,8 +35,8 @@ export default async function CollectionsPage() {
     )
   }
 
-  const [collections, sidebarCollections, itemTypes] = await Promise.all([
-    getAllCollections(userId),
+  const [{ collections, total }, sidebarCollections, itemTypes] = await Promise.all([
+    getAllCollections(userId, page),
     getRecentCollections(userId),
     getSystemItemTypesWithCounts(userId),
   ])
@@ -45,7 +53,7 @@ export default async function CollectionsPage() {
         <div>
           <h1 className="text-2xl font-semibold">Collections</h1>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            {collections.length} {collections.length === 1 ? 'collection' : 'collections'}
+            {total} {total === 1 ? 'collection' : 'collections'}
           </p>
         </div>
       </div>
@@ -72,6 +80,14 @@ export default async function CollectionsPage() {
           ))}
         </div>
       )}
+
+      <Pagination
+        className="mt-8"
+        currentPage={page}
+        total={total}
+        perPage={COLLECTIONS_PER_PAGE}
+        basePath="/collections"
+      />
     </DashboardShell>
   )
 }

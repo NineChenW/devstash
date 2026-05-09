@@ -8,6 +8,7 @@ import { ItemTrigger } from '@/components/items/ItemTrigger'
 import { StatsCard } from '@/components/dashboard/StatsCard'
 import { getRecentCollections, getCollectionStats, getDemoUserId } from '@/lib/db/collections'
 import { getPinnedItems, getRecentItems, getSystemItemTypesWithCounts } from '@/lib/db/items'
+import { DASHBOARD_RECENT_ITEMS_LIMIT } from '@/lib/pagination'
 
 export default async function Dashboard() {
   const session = await auth()
@@ -31,7 +32,7 @@ export default async function Dashboard() {
     getRecentCollections(userId),
     getCollectionStats(userId),
     getPinnedItems(userId),
-    getRecentItems(userId, 10),
+    getRecentItems(userId, DASHBOARD_RECENT_ITEMS_LIMIT),
     getSystemItemTypesWithCounts(userId),
   ])
 
