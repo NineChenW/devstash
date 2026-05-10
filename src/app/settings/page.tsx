@@ -4,7 +4,9 @@ import { ArrowLeft } from 'lucide-react'
 import { auth } from '@/auth'
 import { ChangePasswordDialog } from '@/components/settings/ChangePasswordDialog'
 import { DeleteAccountDialog } from '@/components/settings/DeleteAccountDialog'
-import { getProfileUser } from '@/lib/db/profile'
+import { EditorPreferencesForm } from '@/components/settings/EditorPreferencesForm'
+import { getDemoUserId } from '@/lib/db/collections'
+import { getEditorPreferences, getProfileUser } from '@/lib/db/profile'
 
 export default async function SettingsPage() {
   const session = await auth()
@@ -17,6 +19,9 @@ export default async function SettingsPage() {
     redirect('/sign-in?callbackUrl=/settings')
   }
 
+  const editorOwnerId = (await getDemoUserId()) ?? session.user.id
+  const editorPreferences = await getEditorPreferences(editorOwnerId)
+
   return (
     <main className="mx-auto max-w-3xl px-4 py-10">
       <Link
@@ -28,6 +33,15 @@ export default async function SettingsPage() {
       </Link>
 
       <h1 className="mb-8 text-2xl font-semibold">Settings</h1>
+
+      <section className="mb-8">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          Editor Preferences
+        </h2>
+        <div className="rounded-xl border bg-card p-5">
+          <EditorPreferencesForm initial={editorPreferences} />
+        </div>
+      </section>
 
       <section>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">

@@ -13,6 +13,7 @@ import {
   getRecentCollections,
 } from '@/lib/db/collections'
 import { getSystemItemTypesWithCounts, type ItemListItem } from '@/lib/db/items'
+import { getEditorPreferences } from '@/lib/db/profile'
 import { Pagination } from '@/components/ui/pagination'
 import { ITEMS_PER_PAGE, parsePageParam } from '@/lib/pagination'
 
@@ -49,10 +50,11 @@ export default async function CollectionPage({
     )
   }
 
-  const [result, sidebarCollections, itemTypes] = await Promise.all([
+  const [result, sidebarCollections, itemTypes, editorPreferences] = await Promise.all([
     getCollectionWithItems(id, userId, page),
     getRecentCollections(userId),
     getSystemItemTypesWithCounts(userId),
+    getEditorPreferences(userId),
   ])
 
   if (!result) {
@@ -85,7 +87,7 @@ export default async function CollectionPage({
   const showHeadings = groups.length > 1
 
   return (
-    <DashboardShell itemTypes={itemTypes} sidebarCollections={sidebarCollections} user={sidebarUser}>
+    <DashboardShell itemTypes={itemTypes} sidebarCollections={sidebarCollections} user={sidebarUser} editorPreferences={editorPreferences}>
       <div className="mb-8 flex items-start gap-3">
         <div
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
