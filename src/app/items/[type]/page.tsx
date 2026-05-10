@@ -9,6 +9,7 @@ import { TypeAddButton } from '@/components/items/TypeAddButton'
 import { auth } from '@/auth'
 import { getRecentCollections, getDemoUserId } from '@/lib/db/collections'
 import { getItemsByType, getSystemItemTypesWithCounts } from '@/lib/db/items'
+import { getEditorPreferences } from '@/lib/db/profile'
 import { CREATE_ITEM_TYPES, type CreateItemType } from '@/lib/validations/items'
 import { Pagination } from '@/components/ui/pagination'
 import { ITEMS_PER_PAGE, parsePageParam } from '@/lib/pagination'
@@ -48,10 +49,11 @@ export default async function ItemsByTypePage({
     )
   }
 
-  const [result, collections, itemTypes] = await Promise.all([
+  const [result, collections, itemTypes, editorPreferences] = await Promise.all([
     getItemsByType(userId, singularType, page),
     getRecentCollections(userId),
     getSystemItemTypesWithCounts(userId),
+    getEditorPreferences(userId),
   ])
 
   if (!result) {
@@ -64,7 +66,7 @@ export default async function ItemsByTypePage({
   const isCreatable = (CREATE_ITEM_TYPES as readonly string[]).includes(type.name)
 
   return (
-    <DashboardShell itemTypes={itemTypes} sidebarCollections={collections} user={sidebarUser}>
+    <DashboardShell itemTypes={itemTypes} sidebarCollections={collections} user={sidebarUser} editorPreferences={editorPreferences}>
       <div className="mb-8 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div

@@ -12,18 +12,30 @@ import { CreateCollectionProvider } from '@/components/collections/CreateCollect
 import { TopBarNewCollectionButton } from '@/components/collections/TopBarNewCollectionButton'
 import { CommandPaletteProvider } from '@/components/search/CommandPaletteContext'
 import { SearchTrigger } from '@/components/search/SearchTrigger'
+import { EditorPreferencesProvider } from '@/components/settings/EditorPreferencesContext'
 import type { SidebarUserData } from '@/components/sidebar/SidebarUser'
 import type { ItemTypeWithCount } from '@/lib/db/items'
 import type { CollectionWithTypes } from '@/lib/db/collections'
+import {
+  DEFAULT_EDITOR_PREFERENCES,
+  type EditorPreferences,
+} from '@/lib/validations/editor-preferences'
 
 interface DashboardShellProps {
   children: React.ReactNode
   itemTypes: ItemTypeWithCount[]
   sidebarCollections: CollectionWithTypes[]
   user: SidebarUserData | null
+  editorPreferences?: EditorPreferences
 }
 
-export function DashboardShell({ children, itemTypes, sidebarCollections, user }: DashboardShellProps) {
+export function DashboardShell({
+  children,
+  itemTypes,
+  sidebarCollections,
+  user,
+  editorPreferences = DEFAULT_EDITOR_PREFERENCES,
+}: DashboardShellProps) {
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false
     const saved = window.localStorage.getItem('sidebar-collapsed')
@@ -47,6 +59,7 @@ export function DashboardShell({ children, itemTypes, sidebarCollections, user }
 
   return (
     <div className="min-h-screen bg-background">
+     <EditorPreferencesProvider initial={editorPreferences}>
       <ItemDrawerProvider>
        <CommandPaletteProvider>
         <CreateItemProvider>
@@ -115,6 +128,7 @@ export function DashboardShell({ children, itemTypes, sidebarCollections, user }
         </CreateItemProvider>
        </CommandPaletteProvider>
       </ItemDrawerProvider>
+     </EditorPreferencesProvider>
     </div>
   )
 }

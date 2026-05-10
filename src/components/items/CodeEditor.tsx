@@ -1,9 +1,11 @@
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Check, Copy } from 'lucide-react'
 import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
 import type { editor } from 'monaco-editor'
+import { useEditorPreferences } from '@/components/settings/EditorPreferencesContext'
+import type { EditorTheme } from '@/lib/validations/editor-preferences'
 
 interface CodeEditorProps {
   value: string
@@ -15,13 +17,26 @@ interface CodeEditorProps {
   maxHeight?: number
 }
 
-const DEVSTASH_THEME = 'devstash-dark'
+const THEME_VS_DARK = 'devstash-vs-dark'
+const THEME_MONOKAI = 'devstash-monokai'
+const THEME_GITHUB_DARK = 'devstash-github-dark'
+
+const THEME_MAP: Record<EditorTheme, string> = {
+  'vs-dark': THEME_VS_DARK,
+  monokai: THEME_MONOKAI,
+  'github-dark': THEME_GITHUB_DARK,
+}
 
 const DEFAULT_MIN_HEIGHT = 120
 const DEFAULT_MAX_HEIGHT = 400
 
-function defineDevstashTheme(monaco: Monaco) {
-  monaco.editor.defineTheme(DEVSTASH_THEME, {
+let themesDefined = false
+
+function defineThemes(monaco: Monaco) {
+  if (themesDefined) return
+  themesDefined = true
+
+  monaco.editor.defineTheme(THEME_VS_DARK, {
     base: 'vs-dark',
     inherit: true,
     rules: [],
@@ -42,6 +57,74 @@ function defineDevstashTheme(monaco: Monaco) {
       'scrollbarSlider.activeBackground': '#64748bd0',
     },
   })
+
+  monaco.editor.defineTheme(THEME_MONOKAI, {
+    base: 'vs-dark',
+    inherit: true,
+    rules: [
+      { token: 'comment', foreground: '75715e', fontStyle: 'italic' },
+      { token: 'keyword', foreground: 'f92672' },
+      { token: 'string', foreground: 'e6db74' },
+      { token: 'number', foreground: 'ae81ff' },
+      { token: 'type', foreground: '66d9ef', fontStyle: 'italic' },
+      { token: 'function', foreground: 'a6e22e' },
+      { token: 'variable', foreground: 'f8f8f2' },
+      { token: 'constant', foreground: 'ae81ff' },
+      { token: 'tag', foreground: 'f92672' },
+      { token: 'attribute.name', foreground: 'a6e22e' },
+      { token: 'attribute.value', foreground: 'e6db74' },
+    ],
+    colors: {
+      'editor.background': '#272822',
+      'editor.foreground': '#f8f8f2',
+      'editorLineNumber.foreground': '#75715e',
+      'editorLineNumber.activeForeground': '#f8f8f2',
+      'editor.lineHighlightBackground': '#3e3d32',
+      'editor.selectionBackground': '#49483e',
+      'editor.inactiveSelectionBackground': '#3a3a35',
+      'editorCursor.foreground': '#f8f8f0',
+      'editorIndentGuide.background': '#3b3a32',
+      'editorIndentGuide.activeBackground': '#75715e',
+      'scrollbar.shadow': '#00000000',
+      'scrollbarSlider.background': '#75715e80',
+      'scrollbarSlider.hoverBackground': '#a59f85b0',
+      'scrollbarSlider.activeBackground': '#cfcfc2d0',
+    },
+  })
+
+  monaco.editor.defineTheme(THEME_GITHUB_DARK, {
+    base: 'vs-dark',
+    inherit: true,
+    rules: [
+      { token: 'comment', foreground: '8b949e', fontStyle: 'italic' },
+      { token: 'keyword', foreground: 'ff7b72' },
+      { token: 'string', foreground: 'a5d6ff' },
+      { token: 'number', foreground: '79c0ff' },
+      { token: 'type', foreground: 'ffa657' },
+      { token: 'function', foreground: 'd2a8ff' },
+      { token: 'variable', foreground: 'c9d1d9' },
+      { token: 'constant', foreground: '79c0ff' },
+      { token: 'tag', foreground: '7ee787' },
+      { token: 'attribute.name', foreground: '79c0ff' },
+      { token: 'attribute.value', foreground: 'a5d6ff' },
+    ],
+    colors: {
+      'editor.background': '#0d1117',
+      'editor.foreground': '#c9d1d9',
+      'editorLineNumber.foreground': '#484f58',
+      'editorLineNumber.activeForeground': '#c9d1d9',
+      'editor.lineHighlightBackground': '#161b22',
+      'editor.selectionBackground': '#264f78',
+      'editor.inactiveSelectionBackground': '#1f3a5a',
+      'editorCursor.foreground': '#c9d1d9',
+      'editorIndentGuide.background': '#21262d',
+      'editorIndentGuide.activeBackground': '#30363d',
+      'scrollbar.shadow': '#00000000',
+      'scrollbarSlider.background': '#30363d80',
+      'scrollbarSlider.hoverBackground': '#484f58b0',
+      'scrollbarSlider.activeBackground': '#6e7681d0',
+    },
+  })
 }
 
 export function CodeEditor({
@@ -53,9 +136,13 @@ export function CodeEditor({
   minHeight = DEFAULT_MIN_HEIGHT,
   maxHeight = DEFAULT_MAX_HEIGHT,
 }: CodeEditorProps) {
+  const preferences = useEditorPreferences()
+  const monacoRef = useRef<Monaco | null>(null)
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
   const [editorHeight, setEditorHeight] = useState(minHeight)
   const [copied, setCopied] = useState(false)
+
+  const themeId = THEME_MAP[preferences.theme]
 
   const normalizedLanguage = (language ?? '').trim().toLowerCase() || 'plaintext'
 
@@ -69,11 +156,29 @@ export function CodeEditor({
 
   const handleMount: OnMount = (ed, monaco) => {
     editorRef.current = ed
-    defineDevstashTheme(monaco)
-    monaco.editor.setTheme(DEVSTASH_THEME)
+    monacoRef.current = monaco
+    defineThemes(monaco)
+    monaco.editor.setTheme(themeId)
     ed.onDidContentSizeChange(() => updateHeight(ed))
     updateHeight(ed)
   }
+
+  useEffect(() => {
+    const monaco = monacoRef.current
+    if (!monaco) return
+    monaco.editor.setTheme(themeId)
+  }, [themeId])
+
+  useEffect(() => {
+    const ed = editorRef.current
+    if (!ed) return
+    ed.updateOptions({
+      tabSize: preferences.tabSize,
+      fontSize: preferences.fontSize,
+      wordWrap: preferences.wordWrap ? 'on' : 'off',
+      minimap: { enabled: preferences.minimap },
+    })
+  }, [preferences.tabSize, preferences.fontSize, preferences.wordWrap, preferences.minimap])
 
   const handleCopy = async () => {
     const text = editorRef.current?.getValue() ?? value
@@ -122,20 +227,21 @@ export function CodeEditor({
           value={value}
           onChange={(v) => onChange?.(v ?? '')}
           language={normalizedLanguage}
-          theme={DEVSTASH_THEME}
+          theme={themeId}
           onMount={handleMount}
           height={editorHeight}
           options={{
             readOnly,
             domReadOnly: readOnly,
-            fontSize: 12,
+            fontSize: preferences.fontSize,
+            tabSize: preferences.tabSize,
             fontFamily:
               'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
             lineNumbers: 'on',
             lineNumbersMinChars: 3,
-            minimap: { enabled: false },
+            minimap: { enabled: preferences.minimap },
             scrollBeyondLastLine: false,
-            wordWrap: 'on',
+            wordWrap: preferences.wordWrap ? 'on' : 'off',
             wrappingIndent: 'same',
             automaticLayout: true,
             padding: { top: 12, bottom: 12 },

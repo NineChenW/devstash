@@ -8,6 +8,7 @@ import { ItemTrigger } from '@/components/items/ItemTrigger'
 import { StatsCard } from '@/components/dashboard/StatsCard'
 import { getRecentCollections, getCollectionStats, getDemoUserId } from '@/lib/db/collections'
 import { getPinnedItems, getRecentItems, getSystemItemTypesWithCounts } from '@/lib/db/items'
+import { getEditorPreferences } from '@/lib/db/profile'
 import { DASHBOARD_RECENT_ITEMS_LIMIT } from '@/lib/pagination'
 
 export default async function Dashboard() {
@@ -28,16 +29,17 @@ export default async function Dashboard() {
     )
   }
 
-  const [collections, stats, pinnedItems, recentItems, itemTypes] = await Promise.all([
+  const [collections, stats, pinnedItems, recentItems, itemTypes, editorPreferences] = await Promise.all([
     getRecentCollections(userId),
     getCollectionStats(userId),
     getPinnedItems(userId),
     getRecentItems(userId, DASHBOARD_RECENT_ITEMS_LIMIT),
     getSystemItemTypesWithCounts(userId),
+    getEditorPreferences(userId),
   ])
 
   return (
-    <DashboardShell itemTypes={itemTypes} sidebarCollections={collections} user={sidebarUser}>
+    <DashboardShell itemTypes={itemTypes} sidebarCollections={collections} user={sidebarUser} editorPreferences={editorPreferences}>
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-semibold">Dashboard</h1>
