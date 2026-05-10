@@ -4,8 +4,6 @@ import { Layers, FolderOpen, ArrowLeft } from 'lucide-react'
 import { auth } from '@/auth'
 import { UserAvatar } from '@/components/user/UserAvatar'
 import { StatsCard } from '@/components/dashboard/StatsCard'
-import { ChangePasswordDialog } from '@/components/profile/ChangePasswordDialog'
-import { DeleteAccountDialog } from '@/components/profile/DeleteAccountDialog'
 import { iconMap, DefaultIcon } from '@/lib/icon-map'
 import { getProfileStats, getProfileUser } from '@/lib/db/profile'
 
@@ -99,40 +97,6 @@ export default async function ProfilePage() {
         </div>
       </section>
 
-      <section>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          Account
-        </h2>
-        <div className="space-y-3 rounded-xl border bg-card p-5">
-          {user.hasPassword && (
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-medium">Password</p>
-                <p className="text-xs text-muted-foreground">
-                  Update the password you use to sign in with email.
-                </p>
-              </div>
-              <ChangePasswordDialog />
-            </div>
-          )}
-
-          <div
-            className={
-              user.hasPassword
-                ? 'flex items-center justify-between gap-4 border-t pt-3'
-                : 'flex items-center justify-between gap-4'
-            }
-          >
-            <div>
-              <p className="text-sm font-medium text-destructive">Delete account</p>
-              <p className="text-xs text-muted-foreground">
-                Permanently remove your account and all of your data.
-              </p>
-            </div>
-            <DeleteAccountDialog />
-          </div>
-        </div>
-      </section>
     </main>
   )
 }
