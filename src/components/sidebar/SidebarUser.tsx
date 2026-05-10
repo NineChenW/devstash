@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { signOut } from 'next-auth/react'
-import { LogOut, MoreVertical, Settings } from 'lucide-react'
+import { LogOut, MoreVertical, Settings, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { UserAvatar } from '@/components/user/UserAvatar'
 
@@ -80,6 +80,15 @@ export function SidebarUser({ collapsed, name, email, image }: SidebarUserProps)
           role="menu"
           className="absolute bottom-full left-3 right-3 mb-1 overflow-hidden rounded-md border bg-popover shadow-md"
         >
+          <Link
+            href="/profile"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-popover-foreground hover:bg-accent"
+          >
+            <User className="h-4 w-4" />
+            Profile
+          </Link>
           <Link
             href="/settings"
             role="menuitem"
