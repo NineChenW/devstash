@@ -12,7 +12,7 @@ Do not violate any following rules:
 7. Update goals section with current feature requirements.
 8. Update notes section with current feature references.
 
-# Current Feature
+# Current Feature: Favorites Page
 
 <!--Feature Name-->
 
@@ -20,13 +20,33 @@ Do not violate any following rules:
 
 <!--Not Started|In Progress|Completed-->
 
+In Progress
+
 ## Goals
 
 <!--Goals & requirements-->
 
+- Add a star icon button to the TopBar that links to `/favorites`
+- Create a protected `/favorites` route (auth-gated, same pattern as `/dashboard` etc.)
+- Fetch all favorited items and favorited collections for the current user
+- Render a compact, list-style view (VS Code / terminal aesthetic — not cards)
+- Each row shows: type icon, title, type badge, date added
+- Separate sections for items and collections, each with a count
+- Clicking an item row opens the existing `ItemDrawer`; clicking a collection row navigates to `/collections/[id]`
+- Empty state when the user has no favorites
+- Sort by most recently favorited (`updatedAt` desc)
+
 ## Notes
 
 <!--Any extra notes-->
+
+- Spec: [context/features/favorites-spec.md](favorites-spec.md)
+- UI style: monospace or semi-monospace font, minimal padding for high density, subtle hover states, clean lines only — no cards or heavy borders.
+- "Date added" on a row likely means `updatedAt` on the underlying item/collection row (we don't track a separate favorited-at timestamp; `isFavorite` is a boolean on each model).
+- Items: clicking opens `ItemDrawer` via the existing `ItemTrigger` / `useItemDrawer().openItem(id)` pattern — needs to live under `ItemDrawerProvider`. The page can either render through `DashboardShell` (free providers + sidebar + topbar) or mount a minimal provider stack itself.
+- The TopBar currently lives in `DashboardShell`'s `<header>` between the sidebar drawer trigger and `SearchTrigger` / `TopBarNewItemButton` / `TopBarNewCollectionButton`. New star icon button should slot in near the existing top-bar action buttons; use `lucide-react` `Star` for consistency with the rest of the favorites iconography.
+- Demo user has 7 favorited items and 2 favorited collections (just seeded today via `scripts/seed-demo-favorites.sql`) — good coverage for browser QA of the populated state. Empty-state branch will need a manual unfavorite or a fresh account to verify.
+
 
 
 ## History
