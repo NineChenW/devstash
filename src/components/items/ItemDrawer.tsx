@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Copy, Download, Pencil, Pin, Star, Trash2 } from 'lucide-react'
+import { Copy, Download, Pencil, Pin, PinOff, Star, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Sheet } from '@/components/ui/sheet'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { iconMap, DefaultIcon } from '@/lib/icon-map'
-import { deleteItem, toggleItemFavorite } from '@/actions/items'
+import { deleteItem, toggleItemFavorite, toggleItemPin } from '@/actions/items'
 import type { ItemDetail } from '@/lib/db/items'
 import { ItemContentPreview } from './ItemContentPreview'
 import { ItemDrawerEdit } from './ItemDrawerEdit'
@@ -38,6 +38,7 @@ export function ItemDrawer({ itemId, onClose }: ItemDrawerProps) {
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [favoritePending, setFavoritePending] = useState(false)
+  const [pinPending, setPinPending] = useState(false)
 
   useEffect(() => {
     if (!itemId) {
@@ -108,6 +109,30 @@ export function ItemDrawer({ itemId, onClose }: ItemDrawerProps) {
     }
   }
 
+  async function handleTogglePin() {
+    if (!item || pinPending) return
+    const previous = pinned
+    const next = !previous
+    setPinned(next)
+    setPinPending(true)
+    try {
+      const result = await toggleItemPin(item.id)
+      if (!result.success) {
+        setPinned(previous)
+        toast.error(result.error)
+        return
+      }
+      setPinned(result.isPinned)
+      toast.success(result.isPinned ? 'Pinned' : 'Unpinned')
+      router.refresh()
+    } catch {
+      setPinned(previous)
+      toast.error('Failed to update pin')
+    } finally {
+      setPinPending(false)
+    }
+  }
+
   async function handleConfirmDelete() {
     if (!item || deleting) return
     setDeleting(true)
@@ -144,7 +169,7 @@ export function ItemDrawer({ itemId, onClose }: ItemDrawerProps) {
             favorite={favorite}
             pinned={pinned}
             onToggleFavorite={handleToggleFavorite}
-            onTogglePin={() => setPinned((v) => !v)}
+            onTogglePin={handleTogglePin}
             onEdit={() => setEditing(true)}
             onDelete={() => setConfirmingDelete(true)}
           />
@@ -245,8 +270,14 @@ function DrawerView({
           active={favorite}
         />
         <ActionButton
-          icon={<Pin className={pinned ? 'h-4 w-4 text-foreground' : 'h-4 w-4'} />}
-          label="Pin"
+          icon={
+            pinned ? (
+              <PinOff className="h-4 w-4 text-blue-400" />
+            ) : (
+              <Pin className="h-4 w-4" />
+            )
+          }
+          label={pinned ? 'Unpin' : 'Pin'}
           onClick={onTogglePin}
           active={pinned}
         />

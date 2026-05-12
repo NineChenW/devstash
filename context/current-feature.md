@@ -12,21 +12,40 @@ Do not violate any following rules:
 7. Update goals section with current feature requirements.
 8. Update notes section with current feature references.
 
-# Current Feature
+# Current Feature: Pinned Items
 
 <!--Feature Name-->
 
 ## Status
 
 <!--Not Started|In Progress|Completed-->
+In Progress
 
 ## Goals
 
 <!--Goals & requirements-->
+- Add `toggleItemPin` server action (mirrors `toggleItemFavorite` shape)
+- Wire the existing Pin button in `ItemDrawer` action bar so it actually persists `Item.isPinned` (currently exists but has no `onClick`)
+- Optimistic UI update: flip pin state immediately, revert on failure
+- Toast notification on success (`Pinned` / `Unpinned`) and on error
+- Pinned items sort to the top of `/items/[type]` listings (already partly true via the existing `orderBy: [{ isPinned: 'desc' }, { updatedAt: 'desc' }]` in `getItemsByType` — verify it survives) and continue to surface in the dashboard's Pinned section
+- Follow the Favorite Toggle pattern from 2026-05-12 (revert + toast on failure, `router.refresh()` on success)
+- Items only — collections do NOT get a pin toggle
+- Pin icon on `ItemCard` / `PinnedItem` / `RecentItem` remains a static visual indicator; no inline toggle on listing cards
 
 ## Notes
 
 <!--Any extra notes-->
+- Spec source: `context/features/pinned-spec.md`
+- Pattern reference: 2026-05-12 "Favorite Toggle" history entry — mirror the action shape, DB helper shape, and optimistic-update wiring exactly
+- DB column: `Item.isPinned Boolean @default(false)` already exists in `prisma/schema.prisma`; no migration needed
+- Existing helpers to touch:
+  - `src/lib/db/items.ts` — add `toggleItemPin(itemId, userId)`; check `getPinnedItems` is still the dashboard data source
+  - `src/actions/items.ts` — add `toggleItemPin(itemId)` server action
+  - `src/components/items/ItemDrawer.tsx` — `DrawerView`'s `Pin` `ActionButton` is currently inert; wire it like the Star button
+- Listing sort: `getItemsByType` already orders `[{ isPinned: 'desc' }, { updatedAt: 'desc' }]`, so toggling pin should naturally re-sort on `router.refresh()`. No query change expected.
+- Out of scope per the spec: collection pinning, inline pin toggle on `ItemCard` / `PinnedItem` / `RecentItem`, pinned-only filter view, drag-to-reorder pinned items
+- Tests: per `coding-standards.md`, the action + DB helper are Prisma+auth-touching → untested by design (matches the favorite-toggle stance); add cases only if a pure helper emerges
 
 
 ## History
