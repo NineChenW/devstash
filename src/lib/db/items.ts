@@ -340,6 +340,24 @@ export async function toggleItemFavorite(
   return { isFavorite: updated.isFavorite }
 }
 
+export async function toggleItemPin(
+  itemId: string,
+  userId: string,
+): Promise<{ isPinned: boolean } | null> {
+  const owned = await prisma.item.findFirst({
+    where: { id: itemId, userId },
+    select: { id: true, isPinned: true },
+  })
+  if (!owned) return null
+
+  const updated = await prisma.item.update({
+    where: { id: itemId },
+    data: { isPinned: !owned.isPinned },
+    select: { isPinned: true },
+  })
+  return { isPinned: updated.isPinned }
+}
+
 export async function deleteItem(
   itemId: string,
   userId: string,

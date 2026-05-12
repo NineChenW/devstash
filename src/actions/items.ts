@@ -7,6 +7,7 @@ import {
   createItem as createItemQuery,
   deleteItem as deleteItemQuery,
   toggleItemFavorite as toggleItemFavoriteQuery,
+  toggleItemPin as toggleItemPinQuery,
   updateItem as updateItemQuery,
   type ItemDetail,
 } from '@/lib/db/items'
@@ -153,6 +154,32 @@ export async function toggleItemFavorite(
   } catch (err) {
     console.error('toggleItemFavorite failed', err)
     return { success: false, error: 'Failed to update favorite' }
+  }
+}
+
+export type ToggleItemPinResult =
+  | { success: true; isPinned: boolean }
+  | { success: false; error: string }
+
+export async function toggleItemPin(
+  itemId: string,
+): Promise<ToggleItemPinResult> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { success: false, error: 'Not authenticated' }
+  }
+
+  const ownerId = (await getDemoUserId()) ?? session.user.id
+
+  try {
+    const result = await toggleItemPinQuery(itemId, ownerId)
+    if (!result) {
+      return { success: false, error: 'Item not found' }
+    }
+    return { success: true, isPinned: result.isPinned }
+  } catch (err) {
+    console.error('toggleItemPin failed', err)
+    return { success: false, error: 'Failed to update pin' }
   }
 }
 
