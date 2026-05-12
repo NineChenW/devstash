@@ -12,7 +12,7 @@ Do not violate any following rules:
 7. Update goals section with current feature requirements.
 8. Update notes section with current feature references.
 
-# Current Feature
+# Current Feature: Favorite Toggle (Drawer, Collection Page, Cards)
 
 <!--Feature Name-->
 
@@ -20,13 +20,38 @@ Do not violate any following rules:
 
 <!--Not Started|In Progress|Completed-->
 
+In Progress
+
 ## Goals
 
 <!--Goals & requirements-->
 
+- Wire the favorite icon/button so it actually persists `Item.isFavorite` / `Collection.isFavorite` instead of being a local-only stub or coming-soon toast.
+- Surface a working favorite toggle in three places:
+  - **Item drawer** action bar (currently a visual-only Star button in `ItemDrawer.tsx`).
+  - **Collection detail page** action row (`CollectionActions.tsx` — currently fires a `'Favorites coming soon'` toast).
+  - **Collection card 3-dot menu** (`CollectionCardMenu.tsx` — currently fires the same coming-soon toast).
+- Optimistic UI: clicking the toggle should flip the star state immediately, then reconcile with the server result. Revert and toast on failure.
+- Invalidate downstream surfaces after a successful toggle so the new state is reflected in:
+  - `/favorites` page (the items and collections lists)
+  - Dashboard Recent Collections / Pinned Items grids
+  - Sidebar Favorites section
+  - Items list `ItemCard` star indicator
+- Add server actions for `toggleItemFavorite(itemId)` and `toggleCollectionFavorite(collectionId)` with `auth()` gating, ownership checks, and the standard `{ success, data | error }` discriminated union.
+
 ## Notes
 
 <!--Any extra notes-->
+
+- Schema is already in place: `Item.isFavorite Boolean @default(false)` and `Collection.isFavorite Boolean @default(false)`. No migration needed.
+- Existing local-only stubs to replace:
+  - `ItemDrawer.tsx::handleStub('Favorite')` — visual toggle only.
+  - `CollectionActions.tsx` favorite button — currently `toast.message('Favorites coming soon')`.
+  - `CollectionCardMenu.tsx` favorite menu item — same coming-soon toast.
+- Add a `CollectionCard` star indicator (the card itself doesn't currently render the favorite state visibly outside of the menu); also consider whether `ItemCard` should expose a quick-favorite toggle (out of scope per spec — only drawer + collection surfaces).
+- Follow the established pattern from `src/actions/items.ts::deleteItem` / `src/actions/collections.ts::deleteCollection` for the server action shape (auth + ownership + try/catch + discriminated union return).
+- `router.refresh()` after the server action resolves to invalidate the surrounding page's server-fetched data. Optimistic update handled via local `useState` in each consumer.
+- Add Vitest cases only if a pure utility/helper emerges from this work; the DB queries and server actions follow the project's untested-by-design stance per `coding-standards.md`.
 
 
 ## History

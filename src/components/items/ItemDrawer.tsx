@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import { Sheet } from '@/components/ui/sheet'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { iconMap, DefaultIcon } from '@/lib/icon-map'
-import { deleteItem } from '@/actions/items'
+import { deleteItem, toggleItemFavorite } from '@/actions/items'
 import type { ItemDetail } from '@/lib/db/items'
 import { ItemContentPreview } from './ItemContentPreview'
 import { ItemDrawerEdit } from './ItemDrawerEdit'
@@ -37,6 +37,7 @@ export function ItemDrawer({ itemId, onClose }: ItemDrawerProps) {
   const [editing, setEditing] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [favoritePending, setFavoritePending] = useState(false)
 
   useEffect(() => {
     if (!itemId) {
@@ -84,6 +85,29 @@ export function ItemDrawer({ itemId, onClose }: ItemDrawerProps) {
     setEditing(false)
   }
 
+  async function handleToggleFavorite() {
+    if (!item || favoritePending) return
+    const previous = favorite
+    const next = !previous
+    setFavorite(next)
+    setFavoritePending(true)
+    try {
+      const result = await toggleItemFavorite(item.id)
+      if (!result.success) {
+        setFavorite(previous)
+        toast.error(result.error)
+        return
+      }
+      setFavorite(result.isFavorite)
+      router.refresh()
+    } catch {
+      setFavorite(previous)
+      toast.error('Failed to update favorite')
+    } finally {
+      setFavoritePending(false)
+    }
+  }
+
   async function handleConfirmDelete() {
     if (!item || deleting) return
     setDeleting(true)
@@ -119,7 +143,7 @@ export function ItemDrawer({ itemId, onClose }: ItemDrawerProps) {
             item={item}
             favorite={favorite}
             pinned={pinned}
-            onToggleFavorite={() => setFavorite((v) => !v)}
+            onToggleFavorite={handleToggleFavorite}
             onTogglePin={() => setPinned((v) => !v)}
             onEdit={() => setEditing(true)}
             onDelete={() => setConfirmingDelete(true)}

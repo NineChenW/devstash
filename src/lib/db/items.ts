@@ -322,6 +322,24 @@ export async function createItem(
   return getItemDetail(created.id, userId)
 }
 
+export async function toggleItemFavorite(
+  itemId: string,
+  userId: string,
+): Promise<{ isFavorite: boolean } | null> {
+  const owned = await prisma.item.findFirst({
+    where: { id: itemId, userId },
+    select: { id: true, isFavorite: true },
+  })
+  if (!owned) return null
+
+  const updated = await prisma.item.update({
+    where: { id: itemId },
+    data: { isFavorite: !owned.isFavorite },
+    select: { isFavorite: true },
+  })
+  return { isFavorite: updated.isFavorite }
+}
+
 export async function deleteItem(
   itemId: string,
   userId: string,

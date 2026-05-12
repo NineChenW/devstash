@@ -6,6 +6,7 @@ import { getDemoUserId } from '@/lib/db/collections'
 import {
   createItem as createItemQuery,
   deleteItem as deleteItemQuery,
+  toggleItemFavorite as toggleItemFavoriteQuery,
   updateItem as updateItemQuery,
   type ItemDetail,
 } from '@/lib/db/items'
@@ -126,6 +127,32 @@ export async function createItem(payload: CreateItemPayload): Promise<CreateItem
   } catch (err) {
     console.error('createItem failed', err)
     return { success: false, error: 'Failed to create item' }
+  }
+}
+
+export type ToggleItemFavoriteResult =
+  | { success: true; isFavorite: boolean }
+  | { success: false; error: string }
+
+export async function toggleItemFavorite(
+  itemId: string,
+): Promise<ToggleItemFavoriteResult> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { success: false, error: 'Not authenticated' }
+  }
+
+  const ownerId = (await getDemoUserId()) ?? session.user.id
+
+  try {
+    const result = await toggleItemFavoriteQuery(itemId, ownerId)
+    if (!result) {
+      return { success: false, error: 'Item not found' }
+    }
+    return { success: true, isFavorite: result.isFavorite }
+  } catch (err) {
+    console.error('toggleItemFavorite failed', err)
+    return { success: false, error: 'Failed to update favorite' }
   }
 }
 

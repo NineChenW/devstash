@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import { Pencil, Star, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
-import { deleteCollection } from '@/actions/collections'
+import { deleteCollection, toggleCollectionFavorite } from '@/actions/collections'
 import { EditCollectionDialog } from './EditCollectionDialog'
 
 interface CollectionActionsProps {
@@ -23,6 +23,31 @@ export function CollectionActions({ collection }: CollectionActionsProps) {
   const [editing, setEditing] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [isFavorite, setIsFavorite] = useState(collection.isFavorite)
+  const [favoritePending, setFavoritePending] = useState(false)
+
+  async function handleToggleFavorite() {
+    if (favoritePending) return
+    const previous = isFavorite
+    const next = !previous
+    setIsFavorite(next)
+    setFavoritePending(true)
+    try {
+      const result = await toggleCollectionFavorite(collection.id)
+      if (!result.success) {
+        setIsFavorite(previous)
+        toast.error(result.error)
+        return
+      }
+      setIsFavorite(result.isFavorite)
+      router.refresh()
+    } catch {
+      setIsFavorite(previous)
+      toast.error('Failed to update favorite')
+    } finally {
+      setFavoritePending(false)
+    }
+  }
 
   async function handleConfirmDelete() {
     if (deleting) return
@@ -50,13 +75,14 @@ export function CollectionActions({ collection }: CollectionActionsProps) {
         type="button"
         variant="ghost"
         size="icon"
-        aria-label={collection.isFavorite ? 'Unfavorite collection' : 'Favorite collection'}
-        title="Favorites coming soon"
-        onClick={() => toast.message('Favorites coming soon')}
+        aria-label={isFavorite ? 'Unfavorite collection' : 'Favorite collection'}
+        aria-pressed={isFavorite}
+        onClick={handleToggleFavorite}
+        disabled={favoritePending}
       >
         <Star
           className={
-            collection.isFavorite
+            isFavorite
               ? 'h-4 w-4 fill-yellow-500 text-yellow-500'
               : 'h-4 w-4'
           }
