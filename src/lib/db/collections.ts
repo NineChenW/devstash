@@ -302,6 +302,24 @@ export async function updateCollection(
   return updated
 }
 
+export async function toggleCollectionFavorite(
+  collectionId: string,
+  userId: string,
+): Promise<{ isFavorite: boolean } | null> {
+  const owned = await prisma.collection.findFirst({
+    where: { id: collectionId, userId },
+    select: { id: true, isFavorite: true },
+  })
+  if (!owned) return null
+
+  const updated = await prisma.collection.update({
+    where: { id: collectionId },
+    data: { isFavorite: !owned.isFavorite },
+    select: { isFavorite: true },
+  })
+  return { isFavorite: updated.isFavorite }
+}
+
 export async function deleteCollection(
   collectionId: string,
   userId: string,

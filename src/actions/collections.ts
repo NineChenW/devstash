@@ -7,6 +7,7 @@ import {
   deleteCollection as deleteCollectionQuery,
   getDemoUserId,
   getUserCollections,
+  toggleCollectionFavorite as toggleCollectionFavoriteQuery,
   updateCollection as updateCollectionQuery,
   type CreatedCollection,
   type UserCollectionOption,
@@ -98,6 +99,32 @@ export async function updateCollection(
   } catch (err) {
     console.error('updateCollection failed', err)
     return { success: false, error: 'Failed to update collection' }
+  }
+}
+
+export type ToggleCollectionFavoriteResult =
+  | { success: true; isFavorite: boolean }
+  | { success: false; error: string }
+
+export async function toggleCollectionFavorite(
+  collectionId: string,
+): Promise<ToggleCollectionFavoriteResult> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { success: false, error: 'Not authenticated' }
+  }
+
+  const ownerId = (await getDemoUserId()) ?? session.user.id
+
+  try {
+    const result = await toggleCollectionFavoriteQuery(collectionId, ownerId)
+    if (!result) {
+      return { success: false, error: 'Collection not found' }
+    }
+    return { success: true, isFavorite: result.isFavorite }
+  } catch (err) {
+    console.error('toggleCollectionFavorite failed', err)
+    return { success: false, error: 'Failed to update favorite' }
   }
 }
 

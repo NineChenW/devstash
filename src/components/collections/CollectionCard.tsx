@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import { Star } from 'lucide-react'
 import { iconMap, DefaultIcon } from '@/lib/icon-map'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
-import { deleteCollection } from '@/actions/collections'
+import { deleteCollection, toggleCollectionFavorite } from '@/actions/collections'
 import { CollectionCardMenu } from './CollectionCardMenu'
 import { EditCollectionDialog } from './EditCollectionDialog'
 
@@ -34,6 +34,31 @@ export function CollectionCard({
   const [editing, setEditing] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [favorite, setFavorite] = useState(isFavorite)
+  const [favoritePending, setFavoritePending] = useState(false)
+
+  async function handleToggleFavorite() {
+    if (favoritePending) return
+    const previous = favorite
+    const next = !previous
+    setFavorite(next)
+    setFavoritePending(true)
+    try {
+      const result = await toggleCollectionFavorite(id)
+      if (!result.success) {
+        setFavorite(previous)
+        toast.error(result.error)
+        return
+      }
+      setFavorite(result.isFavorite)
+      router.refresh()
+    } catch {
+      setFavorite(previous)
+      toast.error('Failed to update favorite')
+    } finally {
+      setFavoritePending(false)
+    }
+  }
 
   async function handleConfirmDelete() {
     setDeleting(true)
@@ -64,7 +89,7 @@ export function CollectionCard({
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <h3 className="font-semibold">{name}</h3>
-              {isFavorite && (
+              {favorite && (
                 <Star className="h-3.5 w-3.5 fill-yellow-500 text-yellow-500" />
               )}
             </div>
@@ -93,10 +118,10 @@ export function CollectionCard({
 
       <div className="absolute right-3 top-3 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
         <CollectionCardMenu
-          isFavorite={isFavorite}
+          isFavorite={favorite}
           onEdit={() => setEditing(true)}
           onDelete={() => setConfirming(true)}
-          onFavorite={() => toast.message('Favorites coming soon')}
+          onFavorite={handleToggleFavorite}
         />
       </div>
 
