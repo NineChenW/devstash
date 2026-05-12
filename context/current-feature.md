@@ -14,9 +14,13 @@ Do not violate any following rules:
 
 # Current Feature
 
+Favorites Page Sorting (Client-Side)
+
 <!--Feature Name-->
 
 ## Status
+
+In Progress
 
 <!--Not Started|In Progress|Completed-->
 
@@ -24,9 +28,27 @@ Do not violate any following rules:
 
 <!--Goals & requirements-->
 
+- Add a sort control to `/favorites` that lets users reorder both the Items list and the Collections list without a server round-trip.
+- Support three sort options:
+  - **Name** — alphabetical (A → Z) on `item.title` / `collection.name`.
+  - **Date** — most recently updated first (default — matches the current `updatedAt desc` server-side order).
+  - **Type** — item type alphabetical (A → Z) for the Items section; for Collections, sort by the dominant item type name (alphabetical) so the Type option remains meaningful across both sections.
+- Sort applies to both sections simultaneously when the option is changed (single shared sort control, not per-section).
+- Sort state lives in the client only — no URL params, no persistence between page loads. Default on mount is **Date**.
+- Empty-state and section-hides-when-empty behavior preserved exactly as today.
+
 ## Notes
 
 <!--Any extra notes-->
+
+- The page is currently a server component at [src/app/favorites/page.tsx](src/app/favorites/page.tsx) that fetches `getFavorites(userId)` and renders two static lists. To add client-side sorting, lift the rendering into a new client wrapper (e.g. `src/components/favorites/FavoritesContent.tsx`) that owns the sort state and re-orders the arrays locally. Keep the page as a server component for the auth + data fetch.
+- `FavoriteItem` already has `typeName` for the Type sort. `FavoriteCollection` does not — to sort collections by dominant type name, either (a) extend `getFavorites` to also return the dominant type's `name` (not just its color), or (b) make Type sort items-only and fall back to a stable order for collections. Approach (a) keeps the UX consistent and is a tiny lib change; prefer (a).
+- The dates round-trip through Prisma as `Date` objects but the row formatter already coerces with `new Date(d)`, so the sort can rely on `Date(a.updatedAt).getTime() - Date(b.updatedAt).getTime()` safely.
+- Sort comparator should be stable — use a small helper module `src/lib/favorites-sort.ts` with pure functions per sort option so it's easy to unit-test (matches the "pure utility/library code in scope" testing convention in `coding-standards.md`).
+- UI for the sort control: a small dropdown / segmented control at the top right of the header row (next to the favorites count line), styled in line with the existing terminal/mono aesthetic. shadcn doesn't have a `Select` primitive installed yet — match the existing settings page pattern by using a native `<select>` styled with the project's Tailwind classes, OR build a tiny custom dropdown matching the `CollectionSelect` / `SidebarUser` popover pattern. Native `<select>` is fine here and matches the editor preferences form.
+- No new server actions, no DB schema changes, no migrations.
+- Add Vitest cases for the sort helpers under `src/lib/favorites-sort.test.ts` covering: each sort option's order on items, each sort option's order on collections, empty arrays, stable behavior with equal keys.
+- Out of scope: ascending/descending toggle, multi-key sort, per-section sort controls, URL-state persistence, server-side sort.
 
 ## History
 
