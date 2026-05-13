@@ -55,6 +55,24 @@ export function Sidebar({ collapsed, itemTypes, collections, user }: SidebarProp
       </div>
 
       <div className="flex-1 overflow-y-auto py-4">
+        {/* Favorites */}
+        <div className="mb-4 px-3">
+          <Link
+            href="/favorites"
+            className={cn(
+              'flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors',
+              pathname === '/favorites'
+                ? 'bg-accent text-accent-foreground'
+                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+              collapsed && 'justify-center'
+            )}
+            title={collapsed ? 'Favorites' : undefined}
+          >
+            <Star className="h-4 w-4 shrink-0 text-amber-400" />
+            {!collapsed && <span className="truncate">Favorites</span>}
+          </Link>
+        </div>
+
         {/* Item Types */}
         <div className="mb-4 px-3">
           {!collapsed && (

@@ -100,7 +100,7 @@ export function DashboardShell({
               </div>
 
               <div className="flex items-center gap-2">
-                <FavoritesNavButton />
+                <FavoritesNavButton className="hidden sm:inline-flex" />
                 <TopBarNewCollectionButton />
                 <TopBarNewItemButton />
               </div>
