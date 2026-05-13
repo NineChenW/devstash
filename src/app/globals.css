@@ -184,4 +184,15 @@
   .markdown-preview strong { color: #f1f5f9; font-weight: 600; }
   .markdown-preview em { color: inherit; font-style: italic; }
   .markdown-preview del { color: #94a3b8; }
+
+  @keyframes arrow-pulse {
+    0%, 100% {
+      transform: scale(1);
+      filter: drop-shadow(0 0 0 rgba(99, 102, 241, 0));
+    }
+    50% {
+      transform: scale(1.08);
+      filter: drop-shadow(0 0 18px rgba(236, 72, 153, 0.55));
+    }
+  }
 }

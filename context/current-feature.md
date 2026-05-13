@@ -12,7 +12,7 @@ Do not violate any following rules:
 7. Update goals section with current feature requirements.
 8. Update notes section with current feature references.
 
-# Current Feature
+# Current Feature: Homepage
 
 <!--Feature Name-->
 
@@ -20,13 +20,42 @@ Do not violate any following rules:
 
 <!--Not Started|In Progress|Completed-->
 
+In Progress
+
 ## Goals
 
 <!--Goals & requirements-->
 
+- Port the static `prototypes/homepage/` mockup into the live Next.js app at `/`, replacing the current landing splash; public route, no auth gate
+- Add a `src/components/home/` folder for all homepage-specific components; route file `src/app/page.tsx` stays a server component that composes children
+- Server components (no `'use client'`): `HomePage`, `Hero` (text + CTAs, hosts the client `ChaosVisual`), `Features`, `AISection`, `FinalCTA`, `Footer` (current year via `new Date().getFullYear()`)
+- Client components (`'use client'`): `HomeNav` (scroll listener ramps bg opacity past ~12px), `ChaosVisual` (rAF physics for 8 floating icons, mouse-repel, IntersectionObserver pause-when-offscreen), `PricingSection` (monthly/yearly toggle state), `FadeOnScroll` (generic IntersectionObserver wrapper that swaps to `is-visible` on first viewport entry)
+- Styling: Tailwind v4 utility classes only — no new CSS files (one exception: an `@keyframes arrow-pulse` block under `@layer components` in `src/app/globals.css` to mirror the existing `.markdown-preview` pattern)
+- Reuse `CREATE_TYPE_META` from `src/lib/item-type-meta.ts` where possible; define a small local `HOMEPAGE_TYPE_COLORS` const in the homepage folder for the spec's accent values that diverge (Prompt `#f59e0b`, Command `#06b6d4`, Note `#22c55e`, File `#64748b`, Image `#ec4899`, URL/link `#6366f1`)
+- Reuse ShadCN `Button` for nav + CTAs: `btn-primary` → custom indigo gradient via inline style, `btn-outline` → `variant="outline"`, `btn-ghost` → `variant="ghost"`, `btn-lg` → `size="lg"`
+- Use `next/link` for internal routes (`/sign-in`, `/register`), plain `<a>` for in-page anchors (`#features`, `#pricing`); footer placeholder links (Changelog / Roadmap / Docs / Guides / Templates / API / About / Contact / Privacy / Terms) stay as `#`
+- ChaosVisual: port rAF physics, mouse-repel math, wall-bounce, gentle drift normalization, pulse scale from `prototypes/homepage/script.js`; inline 8 icon SVGs as `const ICONS`; per-icon state (`x, y, vx, vy, rot, rotV, pulse`) in a `useRef` array, mutate `style.transform` via DOM refs (not React state); clean up rAF + listeners + IO on unmount
+- Hero dashboard mock is static JSX with hardcoded display values (`useDebounce.ts`, `Code review prompt`, etc.) — no DB fetch; top-border color per dash item via inline style
+- PricingSection: single `useState<'monthly' | 'yearly'>('monthly')` — Pro card swaps `$8` ↔ `$6`, period swaps `/month` ↔ `/month, billed yearly`, yearly note (`$72 billed yearly — save $24.`) shown only when yearly; section is the client island (Free card stays inside)
+- FadeOnScroll: initial hidden state `opacity-0 translate-y-3.5` → swap to `opacity-100 translate-y-0` with 600ms transition on first `isIntersecting`; unobserve after first show
+- Arrow pulse: add `@keyframes arrow-pulse` to `globals.css` (under `@layer components`); reference via `animate-[arrow-pulse_2.2s_ease-in-out_infinite]`
+- Nav scroll opacity: `HomeNav` listens to `window.scroll` (`{ passive: true }`), sets `scrolled = scrollY > 12`, swaps bg opacity + bottom border via class
+- Responsive: match prototype breakpoints — `lg:` desktop (chaos / arrow / dashboard side-by-side, 3-col features, 2-col pricing, 2-col AI grid); `md:` 2-col features; default mobile stacks; arrow SVG rotates 90° on mobile via `rotate-90 lg:rotate-0` on the inner SVG (outer container keeps the pulse animation intact)
+- Extract a small `Logo` component for the nav + footer (gradient tile + svg + wordmark reused in both places)
+- Pull chaos icons (8), feature cards (6), AI checklist (4), footer link columns (3 × 4) into top-of-file `const` arrays and `.map()` them
+- Only add a `<Section>` helper if it actually reduces duplication across Features / AI / Pricing / CTA — don't add speculatively
+
 ## Notes
 
 <!--Any extra notes-->
+
+- Spec source: `context/features/homepage-spec.md`
+- Reference prototype: `prototypes/homepage/index.html` / `styles.css` / `script.js`
+- Inter is already the project's default font; use Tailwind's `font-mono` for the JetBrains Mono pieces (editor mockup, dashboard search kbd, chip text) — don't add a new Google Fonts import
+- Check what `src/app/page.tsx` currently renders before replacing — make sure any links pointing at `/` (e.g. signed-out NextAuth redirects) still make sense after the swap
+- `proxy.ts` only gates `/dashboard/*`, so `/` stays public — no auth changes needed
+- Out of scope: actually wiring Stripe / billing from the Pro CTA, building Changelog / Roadmap / Docs / etc. routes, dark/light theme toggle (homepage is dark-only per the prototype), SEO meta tags beyond the existing `metadata` export pattern
+- No new Vitest tests warranted — everything here is presentational (no server actions, no pure utility functions to extract); per `coding-standards.md`, components are out of unit-test scope
 
 
 ## History
