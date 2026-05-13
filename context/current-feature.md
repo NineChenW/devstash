@@ -12,11 +12,13 @@ Do not violate any following rules:
 7. Update goals section with current feature requirements.
 8. Update notes section with current feature references.
 
-# Current Feature
+# Current Feature: Top Bar Responsive Cleanup
 
 <!--Feature Name-->
 
 ## Status
+
+In Progress
 
 <!--Not Started|In Progress|Completed-->
 
@@ -24,9 +26,18 @@ Do not violate any following rules:
 
 <!--Goals & requirements-->
 
+- Hide the text labels on `TopBarNewItemButton` and `TopBarNewCollectionButton` below the `sm:` breakpoint so both buttons render icon-only on phones. Keep the icons, add `title` + `aria-label` for the icon-only state, and remove the `mr-2` gap on the icon when the label is hidden.
+- Trim the `SearchTrigger` on mobile: shorten the placeholder text to "Search…" below `sm:` and hide the `⌘K` `<kbd>` element on mobile (keyboard shortcut continues to work).
+- Move the Favorites entry off the top bar on mobile: add a Favorites link inside the sidebar's nav (so it's reachable through the mobile drawer) and hide `FavoritesNavButton` in the top bar below `sm:`.
+
 ## Notes
 
 <!--Any extra notes-->
+
+- Source files: `src/components/dashboard/DashboardShell.tsx`, `src/components/items/TopBarNewItemButton.tsx`, `src/components/collections/TopBarNewCollectionButton.tsx`, `src/components/search/SearchTrigger.tsx`, `src/components/favorites/FavoritesNavButton.tsx`, `src/components/sidebar/Sidebar.tsx`.
+- No DB / schema / server action work — pure responsive UI cleanup. No new Vitest cases warranted under the project's "no component tests" scope rule.
+- The sidebar already has a Favorites section heading near the top (collections marked as favorite). The new Favorites link is a distinct nav item pointing to `/favorites` (the full page added in a prior feature), placed alongside the item-type links — not inside the collection favorites section.
+- Verify with `next build`, `npm run lint`, and an SSR curl smoke at multiple paths; no end-to-end Playwright (MCP still blocked by `SingletonLock` per recent history).
 
 
 ## History

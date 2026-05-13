@@ -14,8 +14,11 @@ export function SearchTrigger() {
       aria-label="Open command palette"
     >
       <Search className="h-4 w-4 shrink-0" />
-      <span className="flex-1 truncate">Search items and collections…</span>
-      <kbd className="pointer-events-none flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 text-xs text-muted-foreground">
+      <span className="flex-1 truncate">
+        <span className="sm:hidden">Search…</span>
+        <span className="hidden sm:inline">Search items and collections…</span>
+      </span>
+      <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 text-xs text-muted-foreground sm:flex">
         <span className="text-xs">⌘</span>K
       </kbd>
     </button>

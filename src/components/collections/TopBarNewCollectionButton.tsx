@@ -7,9 +7,15 @@ import { useCreateCollection } from './CreateCollectionContext'
 export function TopBarNewCollectionButton() {
   const { open } = useCreateCollection()
   return (
-    <Button variant="outline" size="sm" onClick={open}>
-      <FolderPlus className="mr-2 h-4 w-4" />
-      New Collection
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={open}
+      title="New Collection"
+      aria-label="New Collection"
+    >
+      <FolderPlus className="h-4 w-4 sm:mr-2" />
+      <span className="hidden sm:inline">New Collection</span>
     </Button>
   )
 }
