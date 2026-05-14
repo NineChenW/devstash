@@ -12,7 +12,7 @@ Do not violate any following rules:
 7. Update goals section with current feature requirements.
 8. Update notes section with current feature references.
 
-# Current Feature
+# Current Feature: Homepage Top Nav on Auth Pages
 
 <!--Feature Name-->
 
@@ -20,13 +20,34 @@ Do not violate any following rules:
 
 <!--Not Started|In Progress|Completed-->
 
+In Progress
+
 ## Goals
 
 <!--Goals & requirements-->
 
+- Render the homepage top nav (the `HomeNav` component from `src/components/home/HomeNav.tsx`) on all four auth pages: `/sign-in`, `/register`, `/forgot-password`, `/reset-password`.
+- Use the full nav variant: Logo + `Features` + `Pricing` + `Sign in` button + `Get started` CTA — same shape as on `/`.
+- Keep the nav working visually identically to the homepage: same height, same backdrop-blur-on-scroll behavior, same active link styling.
+- Don't break the existing auth page layouts — the auth forms should still center vertically in the remaining viewport space.
+
 ## Notes
 
 <!--Any extra notes-->
+
+- **Anchor link gotcha:** `HomeNav` currently uses `href="#features"` and `href="#pricing"` for the marketing anchors. Those IDs only exist on `/` — on `/sign-in` and friends they'd be no-ops. Need to either (a) rewrite those to `/#features` / `/#pricing` so they navigate back to the homepage and scroll to the section, or (b) factor `HomeNav` to accept an `anchorPrefix` prop (`'' | '/'`) so the homepage call site stays unchanged. Option (a) is simpler and works on both surfaces — clicking `Features` from `/` does a same-page scroll (browser handles `/#features` while already at `/` as a hash-only navigation), clicking from `/sign-in` navigates to `/` and scrolls.
+- **Get-started CTA target:** Currently links to `/register`. On `/register` itself it becomes a self-link — fine UX, but consider whether to hide / disable / repurpose on the register page. Probably fine to leave as-is for simplicity (clicking it just re-renders the same page).
+- **Sign-in button visibility on `/sign-in`:** The nav's `Sign in` button has `hidden sm:inline-flex` from the prior Top Bar Responsive Cleanup change (now removed in UI Review Quick Wins #3, so it should be visible on all viewports). On `/sign-in` itself it becomes a self-link — same situation as above, fine to leave.
+- **Mobile:** `HomeNav` already collapses gracefully — `Features` / `Pricing` links use `hidden sm:inline-block`, so narrow viewports just see Logo + Sign-in + Get-started.
+- **Layout:** Auth pages today have no top nav at all. They render a centered card on a dark background. Adding `HomeNav` means the existing `<main>` content needs top padding (~64px nav height + some breathing room) so the card doesn't slide under the fixed nav. Confirm by reading each page's current layout.
+- **Files likely to touch:**
+  - `src/app/sign-in/page.tsx` — server component shell
+  - `src/app/register/page.tsx` — server component shell
+  - `src/app/forgot-password/page.tsx` — server component shell
+  - `src/app/reset-password/page.tsx` — server component shell
+  - `src/components/home/HomeNav.tsx` — if option (b) is chosen for anchor links, otherwise leave alone
+- **No DB changes, no server actions, no new pure utilities.** Pure presentational refactor — unit-test scope is empty per `coding-standards.md`.
+- **Tests:** Existing 168-test suite should pass unchanged. Build + lint should remain at current baseline (4 pre-existing errors on `main`).
 
 
 ## History
