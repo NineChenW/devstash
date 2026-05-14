@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
+import { HomeNav } from '@/components/home/HomeNav'
 import { RegisterForm } from './RegisterForm'
 
 export default async function RegisterPage() {
@@ -9,8 +10,11 @@ export default async function RegisterPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
-      <RegisterForm />
-    </main>
+    <>
+      <HomeNav />
+      <main className="flex min-h-screen items-center justify-center bg-background px-4 pb-12 pt-24">
+        <RegisterForm />
+      </main>
+    </>
   )
 }

@@ -1,6 +1,8 @@
+import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
+import { HomeNav } from '@/components/home/HomeNav'
 import { checkPasswordResetToken } from '@/lib/verification-token'
 import { ResetPasswordForm } from './ResetPasswordForm'
 
@@ -17,27 +19,30 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
   const { token } = await searchParams
 
   if (!token) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
-        <TokenError reason="missing" />
-      </main>
-    )
+    return <PageShell><TokenError reason="missing" /></PageShell>
   }
 
   const check = await checkPasswordResetToken(token)
   if (!check.ok) {
     const reason = check.reason === 'expired' ? 'expired' : 'invalid'
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
-        <TokenError reason={reason} />
-      </main>
-    )
+    return <PageShell><TokenError reason={reason} /></PageShell>
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
+    <PageShell>
       <ResetPasswordForm token={token} email={check.email} />
-    </main>
+    </PageShell>
+  )
+}
+
+function PageShell({ children }: { children: ReactNode }) {
+  return (
+    <>
+      <HomeNav />
+      <main className="flex min-h-screen items-center justify-center bg-background px-4 pb-12 pt-24">
+        {children}
+      </main>
+    </>
   )
 }
 

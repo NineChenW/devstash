@@ -29,20 +29,20 @@ export function HomeNav() {
 
         <ul className="ml-4 hidden flex-1 gap-7 sm:flex" role="list">
           <li>
-            <a
-              href="#features"
+            <Link
+              href="/#features"
               className="text-sm font-medium text-[#aab1c2] transition-colors hover:text-white"
             >
               Features
-            </a>
+            </Link>
           </li>
           <li>
-            <a
-              href="#pricing"
+            <Link
+              href="/#pricing"
               className="text-sm font-medium text-[#aab1c2] transition-colors hover:text-white"
             >
               Pricing
-            </a>
+            </Link>
           </li>
         </ul>
 
