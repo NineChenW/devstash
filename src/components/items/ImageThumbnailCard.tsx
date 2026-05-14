@@ -43,7 +43,7 @@ export function ImageThumbnailCard({
       </div>
 
       <div className="p-3">
-        <h3 className="truncate text-sm font-medium">{title}</h3>
+        <h3 className="truncate text-sm font-medium" title={title}>{title}</h3>
       </div>
     </div>
   )

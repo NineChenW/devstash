@@ -75,6 +75,7 @@ export function DashboardShell({
                   size="icon"
                   className="md:hidden"
                   onClick={() => setDrawerOpen(true)}
+                  aria-label="Open menu"
                 >
                   <Menu className="h-5 w-5" />
                 </Button>
@@ -85,6 +86,7 @@ export function DashboardShell({
                   size="icon"
                   className="hidden md:flex"
                   onClick={handleToggle}
+                  aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                 >
                   {collapsed ? (
                     <PanelLeft className="h-5 w-5" />

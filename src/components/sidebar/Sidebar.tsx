@@ -60,13 +60,14 @@ export function Sidebar({ collapsed, itemTypes, collections, user }: SidebarProp
           <Link
             href="/favorites"
             className={cn(
-              'flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors',
+              'flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               pathname === '/favorites'
                 ? 'bg-accent text-accent-foreground'
                 : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
               collapsed && 'justify-center'
             )}
             title={collapsed ? 'Favorites' : undefined}
+            aria-label={collapsed ? 'Favorites' : undefined}
           >
             <Star className="h-4 w-4 shrink-0 text-amber-400" />
             {!collapsed && <span className="truncate">Favorites</span>}
@@ -88,6 +89,7 @@ export function Sidebar({ collapsed, itemTypes, collections, user }: SidebarProp
               const isActive = pathname === href
               const isPro = PRO_TYPES.has(type.name)
 
+              const label = `${type.name.charAt(0).toUpperCase()}${type.name.slice(1)}s`
               return (
                 <Link
                   key={type.id}
@@ -99,12 +101,13 @@ export function Sidebar({ collapsed, itemTypes, collections, user }: SidebarProp
                       : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
                     collapsed && 'justify-center'
                   )}
-                  title={collapsed ? type.name : undefined}
+                  title={collapsed ? label : undefined}
+                  aria-label={collapsed ? label : undefined}
                 >
                   <Icon className="h-4 w-4 shrink-0" style={{ color: type.color }} />
                   {!collapsed && (
                     <>
-                      <span className="truncate">{type.name.charAt(0).toUpperCase() + type.name.slice(1)}s</span>
+                      <span className="truncate">{label}</span>
                       {isPro && (
                         <Badge
                           variant="outline"
@@ -220,6 +223,7 @@ function CollectionNavSection({
                 : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
             )}
             title={collapsed ? collection.name : undefined}
+            aria-label={collapsed ? collection.name : undefined}
           >
             {leading(collection)}
             {!collapsed && (

@@ -73,7 +73,7 @@ export function AISection() {
             <span className="ml-2 font-mono text-xs text-[#6f7689]">useDebounce.ts</span>
           </div>
           <pre
-            className="m-0 overflow-x-auto p-[18px] font-mono text-[12.5px] leading-[1.7] text-[#e6e8ee]"
+            className="m-0 overflow-x-auto p-[18px] font-mono text-[12.5px] leading-[1.7] text-[#e6e8ee] [mask-image:linear-gradient(to_right,black_calc(100%-24px),transparent)] sm:[mask-image:none]"
             style={{ background: '#0c1322' }}
           >
             <code>

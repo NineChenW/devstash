@@ -12,11 +12,13 @@ Do not violate any following rules:
 7. Update goals section with current feature requirements.
 8. Update notes section with current feature references.
 
-# Current Feature
+# Current Feature: UI Review Quick Wins
 
 <!--Feature Name-->
 
 ## Status
+
+In Progress
 
 <!--Not Started|In Progress|Completed-->
 
@@ -24,9 +26,49 @@ Do not violate any following rules:
 
 <!--Goals & requirements-->
 
+Batch of low-risk UI fixes from the 2026-05-14 UI review (a11y, responsive polish, Tailwind v4 `@theme` wiring fix).
+
+### Tier 1 — trivial (one-liners)
+
+1. **Sidebar toggle aria-labels** — `DashboardShell.tsx:73,83`: mobile menu → `aria-label="Open menu"`; desktop toggle → `aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}`.
+2. **Collapsed-sidebar link aria-labels** — `Sidebar.tsx`: item type + collection `<Link>`s add `aria-label={name}` alongside `title` for screen readers.
+3. **Sign-in visible on mobile homepage** — `HomeNav.tsx:54`: remove `hidden sm:inline-flex` from Sign-in OR add Sign-in to footer Company column. Least visually disruptive wins.
+4. **`title={item.title}` on truncated cards** — `ItemCard.tsx` and `ImageThumbnailCard.tsx`: add `title={title}` to the `truncate` element.
+5. **`spellCheck={false}` on item title input** — `ItemFormFields.tsx` title `<Input>` only (Monaco unaffected).
+6. **Print + reduced-motion fallback for FadeOnScroll** — `globals.css` inside `@layer components`:
+   ```css
+   @media (prefers-reduced-motion: reduce), print {
+     [data-fade-on-scroll] { opacity: 1 !important; transform: none !important; }
+   }
+   ```
+   Plus `data-fade-on-scroll` attribute on the wrapper in `FadeOnScroll.tsx`.
+7. **Tags in command palette keywords** — `CommandPalette.tsx`: include `item.tags?.join(' ')` in `keywords`. Requires extending `SearchItem` in `src/lib/db/search.ts` to select `tags: { select: { name: true } }` and map.
+8. **Tailwind v4 `@theme inline` block** — `globals.css`: add `@theme inline` mapping HSL CSS variables to Tailwind v4 color utilities (`--color-background`, `--color-card`, `--color-popover`, `--color-muted`, `--color-accent`, `--color-border`, `--color-input`, `--color-ring`, `--color-primary`, `--color-secondary`, `--color-destructive`, plus `-foreground` pairs). Fixes the transparent-surface bug visible on the mobile sidebar drawer. Hardcoded `bg-[hsl(...)]` overrides in Modal/Dialog/Sheet stay valid — do NOT rewrite them in this pass.
+
+### Tier 2 — small but more than one line
+
+9. **AI section code-block fade affordance on phone** — `AISection.tsx:75`: keep `overflow-x-auto`, add right-edge mask gradient below `sm:`:
+   ```tsx
+   className="... [mask-image:linear-gradient(to_right,black_calc(100%-24px),transparent)] sm:[mask-image:none]"
+   ```
+10. **Editor preferences toggle off-state visible border** — `EditorPreferencesForm.tsx`: off-state track gets `border border-white/15`.
+11. **CollectionCard truncation tooltip** — `CollectionCard.tsx`: `title={name}` on the truncated `<h3>` (mirrors #4).
+12. **Focus ring on sidebar Favorites row** — `Sidebar.tsx`: Favorites Link adds `focus-visible:ring-2 focus-visible:ring-ring` to match other nav rows.
+13. **Mobile hero dashboard mock simplification** — `Hero.tsx`: at `<sm:` either drop grid to 1 column or hide truncated titles (icon + type pill only). Pick the less-noisy option.
+14. **Quick-copy icon on dashboard Pinned / Recent items** — extend `getPinnedItems` / `getRecentItems` `DashboardItem` shape with `content: string | null` and `url: string | null`. Add `<CopyButton text={item.content ?? item.url ?? ''} />` to `PinnedItem.tsx` and `RecentItem.tsx`. Mirrors existing `ItemCard` pattern.
+15. **Settings / Sign-out reachable when sidebar collapsed** — `SidebarUser.tsx`: when collapsed, swap avatar's plain `<Link href="/profile">` for a `<button>` that opens the existing dropdown. Non-collapsed behavior unchanged.
+16. **Sticky-nav covering footer logo on phone** — `Footer.tsx`: change top padding `pt-10` → `pt-16` on mobile (or add `scroll-mt-16`).
+
 ## Notes
 
 <!--Any extra notes-->
+
+- **Out of scope:** `/favorites` 500 with `[object ErrorEvent]` (needs separate Neon adapter / query-plan investigation); architectural note on `<main>` being the scroll container.
+- **Suggested ship order:** #8 first (biggest visible impact, fixes a mobile bug). Then batch #1, #2, #3, #4, #5, #11 as one commit. Then #7, #14 together (shared DB shape extension). Then #6, #9, #13, #16 (homepage polish). Then #10, #12, #15 as time permits.
+- After #8 lands, hardcoded `bg-[hsl(217.2_32.6%_12%)]` overrides in `Modal` / `Dialog` / `Sheet` / `CreateItemDialog` / `CreateCollectionDialog` / `EditCollectionDialog` become redundant but still valid. Do **not** rewrite them in this pass.
+- No new server actions or pure utility functions expected. Vitest coverage: only if a parseable helper emerges (none anticipated). Existing 13-files / 168-tests suite should stay green.
+- Full UI review with severity grouping was generated in-session (not committed to disk).
+- Spec: [context/features/ui-review-quick-wins.md](context/features/ui-review-quick-wins.md)
 
 
 ## History

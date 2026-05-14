@@ -165,7 +165,7 @@ function Switch({
       className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
         checked
           ? 'border-blue-500 bg-blue-500'
-          : 'border-[hsl(217.2_32.6%_25%)] bg-[hsl(217.2_32.6%_18%)]'
+          : 'border-white/15 bg-[hsl(217.2_32.6%_18%)]'
       }`}
     >
       <span

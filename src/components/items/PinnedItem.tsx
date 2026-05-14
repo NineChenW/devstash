@@ -1,5 +1,6 @@
 import { Star, Pin } from 'lucide-react'
 import { iconMap, DefaultIcon } from '@/lib/icon-map'
+import { CopyButton } from './CopyButton'
 
 interface PinnedItemProps {
   id: string
@@ -9,6 +10,8 @@ interface PinnedItemProps {
   typeColor: string
   typeName: string
   isFavorite: boolean
+  content: string | null
+  url: string | null
   tags: string[]
   createdAt: Date
 }
@@ -20,6 +23,8 @@ export function PinnedItem({
   typeColor,
   typeName,
   isFavorite,
+  content,
+  url,
   tags,
   createdAt,
 }: PinnedItemProps) {
@@ -28,6 +33,9 @@ export function PinnedItem({
     month: 'short',
     day: 'numeric',
   })
+
+  const copyText = (content ?? url ?? '').trim()
+  const showCopy = copyText.length > 0
 
   return (
     <div
@@ -72,7 +80,10 @@ export function PinnedItem({
         )}
       </div>
 
-      <span className="shrink-0 text-xs text-muted-foreground">{date}</span>
+      <div className="flex shrink-0 items-center gap-2">
+        {showCopy && <CopyButton text={copyText} label={`Copy ${typeName}`} />}
+        <span className="text-xs text-muted-foreground">{date}</span>
+      </div>
     </div>
   )
 }

@@ -45,6 +45,7 @@ export function FadeOnScroll({
     <Tag
       ref={ref as React.RefObject<HTMLDivElement>}
       className={`${base} ${state} ${className}`.trim()}
+      data-fade-on-scroll
       {...rest}
     >
       {children}

@@ -10,6 +10,8 @@ export interface DashboardItem {
   typeColor: string
   typeName: string
   isFavorite: boolean
+  content: string | null
+  url: string | null
   tags: string[]
   createdAt: Date
 }
@@ -69,6 +71,8 @@ export async function getPinnedItems(userId: string): Promise<DashboardItem[]> {
     typeColor: item.itemType.color,
     typeName: item.itemType.name,
     isFavorite: item.isFavorite,
+    content: item.content,
+    url: item.url,
     tags: item.tags.map((t) => t.name),
     createdAt: item.createdAt,
   }))
@@ -96,6 +100,8 @@ export async function getRecentItems(
     typeColor: item.itemType.color,
     typeName: item.itemType.name,
     isFavorite: item.isFavorite,
+    content: item.content,
+    url: item.url,
     tags: item.tags.map((t) => t.name),
     createdAt: item.createdAt,
   }))
@@ -103,8 +109,6 @@ export async function getRecentItems(
 
 export interface ItemListItem extends DashboardItem {
   isPinned: boolean
-  content: string | null
-  url: string | null
   fileUrl: string | null
   fileName: string | null
   fileSize: number | null

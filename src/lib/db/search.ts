@@ -7,6 +7,7 @@ export interface SearchItem {
   typeName: string
   typeIcon: string
   typeColor: string
+  tags: string[]
 }
 
 export interface SearchCollection {
@@ -48,6 +49,7 @@ export async function getSearchData(userId: string): Promise<SearchData> {
         url: true,
         fileName: true,
         itemType: { select: { name: true, icon: true, color: true } },
+        tags: { select: { name: true } },
       },
     }),
     prisma.collection.findMany({
@@ -69,6 +71,7 @@ export async function getSearchData(userId: string): Promise<SearchData> {
       typeName: item.itemType.name,
       typeIcon: item.itemType.icon,
       typeColor: item.itemType.color,
+      tags: item.tags.map((t) => t.name),
     })),
     collections: collections.map((c) => ({
       id: c.id,
