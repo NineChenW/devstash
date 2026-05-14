@@ -88,7 +88,7 @@ export function CollectionCard({
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold">{name}</h3>
+              <h3 className="font-semibold" title={name}>{name}</h3>
               {favorite && (
                 <Star className="h-3.5 w-3.5 fill-yellow-500 text-yellow-500" />
               )}

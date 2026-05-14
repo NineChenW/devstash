@@ -80,6 +80,7 @@ export function ItemFormFields({
           required
           autoFocus
           placeholder={titlePlaceholder}
+          spellCheck={false}
         />
       </Field>
 

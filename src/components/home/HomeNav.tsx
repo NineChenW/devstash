@@ -51,7 +51,7 @@ export function HomeNav() {
             asChild
             variant="ghost"
             size="sm"
-            className="hidden text-[#aab1c2] hover:bg-white/5 hover:text-white sm:inline-flex"
+            className="text-[#aab1c2] hover:bg-white/5 hover:text-white"
           >
             <Link href="/sign-in">Sign in</Link>
           </Button>

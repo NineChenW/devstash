@@ -211,7 +211,7 @@ export function Hero() {
                         borderTopWidth: 3,
                       }}
                     >
-                      <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[11.5px] font-semibold text-white">
+                      <span className="hidden overflow-hidden text-ellipsis whitespace-nowrap text-[11.5px] font-semibold text-white sm:block">
                         {it.title}
                       </span>
                       <span className="text-[10px] text-[#6f7689]">{it.meta}</span>

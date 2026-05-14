@@ -54,7 +54,7 @@ export function ItemCard({
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <h3 className="truncate font-medium">{title}</h3>
+            <h3 className="truncate font-medium" title={title}>{title}</h3>
             {isPinned && <Pin className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
             {isFavorite && (
               <Star className="h-3.5 w-3.5 shrink-0 fill-yellow-500 text-yellow-500" />

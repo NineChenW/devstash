@@ -94,6 +94,8 @@ export default async function Dashboard() {
                   typeColor={item.typeColor}
                   typeName={item.typeName}
                   isFavorite={item.isFavorite}
+                  content={item.content}
+                  url={item.url}
                   tags={item.tags}
                   createdAt={item.createdAt}
                 />
@@ -119,6 +121,8 @@ export default async function Dashboard() {
                 typeIcon={item.typeIcon}
                 typeColor={item.typeColor}
                 typeName={item.typeName}
+                content={item.content}
+                url={item.url}
                 createdAt={item.createdAt}
               />
             </ItemTrigger>

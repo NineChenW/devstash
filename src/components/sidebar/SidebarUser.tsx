@@ -47,13 +47,26 @@ export function SidebarUser({ collapsed, name, email, image }: SidebarUserProps)
           collapsed && 'justify-center',
         )}
       >
-        <Link
-          href="/profile"
-          aria-label="Go to profile"
-          className="shrink-0 rounded-full transition-opacity hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-ring"
-        >
-          <UserAvatar name={name} image={image} />
-        </Link>
+        {collapsed ? (
+          <button
+            type="button"
+            onClick={() => setOpen((prev) => !prev)}
+            aria-haspopup="menu"
+            aria-expanded={open}
+            aria-label="Open user menu"
+            className="shrink-0 rounded-full transition-opacity hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <UserAvatar name={name} image={image} />
+          </button>
+        ) : (
+          <Link
+            href="/profile"
+            aria-label="Go to profile"
+            className="shrink-0 rounded-full transition-opacity hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <UserAvatar name={name} image={image} />
+          </Link>
+        )}
         {!collapsed && (
           <>
             <div className="min-w-0 flex-1">
@@ -75,10 +88,13 @@ export function SidebarUser({ collapsed, name, email, image }: SidebarUserProps)
         )}
       </div>
 
-      {open && !collapsed && (
+      {open && (
         <div
           role="menu"
-          className="absolute bottom-full left-3 right-3 mb-1 overflow-hidden rounded-md border bg-popover shadow-md"
+          className={cn(
+            'absolute bottom-full mb-1 overflow-hidden rounded-md border bg-popover shadow-md',
+            collapsed ? 'left-3 w-44' : 'left-3 right-3',
+          )}
         >
           <Link
             href="/profile"

@@ -105,6 +105,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                             item.title,
                             item.typeName,
                             item.contentPreview ?? '',
+                            item.tags.join(' '),
                           ]}
                           onSelect={() => handleSelectItem(item.id)}
                           className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-sm data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
