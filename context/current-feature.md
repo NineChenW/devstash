@@ -12,7 +12,7 @@ Do not violate any following rules:
 7. Update goals section with current feature requirements.
 8. Update notes section with current feature references.
 
-# Current Feature: Stripe Integration — Phase 1 (Core Infrastructure)
+# Current Feature
 
 <!--Feature Name-->
 
@@ -20,40 +20,13 @@ Do not violate any following rules:
 
 <!--Not Started|In Progress|Completed-->
 
-Completed
-
 ## Goals
 
 <!--Goals & requirements-->
 
-- Verify `prisma migrate status` is clean — no schema migration needed (`User.isPro`, `stripeCustomerId`, `stripeSubscriptionId` already exist on the model).
-- Clean up `.env.example` lines 41–45: remove `STRIPE_PUBLISHABLE_KEY`, keep `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` / `STRIPE_PRICE_ID_MONTHLY` / `STRIPE_PRICE_ID_YEARLY`, add comment block explaining Phase 2 wiring and graceful-degradation when unset.
-- Add `src/lib/stripe.ts` — lazy-cached Stripe client mirroring `email.ts` / `r2.ts` pattern. Exports `getStripe()`, `isStripeConfigured()`, `getPriceId('monthly' | 'yearly')`, `getAppUrl()`. Install `stripe` npm package (latest stable major).
-- Add `src/lib/db/billing.ts` — exports `BillingUser` interface, `getBillingUser(userId)`, `setStripeCustomerId(userId, customerId)`, `applySubscriptionState({...})`. Uses `updateMany` for the customer-id-keyed mutation (not `update`) since `stripeCustomerId` is `@unique` but not the PK.
-- Add `src/lib/usage-limits.ts` — pure feature-gate helpers. Exports `FREE_ITEM_LIMIT = 50`, `FREE_COLLECTION_LIMIT = 3`, `PRO_ITEM_TYPES`, `QuotaCheck`, `QuotaExceededError`, `checkItemQuota`, `checkCollectionQuota`, `gateForUploadKind`. Pro users always pass; free users gated by type + count.
-- Add `src/lib/usage-limits.test.ts` — Vitest unit tests covering Pro bypass + Pro-only-type gating + `gateForUploadKind` (all 4 combos). ~7 new cases; suite grows 168 → ~175. Do NOT mock Prisma — count branches stay uncovered.
-- Move JWT/session callbacks from `src/auth.config.ts` into `src/auth.ts` (keep auth.config.ts edge-safe / Prisma-free). JWT callback reads `prisma.user.findUnique({ where: { id }, select: { isPro: true } })` and sets `token.isPro`; session callback copies it to `session.user.isPro`.
-- Augment `src/types/next-auth.d.ts` to add `isPro: boolean` to `Session.user` and `isPro?: boolean` to `JWT`.
-- Three sequential commits on a single `feature/stripe-integration-phase-1` branch: (1) stripe client + db helpers + env cleanup, (2) usage-limits + tests, (3) JWT isPro sync + type augmentation.
-- Verify: `npm run test:run` 168 → ~175 pass, `npm run build` clean, `npm run lint` no new errors above baseline, `/dashboard` unauthenticated still redirects to `/sign-in` (edge proxy regression check), manual DB flip of demo user's `isPro` propagates to `session.user.isPro` without re-sign-in.
-
 ## Notes
 
 <!--Any extra notes-->
-
-- Spec: [context/features/stripe-integration-phase-1-spec.md](../context/features/stripe-integration-phase-1-spec.md). Full plan: [docs/stripe-integration-plan.md](../docs/stripe-integration-plan.md). Phase 2 spec (out of scope here): [context/features/stripe-integration-phase-2-spec.md](../context/features/stripe-integration-phase-2-spec.md).
-- **No checkout, no webhook, no UI surfaces** — those land in Phase 2. Phase 1 is pure scaffolding + the JWT-callback wiring.
-- **No schema migration.** `User.isPro / stripeCustomerId / stripeSubscriptionId` already exist on the model. Confirm with `prisma migrate status` only; do not run `db push` or create a new migration.
-- **Lazy-cache pattern** for `stripe.ts` is the same shape as `src/lib/email.ts:3-11` and `src/lib/r2.ts` — module-scope `let cached: Stripe | null = null`, env read at first call, errors only surface on real calls (not at import time). Keeps the app bootable without Stripe env vars.
-- **`isStripeConfigured()`** is the contract Phase 2 routes/actions use to return graceful 503s when env is missing; check that both `STRIPE_SECRET_KEY` AND `STRIPE_WEBHOOK_SECRET` are set.
-- **`getAppUrl()`** reads `APP_URL || NEXT_PUBLIC_APP_URL || AUTH_URL || 'http://localhost:3000'` and strips the trailing slash — same fallback chain as the email module so success_url / cancel_url stay consistent.
-- **`applySubscriptionState` uses `updateMany`** because Prisma's `update()` requires the primary key but `stripeCustomerId` is `@unique` (not the PK). `updateMany` lets webhook handlers (Phase 2) update by the unique non-id column without an extra `findUnique` round-trip.
-- **JWT callback placement is the critical design decision:** `auth.config.ts` MUST stay edge-safe (no Prisma import) so `proxy.ts` can run it on the edge runtime. Adding `prisma` there would break edge deploys. Solution per spec §7: override the callbacks block in the Node-runtime `auth.ts` wrapper that already imports Prisma via the adapter. Leave `auth.config.ts` with just `isLoggedIn` checks for the edge proxy.
-- One extra DB read per session validation is acceptable at current scale. Redis-cache optimization is deferred (see plan §7).
-- Per `coding-standards.md`: count-based branches in `checkItemQuota` / `checkCollectionQuota` are intentionally untested (no Prisma mocking). Only the pure branches (Pro bypass + Pro-type gating + `gateForUploadKind`) are covered.
-- **`QuotaExceededError` is defined but not thrown anywhere in Phase 1.** Phase 2 wires it into the DB layer + server actions; defining it now keeps Phase 1 self-contained.
-- Per `project-overview.md`'s dev override ("during development, all users have access to all features regardless of `isPro`"): Phase 1 does NOT add any dev override — the usage-limits functions report what the data says. The dev override lives in Phase 2's action-layer wiring (`NODE_ENV !== 'production'` short-circuit).
-- After Phase 1 lands, `session.user.isPro` is available everywhere but no production code reads it yet. The only consumer is the test file. That's expected — Phase 2 is the consumer.
 
 
 ## History
