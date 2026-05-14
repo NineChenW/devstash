@@ -44,6 +44,7 @@
     "remark-gfm": "^4.0.1",
     "resend": "^6.12.2",
     "sonner": "^2.0.7",
+    "stripe": "^22.1.1",
     "tailwind-merge": "^3.5.0",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^4.4.1"
