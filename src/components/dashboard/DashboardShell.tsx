@@ -28,6 +28,7 @@ interface DashboardShellProps {
   sidebarCollections: CollectionWithTypes[]
   user: SidebarUserData | null
   editorPreferences?: EditorPreferences
+  userIsPro?: boolean
 }
 
 export function DashboardShell({
@@ -36,6 +37,7 @@ export function DashboardShell({
   sidebarCollections,
   user,
   editorPreferences = DEFAULT_EDITOR_PREFERENCES,
+  userIsPro = false,
 }: DashboardShellProps) {
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false
@@ -63,7 +65,7 @@ export function DashboardShell({
      <EditorPreferencesProvider initial={editorPreferences}>
       <ItemDrawerProvider>
        <CommandPaletteProvider>
-        <CreateItemProvider>
+        <CreateItemProvider userIsPro={userIsPro}>
          <CreateCollectionProvider>
           {/* Top Bar */}
           <header className="border-b">
@@ -113,7 +115,13 @@ export function DashboardShell({
           <div className="flex h-[calc(100vh-4rem)]">
             {/* Desktop Sidebar */}
             <div className="hidden md:block">
-              <Sidebar collapsed={collapsed} itemTypes={itemTypes} collections={sidebarCollections} user={user} />
+              <Sidebar
+                collapsed={collapsed}
+                itemTypes={itemTypes}
+                collections={sidebarCollections}
+                user={user}
+                userIsPro={userIsPro}
+              />
             </div>
 
             {/* Main Content */}
@@ -127,6 +135,7 @@ export function DashboardShell({
             itemTypes={itemTypes}
             collections={sidebarCollections}
             user={user}
+            userIsPro={userIsPro}
           />
          </CreateCollectionProvider>
         </CreateItemProvider>

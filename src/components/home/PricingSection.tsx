@@ -148,7 +148,7 @@ export function PricingSection() {
             variant="outline"
             className="w-full border-white/14 bg-transparent text-white hover:bg-white/5 hover:text-white"
           >
-            <Link href="/register">Start free</Link>
+            <Link href="/register?plan=free">Start free</Link>
           </Button>
         </FadeOnScroll>
 
@@ -199,7 +199,9 @@ export function PricingSection() {
             className="w-full border-0 text-white shadow-[0_4px_16px_rgba(99,102,241,0.45)] hover:opacity-90"
             style={{ background: 'linear-gradient(180deg, #6366f1 0%, #4f46e5 100%)' }}
           >
-            <Link href="/register">Upgrade to Pro</Link>
+            <Link href={`/register?plan=${isYearly ? 'yearly' : 'monthly'}`}>
+              Upgrade to Pro
+            </Link>
           </Button>
         </FadeOnScroll>
       </div>

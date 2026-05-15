@@ -11,6 +11,7 @@ import { getSystemItemTypesWithCounts } from '@/lib/db/items'
 import { getEditorPreferences } from '@/lib/db/profile'
 import { Pagination } from '@/components/ui/pagination'
 import { COLLECTIONS_PER_PAGE, parsePageParam } from '@/lib/pagination'
+import { isProForGating } from '@/lib/usage-limits'
 
 interface CollectionsPageProps {
   searchParams: Promise<{ page?: string | string[] }>
@@ -23,12 +24,18 @@ export default async function CollectionsPage({ searchParams }: CollectionsPageP
   const sidebarUser = session?.user
     ? { name: session.user.name, email: session.user.email, image: session.user.image }
     : null
+  const userIsPro = isProForGating(session)
 
   const userId = await getDemoUserId()
 
   if (!userId) {
     return (
-      <DashboardShell itemTypes={[]} sidebarCollections={[]} user={sidebarUser}>
+      <DashboardShell
+        itemTypes={[]}
+        sidebarCollections={[]}
+        user={sidebarUser}
+        userIsPro={userIsPro}
+      >
         <div className="flex h-64 items-center justify-center">
           <p className="text-muted-foreground">No demo user found. Run the seed script first.</p>
         </div>
@@ -44,7 +51,7 @@ export default async function CollectionsPage({ searchParams }: CollectionsPageP
   ])
 
   return (
-    <DashboardShell itemTypes={itemTypes} sidebarCollections={sidebarCollections} user={sidebarUser} editorPreferences={editorPreferences}>
+    <DashboardShell itemTypes={itemTypes} sidebarCollections={sidebarCollections} user={sidebarUser} editorPreferences={editorPreferences} userIsPro={userIsPro}>
       <div className="mb-8 flex items-center gap-3">
         <div
           className="flex h-10 w-10 items-center justify-center rounded-lg"

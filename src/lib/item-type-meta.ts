@@ -23,3 +23,4 @@ export const TYPES_WITH_LANGUAGE: ReadonlySet<string> = new Set(['snippet', 'com
 export const TYPES_WITH_CODE_EDITOR: ReadonlySet<string> = new Set(['snippet', 'command'])
 export const TYPES_WITH_MARKDOWN_EDITOR: ReadonlySet<string> = new Set(['note', 'prompt'])
 export const TYPES_WITH_FILE_UPLOAD: ReadonlySet<string> = new Set(['file', 'image'])
+export const PRO_TYPES: ReadonlySet<string> = new Set(['file', 'image'])

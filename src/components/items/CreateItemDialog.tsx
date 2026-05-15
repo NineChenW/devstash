@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import {
@@ -16,6 +17,7 @@ import { createItem } from '@/actions/items'
 import { CREATE_ITEM_TYPES, type CreateItemType } from '@/lib/validations/items'
 import {
   CREATE_TYPE_META,
+  PRO_TYPES,
   TYPES_WITH_CONTENT,
   TYPES_WITH_FILE_UPLOAD,
   TYPES_WITH_LANGUAGE,
@@ -32,11 +34,22 @@ interface CreateItemDialogProps {
   open: boolean
   onClose: () => void
   defaultType?: CreateItemType
+  userIsPro?: boolean
 }
 
-export function CreateItemDialog({ open, onClose, defaultType }: CreateItemDialogProps) {
+export function CreateItemDialog({
+  open,
+  onClose,
+  defaultType,
+  userIsPro = false,
+}: CreateItemDialogProps) {
   const router = useRouter()
-  const initialType: CreateItemType = defaultType ?? 'snippet'
+  const availableTypes = userIsPro
+    ? CREATE_ITEM_TYPES
+    : CREATE_ITEM_TYPES.filter((t) => !PRO_TYPES.has(t))
+  const safeDefault =
+    defaultType && (userIsPro || !PRO_TYPES.has(defaultType)) ? defaultType : 'snippet'
+  const initialType: CreateItemType = safeDefault
   const [typeName, setTypeName] = useState<CreateItemType>(initialType)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -178,8 +191,10 @@ export function CreateItemDialog({ open, onClose, defaultType }: CreateItemDialo
 
           <div className="space-y-5 px-6 py-5 max-h-[70vh] overflow-y-auto">
             <Field label="Type">
-              <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
-                {CREATE_ITEM_TYPES.map((t) => {
+              <div
+                className={`grid gap-2 ${userIsPro ? 'grid-cols-4 sm:grid-cols-7' : 'grid-cols-5'}`}
+              >
+                {availableTypes.map((t) => {
                   const meta = CREATE_TYPE_META[t]
                   const Icon = iconMap[meta.icon] || DefaultIcon
                   const active = typeName === t
@@ -202,6 +217,18 @@ export function CreateItemDialog({ open, onClose, defaultType }: CreateItemDialo
                   )
                 })}
               </div>
+              {!userIsPro && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Need files & images?{' '}
+                  <Link
+                    href="/settings#billing"
+                    className="font-medium text-foreground underline-offset-2 hover:underline"
+                    onClick={onClose}
+                  >
+                    Upgrade to Pro
+                  </Link>
+                </p>
+              )}
             </Field>
 
             <ItemFormFields

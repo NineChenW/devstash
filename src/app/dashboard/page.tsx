@@ -10,18 +10,25 @@ import { getRecentCollections, getCollectionStats, getDemoUserId } from '@/lib/d
 import { getPinnedItems, getRecentItems, getSystemItemTypesWithCounts } from '@/lib/db/items'
 import { getEditorPreferences } from '@/lib/db/profile'
 import { DASHBOARD_RECENT_ITEMS_LIMIT } from '@/lib/pagination'
+import { isProForGating } from '@/lib/usage-limits'
 
 export default async function Dashboard() {
   const session = await auth()
   const sidebarUser = session?.user
     ? { name: session.user.name, email: session.user.email, image: session.user.image }
     : null
+  const userIsPro = isProForGating(session)
 
   const userId = await getDemoUserId()
 
   if (!userId) {
     return (
-      <DashboardShell itemTypes={[]} sidebarCollections={[]} user={sidebarUser}>
+      <DashboardShell
+        itemTypes={[]}
+        sidebarCollections={[]}
+        user={sidebarUser}
+        userIsPro={userIsPro}
+      >
         <div className="flex h-64 items-center justify-center">
           <p className="text-muted-foreground">No demo user found. Run the seed script first.</p>
         </div>
@@ -39,7 +46,7 @@ export default async function Dashboard() {
   ])
 
   return (
-    <DashboardShell itemTypes={itemTypes} sidebarCollections={collections} user={sidebarUser} editorPreferences={editorPreferences}>
+    <DashboardShell itemTypes={itemTypes} sidebarCollections={collections} user={sidebarUser} editorPreferences={editorPreferences} userIsPro={userIsPro}>
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-semibold">Dashboard</h1>

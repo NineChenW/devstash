@@ -22,9 +22,16 @@ interface SidebarProps {
   itemTypes: ItemTypeWithCount[]
   collections: CollectionWithTypes[]
   user: SidebarUserData | null
+  userIsPro?: boolean
 }
 
-export function Sidebar({ collapsed, itemTypes, collections, user }: SidebarProps) {
+export function Sidebar({
+  collapsed,
+  itemTypes,
+  collections,
+  user,
+  userIsPro = false,
+}: SidebarProps) {
   const pathname = usePathname()
   const [collectionsOpen, setCollectionsOpen] = useState(true)
 
@@ -87,7 +94,8 @@ export function Sidebar({ collapsed, itemTypes, collections, user }: SidebarProp
               const Icon = iconMap[type.icon] || DefaultIcon
               const href = `/items/${type.name}s`
               const isActive = pathname === href
-              const isPro = PRO_TYPES.has(type.name)
+              const isProType = PRO_TYPES.has(type.name)
+              const showProBadge = isProType && !userIsPro
 
               const label = `${type.name.charAt(0).toUpperCase()}${type.name.slice(1)}s`
               return (
@@ -108,7 +116,7 @@ export function Sidebar({ collapsed, itemTypes, collections, user }: SidebarProp
                   {!collapsed && (
                     <>
                       <span className="truncate">{label}</span>
-                      {isPro && (
+                      {showProBadge && (
                         <Badge
                           variant="outline"
                           className="h-4 border-muted-foreground/30 px-1 py-0 text-[9px] font-semibold tracking-wider text-muted-foreground"

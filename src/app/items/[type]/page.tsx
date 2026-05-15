@@ -13,6 +13,7 @@ import { getEditorPreferences } from '@/lib/db/profile'
 import { CREATE_ITEM_TYPES, type CreateItemType } from '@/lib/validations/items'
 import { Pagination } from '@/components/ui/pagination'
 import { ITEMS_PER_PAGE, parsePageParam } from '@/lib/pagination'
+import { isProForGating } from '@/lib/usage-limits'
 
 interface ItemsByTypePageProps {
   params: Promise<{ type: string }>
@@ -36,12 +37,18 @@ export default async function ItemsByTypePage({
   const sidebarUser = session?.user
     ? { name: session.user.name, email: session.user.email, image: session.user.image }
     : null
+  const userIsPro = isProForGating(session)
 
   const userId = await getDemoUserId()
 
   if (!userId) {
     return (
-      <DashboardShell itemTypes={[]} sidebarCollections={[]} user={sidebarUser}>
+      <DashboardShell
+        itemTypes={[]}
+        sidebarCollections={[]}
+        user={sidebarUser}
+        userIsPro={userIsPro}
+      >
         <div className="flex h-64 items-center justify-center">
           <p className="text-muted-foreground">No demo user found. Run the seed script first.</p>
         </div>
@@ -66,7 +73,7 @@ export default async function ItemsByTypePage({
   const isCreatable = (CREATE_ITEM_TYPES as readonly string[]).includes(type.name)
 
   return (
-    <DashboardShell itemTypes={itemTypes} sidebarCollections={collections} user={sidebarUser} editorPreferences={editorPreferences}>
+    <DashboardShell itemTypes={itemTypes} sidebarCollections={collections} user={sidebarUser} editorPreferences={editorPreferences} userIsPro={userIsPro}>
       <div className="mb-8 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div
