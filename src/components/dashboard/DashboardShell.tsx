@@ -11,6 +11,7 @@ import { TopBarNewItemButton } from '@/components/items/TopBarNewItemButton'
 import { CreateCollectionProvider } from '@/components/collections/CreateCollectionContext'
 import { TopBarNewCollectionButton } from '@/components/collections/TopBarNewCollectionButton'
 import { FavoritesNavButton } from '@/components/favorites/FavoritesNavButton'
+import { UpgradeNavButton } from '@/components/billing/UpgradeNavButton'
 import { CommandPaletteProvider } from '@/components/search/CommandPaletteContext'
 import { SearchTrigger } from '@/components/search/SearchTrigger'
 import { EditorPreferencesProvider } from '@/components/settings/EditorPreferencesContext'
@@ -104,6 +105,7 @@ export function DashboardShell({
               </div>
 
               <div className="flex items-center gap-2">
+                {!userIsPro && <UpgradeNavButton />}
                 <FavoritesNavButton className="hidden sm:inline-flex" />
                 <TopBarNewCollectionButton />
                 <TopBarNewItemButton />
