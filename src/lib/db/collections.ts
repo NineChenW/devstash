@@ -5,6 +5,7 @@ import {
   DASHBOARD_COLLECTIONS_LIMIT,
   ITEMS_PER_PAGE,
 } from '@/lib/pagination'
+import { checkCollectionQuota, QuotaExceededError } from '@/lib/usage-limits'
 
 export interface CollectionWithTypes {
   id: string
@@ -248,8 +249,14 @@ export interface CreatedCollection {
 
 export async function createCollection(
   userId: string,
+  isPro: boolean,
   data: CreateCollectionInput,
 ): Promise<CreatedCollection> {
+  const quota = await checkCollectionQuota({ userId, isPro })
+  if (!quota.ok) {
+    throw new QuotaExceededError(quota.error ?? 'Quota exceeded')
+  }
+
   const created = await prisma.collection.create({
     data: {
       name: data.name,

@@ -7,6 +7,7 @@ import {
   validateUpload,
   type UploadKind,
 } from '@/lib/file-constraints'
+import { gateForUploadKind, isProForGating } from '@/lib/usage-limits'
 
 export const runtime = 'nodejs'
 
@@ -37,6 +38,12 @@ export async function POST(req: Request) {
   if (!kind) {
     return NextResponse.json({ error: 'kind must be "file" or "image"' }, { status: 400 })
   }
+
+  const gate = gateForUploadKind({ isPro: isProForGating(session), kind })
+  if (!gate.ok) {
+    return NextResponse.json({ error: gate.error }, { status: 403 })
+  }
+
   if (!(file instanceof Blob) || typeof (file as File).name !== 'string') {
     return NextResponse.json({ error: 'file is required' }, { status: 400 })
   }

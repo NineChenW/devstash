@@ -3,9 +3,20 @@ import { auth } from '@/auth'
 import { HomeNav } from '@/components/home/HomeNav'
 import { RegisterForm } from './RegisterForm'
 
-export default async function RegisterPage() {
+interface RegisterPageProps {
+  searchParams: Promise<{ plan?: string | string[] }>
+}
+
+export default async function RegisterPage({ searchParams }: RegisterPageProps) {
   const session = await auth()
+  const { plan: planParam } = await searchParams
+  const rawPlan = Array.isArray(planParam) ? planParam[0] : planParam
+  const plan = rawPlan === 'monthly' || rawPlan === 'yearly' ? rawPlan : null
+
   if (session?.user) {
+    if (plan) {
+      redirect(`/settings?plan=${plan}#billing`)
+    }
     redirect('/dashboard')
   }
 

@@ -18,7 +18,13 @@ export function useCreateItem() {
   return ctx
 }
 
-export function CreateItemProvider({ children }: { children: ReactNode }) {
+export function CreateItemProvider({
+  children,
+  userIsPro = false,
+}: {
+  children: ReactNode
+  userIsPro?: boolean
+}) {
   const [state, setState] = useState<{ open: boolean; type?: CreateItemType }>({
     open: false,
   })
@@ -34,7 +40,12 @@ export function CreateItemProvider({ children }: { children: ReactNode }) {
   return (
     <CreateItemContext.Provider value={{ open }}>
       {children}
-      <CreateItemDialog open={state.open} onClose={close} defaultType={state.type} />
+      <CreateItemDialog
+        open={state.open}
+        onClose={close}
+        defaultType={state.type}
+        userIsPro={userIsPro}
+      />
     </CreateItemContext.Provider>
   )
 }

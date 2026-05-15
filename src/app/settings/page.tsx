@@ -2,11 +2,16 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { auth } from '@/auth'
+import { BillingSection } from '@/components/settings/BillingSection'
+import { BillingToast } from '@/components/settings/BillingToast'
 import { ChangePasswordDialog } from '@/components/settings/ChangePasswordDialog'
 import { DeleteAccountDialog } from '@/components/settings/DeleteAccountDialog'
 import { EditorPreferencesForm } from '@/components/settings/EditorPreferencesForm'
+import { getBillingUser } from '@/lib/db/billing'
 import { getDemoUserId } from '@/lib/db/collections'
 import { getEditorPreferences, getProfileUser } from '@/lib/db/profile'
+import { prisma } from '@/lib/prisma'
+import { FREE_COLLECTION_LIMIT, FREE_ITEM_LIMIT } from '@/lib/usage-limits'
 
 export default async function SettingsPage() {
   const session = await auth()
@@ -14,7 +19,12 @@ export default async function SettingsPage() {
     redirect('/sign-in?callbackUrl=/settings')
   }
 
-  const user = await getProfileUser(session.user.id)
+  const [user, billing, itemsUsed, collectionsUsed] = await Promise.all([
+    getProfileUser(session.user.id),
+    getBillingUser(session.user.id),
+    prisma.item.count({ where: { userId: session.user.id } }),
+    prisma.collection.count({ where: { userId: session.user.id } }),
+  ])
   if (!user) {
     redirect('/sign-in?callbackUrl=/settings')
   }
@@ -24,6 +34,8 @@ export default async function SettingsPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-10">
+      <BillingToast />
+
       <Link
         href="/dashboard"
         className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
@@ -33,6 +45,21 @@ export default async function SettingsPage() {
       </Link>
 
       <h1 className="mb-8 text-2xl font-semibold">Settings</h1>
+
+      <section id="billing" className="mb-8 scroll-mt-24">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          Billing
+        </h2>
+        <div className="rounded-xl border bg-card p-5">
+          <BillingSection
+            isPro={billing?.isPro ?? false}
+            itemsUsed={itemsUsed}
+            collectionsUsed={collectionsUsed}
+            itemLimit={FREE_ITEM_LIMIT}
+            collectionLimit={FREE_COLLECTION_LIMIT}
+          />
+        </div>
+      </section>
 
       <section className="mb-8">
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">

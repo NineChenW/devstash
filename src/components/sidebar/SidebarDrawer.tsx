@@ -11,9 +11,17 @@ interface SidebarDrawerProps {
   itemTypes: ItemTypeWithCount[]
   collections: CollectionWithTypes[]
   user: SidebarUserData | null
+  userIsPro?: boolean
 }
 
-export function SidebarDrawer({ open, onClose, itemTypes, collections, user }: SidebarDrawerProps) {
+export function SidebarDrawer({
+  open,
+  onClose,
+  itemTypes,
+  collections,
+  user,
+  userIsPro = false,
+}: SidebarDrawerProps) {
   if (!open) return null
 
   return (
@@ -27,7 +35,13 @@ export function SidebarDrawer({ open, onClose, itemTypes, collections, user }: S
       {/* Drawer */}
       <div className="fixed inset-y-0 left-0 z-50 w-64 md:hidden">
         <div className="relative flex h-full flex-col">
-          <Sidebar collapsed={false} itemTypes={itemTypes} collections={collections} user={user} />
+          <Sidebar
+            collapsed={false}
+            itemTypes={itemTypes}
+            collections={collections}
+            user={user}
+            userIsPro={userIsPro}
+          />
         </div>
       </div>
     </>

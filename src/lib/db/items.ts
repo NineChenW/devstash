@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { deleteObject, isR2Configured } from '@/lib/r2'
 import { ITEMS_PER_PAGE, DASHBOARD_RECENT_ITEMS_LIMIT } from '@/lib/pagination'
+import { checkItemQuota, QuotaExceededError } from '@/lib/usage-limits'
 
 export interface DashboardItem {
   id: string
@@ -279,8 +280,14 @@ const TYPE_CONTENT_TYPE: Record<string, string> = {
 
 export async function createItem(
   userId: string,
+  isPro: boolean,
   data: CreateItemInput,
 ): Promise<ItemDetail | null> {
+  const quota = await checkItemQuota({ userId, isPro, typeName: data.typeName })
+  if (!quota.ok) {
+    throw new QuotaExceededError(quota.error ?? 'Quota exceeded')
+  }
+
   const type = await prisma.itemType.findFirst({
     where: {
       name: data.typeName,

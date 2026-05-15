@@ -80,3 +80,10 @@ export function gateForUploadKind(args: {
     error: `${args.kind} items are a Pro feature.`,
   }
 }
+
+export function isProForGating(session: {
+  user?: { isPro?: boolean } | null
+} | null): boolean {
+  if (process.env.NODE_ENV !== "production") return true
+  return Boolean(session?.user?.isPro)
+}
