@@ -12,6 +12,7 @@ import {
   type CreatedCollection,
   type UserCollectionOption,
 } from '@/lib/db/collections'
+import { QuotaExceededError, isProForGating } from '@/lib/usage-limits'
 import {
   createCollectionSchema,
   updateCollectionSchema,
@@ -49,14 +50,18 @@ export async function createCollection(
 
   const { name, description } = parsed.data
   const ownerId = (await getDemoUserId()) ?? session.user.id
+  const isPro = isProForGating(session)
 
   try {
-    const created = await createCollectionQuery(ownerId, {
+    const created = await createCollectionQuery(ownerId, isPro, {
       name,
       description: description && description.length > 0 ? description : null,
     })
     return { success: true, data: created }
   } catch (err) {
+    if (err instanceof QuotaExceededError) {
+      return { success: false, error: err.message }
+    }
     console.error('createCollection failed', err)
     return { success: false, error: 'Failed to create collection' }
   }

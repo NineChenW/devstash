@@ -1,8 +1,9 @@
-import { describe, it, expect } from "vitest"
+import { describe, it, expect, beforeEach, afterEach } from "vitest"
 import {
   checkItemQuota,
   checkCollectionQuota,
   gateForUploadKind,
+  isProForGating,
 } from "@/lib/usage-limits"
 
 describe("checkItemQuota", () => {
@@ -86,5 +87,54 @@ describe("gateForUploadKind", () => {
     const result = gateForUploadKind({ isPro: false, kind: "image" })
     expect(result.ok).toBe(false)
     expect(result.error).toBe("image items are a Pro feature.")
+  })
+})
+
+describe("isProForGating", () => {
+  const originalNodeEnv = process.env.NODE_ENV
+
+  function setNodeEnv(value: string) {
+    ;(process.env as Record<string, string | undefined>).NODE_ENV = value
+  }
+
+  beforeEach(() => {
+    setNodeEnv("production")
+  })
+
+  afterEach(() => {
+    setNodeEnv(originalNodeEnv ?? "test")
+  })
+
+  it("returns true regardless of session when NODE_ENV !== production (dev override)", () => {
+    setNodeEnv("development")
+    expect(isProForGating(null)).toBe(true)
+    expect(isProForGating({})).toBe(true)
+    expect(isProForGating({ user: null })).toBe(true)
+    expect(isProForGating({ user: { isPro: false } })).toBe(true)
+  })
+
+  it("dev override also fires in 'test' mode", () => {
+    setNodeEnv("test")
+    expect(isProForGating({ user: { isPro: false } })).toBe(true)
+  })
+
+  it("returns true in production when session.user.isPro is true", () => {
+    expect(isProForGating({ user: { isPro: true } })).toBe(true)
+  })
+
+  it("returns false in production when session.user.isPro is false", () => {
+    expect(isProForGating({ user: { isPro: false } })).toBe(false)
+  })
+
+  it("returns false in production when isPro is undefined", () => {
+    expect(isProForGating({ user: {} })).toBe(false)
+  })
+
+  it("returns false in production for null session", () => {
+    expect(isProForGating(null)).toBe(false)
+  })
+
+  it("returns false in production when user is null", () => {
+    expect(isProForGating({ user: null })).toBe(false)
   })
 })

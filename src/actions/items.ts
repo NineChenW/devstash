@@ -11,6 +11,7 @@ import {
   updateItem as updateItemQuery,
   type ItemDetail,
 } from '@/lib/db/items'
+import { QuotaExceededError, isProForGating } from '@/lib/usage-limits'
 import {
   createItemSchema,
   updateItemSchema,
@@ -104,9 +105,10 @@ export async function createItem(payload: CreateItemPayload): Promise<CreateItem
   const dedupedCollectionIds = collectionIds ? Array.from(new Set(collectionIds)) : undefined
 
   const ownerId = (await getDemoUserId()) ?? session.user.id
+  const isPro = isProForGating(session)
 
   try {
-    const created = await createItemQuery(ownerId, {
+    const created = await createItemQuery(ownerId, isPro, {
       typeName,
       title,
       description: description ?? null,
@@ -126,6 +128,9 @@ export async function createItem(payload: CreateItemPayload): Promise<CreateItem
 
     return { success: true, data: created }
   } catch (err) {
+    if (err instanceof QuotaExceededError) {
+      return { success: false, error: err.message }
+    }
     console.error('createItem failed', err)
     return { success: false, error: 'Failed to create item' }
   }
