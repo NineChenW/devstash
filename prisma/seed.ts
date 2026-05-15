@@ -557,20 +557,6 @@ npx npm-check-updates -i`,
       defaultType: 'snippet',
       group: 'devops',
     },
-    {
-      name: 'Terminal Commands',
-      description: 'Useful shell commands for everyday development',
-      isFavorite: false,
-      defaultType: 'command',
-      group: 'terminal',
-    },
-    {
-      name: 'Design Resources',
-      description: 'UI/UX resources and references',
-      isFavorite: true,
-      defaultType: 'link',
-      group: 'design',
-    },
   ]
 
   for (const col of collections) {
