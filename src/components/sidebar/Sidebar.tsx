@@ -7,6 +7,7 @@ import {
   Star,
   FolderOpen,
   ChevronDown,
+  Sparkles,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -96,6 +97,7 @@ export function Sidebar({
               const isActive = pathname === href
               const isProType = PRO_TYPES.has(type.name)
               const showProBadge = isProType && !userIsPro
+              const showProUnlocked = isProType && userIsPro
 
               const label = `${type.name.charAt(0).toUpperCase()}${type.name.slice(1)}s`
               return (
@@ -123,6 +125,21 @@ export function Sidebar({
                         >
                           PRO
                         </Badge>
+                      )}
+                      {showProUnlocked && (
+                        <span
+                          className="pro-badge-glow inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full"
+                          style={{
+                            background: 'linear-gradient(135deg, #6366f1, #ec4899)',
+                          }}
+                          aria-label="Pro feature"
+                          title="Pro feature"
+                        >
+                          <Sparkles
+                            className="h-2.5 w-2.5 text-white"
+                            strokeWidth={2.5}
+                          />
+                        </span>
                       )}
                       <span className="ml-auto text-xs text-muted-foreground">{type.count}</span>
                     </>

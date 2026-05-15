@@ -110,10 +110,20 @@ function ProState() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div>
-        <p className="text-sm font-medium">Plan: DevStash Pro</p>
-        <p className="mt-1 text-xs text-muted-foreground">Unlimited everything.</p>
+        <div className="flex items-center gap-2.5">
+          <Sparkles className="h-5 w-5 text-indigo-400" strokeWidth={1.75} />
+          <h2 className="bg-gradient-to-r from-indigo-300 via-violet-300 to-fuchsia-300 bg-clip-text text-xl font-semibold tracking-tight text-transparent">
+            DevStash Pro
+          </h2>
+          <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-emerald-400">
+            Active
+          </span>
+        </div>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Unlimited items, collections, files, and images. Thanks for supporting DevStash.
+        </p>
       </div>
       <Button variant="outline" onClick={handleManage} disabled={pending}>
         {pending ? 'Opening…' : 'Manage billing'}

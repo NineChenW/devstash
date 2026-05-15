@@ -207,6 +207,25 @@
   .markdown-preview em { color: inherit; font-style: italic; }
   .markdown-preview del { color: #94a3b8; }
 
+  @keyframes pro-badge-pulse {
+    0%, 100% {
+      box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.55), 0 2px 8px rgba(99, 102, 241, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 0 5px rgba(236, 72, 153, 0), 0 2px 8px rgba(99, 102, 241, 0.4);
+    }
+  }
+
+  .pro-badge-glow {
+    animation: pro-badge-pulse 2.4s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pro-badge-glow {
+      animation: none;
+    }
+  }
+
   @keyframes arrow-pulse {
     0%, 100% {
       transform: scale(1);
