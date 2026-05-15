@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { iconMap, DefaultIcon } from '@/lib/icon-map'
 import { DashboardShell } from '@/components/dashboard/DashboardShell'
 import { ItemCard } from '@/components/items/ItemCard'
@@ -13,7 +13,7 @@ import { getEditorPreferences } from '@/lib/db/profile'
 import { CREATE_ITEM_TYPES, type CreateItemType } from '@/lib/validations/items'
 import { Pagination } from '@/components/ui/pagination'
 import { ITEMS_PER_PAGE, parsePageParam } from '@/lib/pagination'
-import { isProForGating } from '@/lib/usage-limits'
+import { isProForGating, PRO_ITEM_TYPES } from '@/lib/usage-limits'
 
 interface ItemsByTypePageProps {
   params: Promise<{ type: string }>
@@ -54,6 +54,11 @@ export default async function ItemsByTypePage({
         </div>
       </DashboardShell>
     )
+  }
+
+  const isProOnlyType = PRO_ITEM_TYPES.has(singularType as 'file' | 'image')
+  if (isProOnlyType && !userIsPro) {
+    redirect('/upgrade')
   }
 
   const [result, collections, itemTypes, editorPreferences] = await Promise.all([
