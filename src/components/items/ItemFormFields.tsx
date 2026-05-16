@@ -10,6 +10,37 @@ import {
 import { CodeEditor } from './CodeEditor'
 import { MarkdownEditor } from './MarkdownEditor'
 
+const LANGUAGE_OPTIONS = [
+  { value: 'plaintext', label: 'Plain text' },
+  { value: 'bash', label: 'Bash / Shell' },
+  { value: 'c', label: 'C' },
+  { value: 'cpp', label: 'C++' },
+  { value: 'csharp', label: 'C#' },
+  { value: 'css', label: 'CSS' },
+  { value: 'dockerfile', label: 'Dockerfile' },
+  { value: 'go', label: 'Go' },
+  { value: 'graphql', label: 'GraphQL' },
+  { value: 'html', label: 'HTML' },
+  { value: 'java', label: 'Java' },
+  { value: 'javascript', label: 'JavaScript' },
+  { value: 'json', label: 'JSON' },
+  { value: 'kotlin', label: 'Kotlin' },
+  { value: 'markdown', label: 'Markdown' },
+  { value: 'php', label: 'PHP' },
+  { value: 'python', label: 'Python' },
+  { value: 'ruby', label: 'Ruby' },
+  { value: 'rust', label: 'Rust' },
+  { value: 'scala', label: 'Scala' },
+  { value: 'scss', label: 'SCSS' },
+  { value: 'sql', label: 'SQL' },
+  { value: 'swift', label: 'Swift' },
+  { value: 'typescript', label: 'TypeScript' },
+  { value: 'xml', label: 'XML' },
+  { value: 'yaml', label: 'YAML' },
+] as const
+
+const LANGUAGE_VALUES = new Set<string>(LANGUAGE_OPTIONS.map((o) => o.value))
+
 interface ItemFormFieldsProps {
   typeName: string
   idPrefix: string
@@ -95,6 +126,26 @@ export function ItemFormFields({
         />
       </Field>
 
+      {showLanguage && (
+        <Field label="Language" htmlFor={`${idPrefix}-language`}>
+          <select
+            id={`${idPrefix}-language`}
+            value={language || 'plaintext'}
+            onChange={(e) => setLanguage(e.target.value)}
+            className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          >
+            {language && !LANGUAGE_VALUES.has(language) && (
+              <option value={language}>{language}</option>
+            )}
+            {LANGUAGE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+      )}
+
       {showContent && (
         <Field label="Content" htmlFor={`${idPrefix}-content`}>
           {useCodeEditor ? (
@@ -119,17 +170,6 @@ export function ItemFormFields({
               className="w-full rounded-md border border-input bg-transparent px-3 py-2 font-mono text-xs leading-relaxed shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
             />
           )}
-        </Field>
-      )}
-
-      {showLanguage && (
-        <Field label="Language" htmlFor={`${idPrefix}-language`}>
-          <Input
-            id={`${idPrefix}-language`}
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-            placeholder="e.g. typescript"
-          />
         </Field>
       )}
 
