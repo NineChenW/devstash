@@ -24,6 +24,7 @@ import {
 } from '@/lib/item-type-meta'
 import { appendTagToInput, firstFieldError, parseTagsInput } from '@/lib/item-utils'
 import { uploadFile } from '@/lib/upload'
+import { AutoDescriptionSuggestion } from './AutoDescriptionSuggestion'
 import { AutoTagSuggestions } from './AutoTagSuggestions'
 import { Field, ItemFormFields } from './ItemFormFields'
 import { FileUpload, type PendingFile } from './FileUpload'
@@ -253,6 +254,18 @@ export function CreateItemDialog({
               contentPlaceholder="Paste your code…"
               contentRows={8}
               urlRequired
+              descriptionBelow={
+                userIsPro ? (
+                  <AutoDescriptionSuggestion
+                    title={title}
+                    content={content}
+                    url={url}
+                    fileName={pendingFile?.file.name ?? null}
+                    typeName={typeName}
+                    onAccept={setDescription}
+                  />
+                ) : null
+              }
               extraBeforeTags={
                 showFileUpload ? (
                   <Field label={typeName === 'image' ? 'Image' : 'File'}>
