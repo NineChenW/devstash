@@ -7,6 +7,7 @@ export type RateLimitProfile =
   | "forgot-password"
   | "reset-password"
   | "resend-verification"
+  | "ai"
 
 type ProfileConfig = {
   limit: number
@@ -19,6 +20,7 @@ const PROFILES: Record<RateLimitProfile, ProfileConfig> = {
   "forgot-password": { limit: 3, window: "1 h" },
   "reset-password": { limit: 5, window: "15 m" },
   "resend-verification": { limit: 3, window: "15 m" },
+  ai: { limit: 20, window: "1 h" },
 }
 
 let redisClient: Redis | null | undefined

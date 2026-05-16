@@ -67,6 +67,8 @@ interface ItemFormFieldsProps {
 
   /** Optional slot rendered between the URL field and the Tags field. */
   extraBeforeTags?: React.ReactNode
+  /** Optional slot rendered inside the Tags field, directly below the input. */
+  tagsBelow?: React.ReactNode
   /** Optional slot rendered after the Tags field. */
   extraAfterTags?: React.ReactNode
 }
@@ -93,6 +95,7 @@ export function ItemFormFields({
   contentRows = 10,
   urlRequired = false,
   extraBeforeTags,
+  tagsBelow,
   extraAfterTags,
 }: ItemFormFieldsProps) {
   const showContent = TYPES_WITH_CONTENT.has(typeName)
@@ -195,6 +198,7 @@ export function ItemFormFields({
           onChange={(e) => setTagsInput(e.target.value)}
           placeholder="react, hooks, ui"
         />
+        {tagsBelow}
       </Field>
 
       {extraAfterTags}

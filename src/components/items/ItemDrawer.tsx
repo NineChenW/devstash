@@ -16,6 +16,7 @@ import { DetailRow, ItemHeader, Section, fmtLongDate } from './ItemDrawerLayout'
 interface ItemDrawerProps {
   itemId: string | null
   onClose: () => void
+  userIsPro?: boolean
 }
 
 function normalizeItemDates(item: ItemDetail): ItemDetail {
@@ -26,7 +27,7 @@ function normalizeItemDates(item: ItemDetail): ItemDetail {
   }
 }
 
-export function ItemDrawer({ itemId, onClose }: ItemDrawerProps) {
+export function ItemDrawer({ itemId, onClose, userIsPro = false }: ItemDrawerProps) {
   const router = useRouter()
   const open = itemId !== null
   const [item, setItem] = useState<ItemDetail | null>(null)
@@ -179,6 +180,7 @@ export function ItemDrawer({ itemId, onClose }: ItemDrawerProps) {
             item={item}
             onCancel={() => setEditing(false)}
             onSaved={handleSaved}
+            userIsPro={userIsPro}
           />
         )}
       </Sheet>

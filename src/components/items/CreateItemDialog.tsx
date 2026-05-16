@@ -22,8 +22,9 @@ import {
   TYPES_WITH_FILE_UPLOAD,
   TYPES_WITH_LANGUAGE,
 } from '@/lib/item-type-meta'
-import { firstFieldError, parseTagsInput } from '@/lib/item-utils'
+import { appendTagToInput, firstFieldError, parseTagsInput } from '@/lib/item-utils'
 import { uploadFile } from '@/lib/upload'
+import { AutoTagSuggestions } from './AutoTagSuggestions'
 import { Field, ItemFormFields } from './ItemFormFields'
 import { FileUpload, type PendingFile } from './FileUpload'
 import { CollectionSelect } from '@/components/collections/CollectionSelect'
@@ -262,6 +263,17 @@ export function CreateItemDialog({
                       progress={uploadProgress}
                     />
                   </Field>
+                ) : null
+              }
+              tagsBelow={
+                userIsPro ? (
+                  <AutoTagSuggestions
+                    title={title}
+                    content={content}
+                    typeName={typeName}
+                    tagsInput={tagsInput}
+                    onAcceptTag={(tag) => setTagsInput((prev) => appendTagToInput(prev, tag))}
+                  />
                 ) : null
               }
               extraAfterTags={

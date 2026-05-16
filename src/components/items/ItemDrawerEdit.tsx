@@ -5,13 +5,14 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { iconMap, DefaultIcon } from '@/lib/icon-map'
-import { firstFieldError, parseTagsInput } from '@/lib/item-utils'
+import { appendTagToInput, firstFieldError, parseTagsInput } from '@/lib/item-utils'
 import {
   TYPES_WITH_CONTENT,
   TYPES_WITH_LANGUAGE,
 } from '@/lib/item-type-meta'
 import { updateItem } from '@/actions/items'
 import type { ItemDetail } from '@/lib/db/items'
+import { AutoTagSuggestions } from './AutoTagSuggestions'
 import { Field, ItemFormFields } from './ItemFormFields'
 import { DetailRow, ItemHeader, Section, fmtLongDate } from './ItemDrawerLayout'
 import { CollectionSelect } from '@/components/collections/CollectionSelect'
@@ -22,9 +23,10 @@ interface ItemDrawerEditProps {
   item: ItemDetail
   onCancel: () => void
   onSaved: (updated: ItemDetail) => void
+  userIsPro?: boolean
 }
 
-export function ItemDrawerEdit({ item, onCancel, onSaved }: ItemDrawerEditProps) {
+export function ItemDrawerEdit({ item, onCancel, onSaved, userIsPro = false }: ItemDrawerEditProps) {
   const router = useRouter()
   const Icon = iconMap[item.type.icon] || DefaultIcon
   const typeName = item.type.name
@@ -127,6 +129,17 @@ export function ItemDrawerEdit({ item, onCancel, onSaved }: ItemDrawerEditProps)
           tagsInput={tagsInput}
           setTagsInput={setTagsInput}
           contentRows={10}
+          tagsBelow={
+            userIsPro ? (
+              <AutoTagSuggestions
+                title={title}
+                content={content}
+                typeName={typeName}
+                tagsInput={tagsInput}
+                onAcceptTag={(tag) => setTagsInput((prev) => appendTagToInput(prev, tag))}
+              />
+            ) : null
+          }
           extraAfterTags={
             <Field label="Collections">
               <CollectionSelect
