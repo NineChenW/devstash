@@ -12,7 +12,7 @@ Do not violate any following rules:
 7. Update goals section with current feature requirements.
 8. Update notes section with current feature references.
 
-# Current Feature
+# Current Feature: AI Description Suggestion
 
 <!--Feature Name-->
 
@@ -20,13 +20,32 @@ Do not violate any following rules:
 
 <!--Not Started|In Progress|Completed-->
 
+In Progress
+
 ## Goals
 
 <!--Goals & requirements-->
 
+- Add an icon button (sparkles, matching the auto-tag pattern) near the description input that generates a concise 1–2 sentence AI summary based on the item's currently unsaved form state (title, content, url, fileName, typeName) — no save round-trip required.
+- Works for every item type: snippet/prompt/command/note use title+content, link uses title+url, file/image use title+fileName, fallback to title only when nothing else is present.
+- Surface the AI-generated suggestion in a small accept/reject UI (single suggestion, not 3–5 like tags) — accepting writes the text into the description textarea, rejecting just dismisses.
+- Available in both `CreateItemDialog` and `ItemDrawerEdit` (same two surfaces the AutoTagSuggestions wired into).
+- Pro-only, honoring the existing `isProForGating` dev-override so non-prod users always see the button.
+- Reuses the AI rate-limit profile (`ai`, 20/hr per user) — no new bucket.
+- Disable the button when the title is empty (same UX as `AutoTagSuggestions` — title is the minimum input required to produce anything useful).
+
 ## Notes
 
 <!--Any extra notes-->
+
+- Build on top of the just-merged AI Auto-Tagging infrastructure: [src/lib/openai.ts](src/lib/openai.ts) (lazy-cached client, `AI_MODEL`/`AI_BASE_URL` pointed at SiliconFlow `Qwen/Qwen2.5-7B-Instruct` via Chat Completions, env-parser `isOpenAIConfigured()`), [src/lib/rate-limit.ts](src/lib/rate-limit.ts) `ai` profile keyed by `user:${session.user.id}`, and the established server-action shape (auth gate → Pro gate → Zod safeParse → rate limit → 503 short-circuit → try/catch returning `{ success, data | error }`).
+- Mirror the file layout of [src/lib/ai/auto-tags.ts](src/lib/ai/auto-tags.ts): new `src/lib/ai/auto-description.ts` with `buildAutoDescriptionInput({title, content, url, fileName, typeName})`, `parseDescriptionResponse(raw)` (just trim + reject empty), and pure-function tests in `src/lib/ai/auto-description.test.ts`. Server action lives in [src/actions/ai.ts](src/actions/ai.ts) alongside `generateAutoTags`.
+- System prompt should ask for plain prose only — no markdown, no quotes, no leading "This is a..." — 1–2 sentences, ≤ 240 chars. Truncate the content input to the same 2000-char cap `auto-tags` uses.
+- UI: new `src/components/items/AutoDescriptionSuggestion.tsx` (client component). Sparkles icon button with `Loader2` spin while pending, label "Suggest description" → "Thinking…". When a suggestion arrives, render it in a small bordered card below the description textarea with two icon buttons: emerald `Check` (writes to the description input via the same controlled-state callback the textarea uses) and muted `X` (dismisses). Add a `descriptionBelow?: ReactNode` slot to [src/components/items/ItemFormFields.tsx](src/components/items/ItemFormFields.tsx) mirroring the existing `tagsBelow` pattern; the consumer (CreateItemDialog / ItemDrawerEdit) decides whether to mount it based on `userIsPro` (already plumbed through both surfaces by the auto-tags feature).
+- Accept-behavior decision: replace the description entirely (single-shot suggestion, no merging) — simpler and matches how a user would use it (click → review → accept). If the user wants to keep their existing description AND add AI text, they can manually merge after the suggestion appears in the preview card.
+- No new env vars, no schema changes, no migration. Same `OPENAI_API_KEY` env used for tags works here.
+- Tests: cover `buildAutoDescriptionInput` (type-conditional input shape: link includes url, file/image includes fileName, others include content; truncation), `parseDescriptionResponse` (whitespace/empty handling, length cap if we enforce one). Server action and component stay untested per the project's "no mocking Prisma / OpenAI, no component tests" stance.
+- Out of scope: streaming the response token-by-token (single chunk is fine), multiple alternative descriptions, "regenerate" affordance (user can just click the button again — rate limit will guard rapid repeats), persisting suggestion history.
 
 ## History
 

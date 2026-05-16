@@ -67,6 +67,8 @@ interface ItemFormFieldsProps {
 
   /** Optional slot rendered between the URL field and the Tags field. */
   extraBeforeTags?: React.ReactNode
+  /** Optional slot rendered inside the Description field, directly below the textarea. */
+  descriptionBelow?: React.ReactNode
   /** Optional slot rendered inside the Tags field, directly below the input. */
   tagsBelow?: React.ReactNode
   /** Optional slot rendered after the Tags field. */
@@ -95,6 +97,7 @@ export function ItemFormFields({
   contentRows = 10,
   urlRequired = false,
   extraBeforeTags,
+  descriptionBelow,
   tagsBelow,
   extraAfterTags,
 }: ItemFormFieldsProps) {
@@ -127,6 +130,7 @@ export function ItemFormFields({
           placeholder={descriptionPlaceholder}
           className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
         />
+        {descriptionBelow}
       </Field>
 
       {showLanguage && (

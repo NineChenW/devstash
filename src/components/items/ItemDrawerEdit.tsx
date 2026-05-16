@@ -12,6 +12,7 @@ import {
 } from '@/lib/item-type-meta'
 import { updateItem } from '@/actions/items'
 import type { ItemDetail } from '@/lib/db/items'
+import { AutoDescriptionSuggestion } from './AutoDescriptionSuggestion'
 import { AutoTagSuggestions } from './AutoTagSuggestions'
 import { Field, ItemFormFields } from './ItemFormFields'
 import { DetailRow, ItemHeader, Section, fmtLongDate } from './ItemDrawerLayout'
@@ -129,6 +130,18 @@ export function ItemDrawerEdit({ item, onCancel, onSaved, userIsPro = false }: I
           tagsInput={tagsInput}
           setTagsInput={setTagsInput}
           contentRows={10}
+          descriptionBelow={
+            userIsPro ? (
+              <AutoDescriptionSuggestion
+                title={title}
+                content={content}
+                url={url}
+                fileName={item.fileName ?? null}
+                typeName={typeName}
+                onAccept={setDescription}
+              />
+            ) : null
+          }
           tagsBelow={
             userIsPro ? (
               <AutoTagSuggestions
