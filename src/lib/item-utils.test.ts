@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { firstFieldError, parseTagsInput } from './item-utils'
+import { appendTagToInput, firstFieldError, parseTagsInput } from './item-utils'
 
 describe('parseTagsInput', () => {
   it('splits, trims, and drops empty entries', () => {
@@ -41,5 +41,39 @@ describe('firstFieldError', () => {
   it('skips empty arrays', () => {
     const errors = { title: [] as string[], url: ['Bad URL'] }
     expect(firstFieldError(errors, 'title', 'url')).toBe('Bad URL')
+  })
+})
+
+describe('appendTagToInput', () => {
+  it('returns the input unchanged when tag is empty or whitespace', () => {
+    expect(appendTagToInput('react', '')).toBe('react')
+    expect(appendTagToInput('react', '   ')).toBe('react')
+  })
+
+  it('sets the tag as the only entry for empty / whitespace-only input', () => {
+    expect(appendTagToInput('', 'react')).toBe('react')
+    expect(appendTagToInput('   ', 'react')).toBe('react')
+  })
+
+  it('appends with ", " when input already has tags', () => {
+    expect(appendTagToInput('react', 'hooks')).toBe('react, hooks')
+    expect(appendTagToInput('react, hooks', 'state')).toBe('react, hooks, state')
+  })
+
+  it('handles input ending in a trailing comma', () => {
+    expect(appendTagToInput('react,', 'hooks')).toBe('react, hooks')
+  })
+
+  it('handles input ending in trailing whitespace', () => {
+    expect(appendTagToInput('react ', 'hooks')).toBe('react hooks')
+  })
+
+  it('dedupes case-insensitively', () => {
+    expect(appendTagToInput('React, hooks', 'react')).toBe('React, hooks')
+    expect(appendTagToInput('react, HOOKS', 'hooks')).toBe('react, HOOKS')
+  })
+
+  it('trims the tag before appending', () => {
+    expect(appendTagToInput('react', '  hooks  ')).toBe('react, hooks')
   })
 })

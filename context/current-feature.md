@@ -12,11 +12,13 @@ Do not violate any following rules:
 7. Update goals section with current feature requirements.
 8. Update notes section with current feature references.
 
-# Current Feature
+# Current Feature: AI Auto-Tagging
 
 <!--Feature Name-->
 
 ## Status
+
+In Progress
 
 <!--Not Started|In Progress|Completed-->
 
@@ -24,9 +26,32 @@ Do not violate any following rules:
 
 <!--Goals & requirements-->
 
+- Add AI-powered tag suggestions for items using OpenAI `gpt-5-nano` model
+- Establish OpenAI client utility with `AI_MODEL` constant (foundation for future AI features)
+- Build `generateAutoTags` server action: auth gate, Pro gating, Zod validation, rate limiting
+- Add `ai` rate-limit profile (20 requests/hour per user) to existing `src/lib/rate-limit.ts`
+- Add "Suggest Tags" button (Sparkles icon, ghost variant) in the tags area of both `CreateItemDialog` and `ItemDrawerEdit`
+- Display 3-5 suggested tags as badges with accept (check) and reject (X) controls per tag
+- Accepted suggestions get added to the item's tag list (freeform — not constrained to existing DB tags)
+- Truncate item content to 2000 chars before sending to OpenAI
+- Hide the Suggest Tags button for free users (UI-level Pro gating)
+- Error handling via sonner toast: Pro gating ("Pro feature"), rate limit ("Too many requests"), AI service errors
+- Unit tests for the server action's pure logic (input validation, tag normalization, response parsing)
+
 ## Notes
 
 <!--Any extra notes-->
+
+- **CRITICAL: Use OpenAI Responses API, NOT Chat Completions** — `gpt-5-nano` returns empty content via Chat Completions API. Must use `client.responses.create({ model, instructions, input, text: { format: { type: 'json_object' } } })` and read `response.output_text`.
+- `gpt-5-nano` does NOT support `max_tokens` (use `max_output_tokens` if needed via Responses API)
+- `zodResponseFormat` structured output blows token budgets with this model — use plain `json_object` format and parse manually
+- Model may return either `{"tags": [...]}` OR a bare `[...]` array — handle both shapes
+- Always normalize accepted tags to lowercase before adding to the item
+- `OPENAI_API_KEY` already in `.env`
+- `session.user.isPro` is available server-side (Phase 1 of Stripe integration wired this into the JWT callback); for UI gating, need to thread `userIsPro` prop into `CreateItemDialog` (already plumbed from prior gating work) and `ItemDrawerEdit` (new threading needed)
+- Dev override: `isProForGating(session)` in `src/lib/usage-limits.ts` returns true unconditionally in non-production — server action should use this helper for parity with the rest of the gating surface
+- Reference: see `docs/ai-integration-plan.md` for full architectural context
+- Rate-limit profile shape per existing `rate-limit.ts` pattern: `ai: { limit: 20, window: '1 h' }`; key by user id (not IP) so multi-user / shared-IP scenarios don't collide
 
 
 ## History

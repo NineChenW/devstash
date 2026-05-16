@@ -64,7 +64,7 @@ export function DashboardShell({
   return (
     <div className="min-h-screen bg-background">
      <EditorPreferencesProvider initial={editorPreferences}>
-      <ItemDrawerProvider>
+      <ItemDrawerProvider userIsPro={userIsPro}>
        <CommandPaletteProvider>
         <CreateItemProvider userIsPro={userIsPro}>
          <CreateCollectionProvider>

@@ -208,6 +208,24 @@ export async function updateItem(
     ? await filterUserCollectionIds(userId, data.collectionIds)
     : null
 
+  // Upsert tag rows OUTSIDE the transaction. The Neon HTTP adapter has limited
+  // visibility semantics for writes inside an interactive transaction — newly
+  // upserted rows aren't always visible to subsequent queries on the same tx
+  // handle, which surfaces as P2025 ("Expected N records to be connected, found
+  // only M") on the item.update set: [...] step. Orphan Tag rows on transaction
+  // failure are harmless: they're deduped by name and not user-scoped.
+  const uniqueTagNames = Array.from(new Set(data.tags))
+  const tagIds: { id: string }[] = []
+  for (const name of uniqueTagNames) {
+    const tag = await prisma.tag.upsert({
+      where: { name },
+      create: { name },
+      update: {},
+      select: { id: true },
+    })
+    tagIds.push({ id: tag.id })
+  }
+
   await prisma.$transaction(async (tx) => {
     await tx.item.update({
       where: { id: itemId },
@@ -217,13 +235,7 @@ export async function updateItem(
         content: data.content,
         url: data.url,
         language: data.language,
-        tags: {
-          set: [],
-          connectOrCreate: data.tags.map((name) => ({
-            where: { name },
-            create: { name },
-          })),
-        },
+        tags: { set: tagIds },
       },
     })
 
