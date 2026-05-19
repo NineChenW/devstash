@@ -1,0 +1,42 @@
+{
+    "$schema": "https://opencode.ai/config.json",
+    "permission": {
+        "*": "allow",
+        "question": "allow"
+    },
+    "compaction": {
+        "auto": false,
+        "prune": false
+    },
+    "watcher": {
+        "ignore": [
+            "node_modules/**"
+        ]
+    },
+    
+    "provider": {
+    "myprovider": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "volcengine",
+      "options": {
+        "baseURL": "https://ark.cn-beijing.volces.com/api/v3",
+        "apiKey": "ark-a0d34c5d-4efe-48ca-8623-b2412ff4d9d5-6a6c9"
+      },
+      "models": {
+        "ep-20260519103548-vtqtm": {
+          "name": "GLM-4.7"
+        }
+      }
+    }
+  },
+    "mcp": {
+        "playwright": {
+            "type": "local",
+            "command": [
+                "npx",
+                "@playwright/mcp@latest"
+            ],
+            "enabled": true
+        }
+    }
+}
