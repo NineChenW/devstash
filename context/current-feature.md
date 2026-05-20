@@ -20,7 +20,7 @@ AI Explain Code
 ## Status
 
 <!--Not Started|In Progress|Completed-->
-In Progress
+Completed
 
 ## Goals
 
@@ -118,3 +118,4 @@ Earliest to latest.
 - **2026-05-15**: Stripe Integration — Phase 2 (Integration & UI)
 - **2026-05-16**: AI Auto-Tagging
 - **2026-05-16**: AI Description Suggestion
+- **2026-05-20**: AI Explain Code
