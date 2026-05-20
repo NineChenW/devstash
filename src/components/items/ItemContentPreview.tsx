@@ -1,12 +1,20 @@
 'use client'
 
+import { useCallback } from 'react'
+import { toast } from 'sonner'
 import { formatBytes } from '@/lib/file-constraints'
 import { TYPES_WITH_CODE_EDITOR, TYPES_WITH_MARKDOWN_EDITOR } from '@/lib/item-type-meta'
 import type { ItemDetail } from '@/lib/db/items'
 import { CodeEditor } from './CodeEditor'
 import { MarkdownEditor } from './MarkdownEditor'
+import { explainCode } from '@/actions/ai'
 
-export function ItemContentPreview({ item }: { item: ItemDetail }) {
+interface ItemContentPreviewProps {
+  item: ItemDetail
+  userIsPro?: boolean
+}
+
+export function ItemContentPreview({ item, userIsPro = false }: ItemContentPreviewProps) {
   if (item.contentType === 'url' && item.url) {
     return (
       <a
@@ -46,7 +54,29 @@ export function ItemContentPreview({ item }: { item: ItemDetail }) {
 
   if (item.content) {
     if (TYPES_WITH_CODE_EDITOR.has(item.type.name)) {
-      return <CodeEditor value={item.content} language={item.language} readOnly />
+      const handleExplain = async () => {
+        const result = await explainCode({
+          title: item.title,
+          content: item.content,
+          language: item.language,
+          typeName: item.type.name,
+        })
+        if (!result.success) {
+          toast.error(result.error)
+          throw new Error(result.error)
+        }
+        return result.explanation
+      }
+      return (
+        <CodeEditor
+          value={item.content}
+          language={item.language}
+          readOnly
+          showExplain
+          userIsPro={userIsPro}
+          onExplain={handleExplain}
+        />
+      )
     }
     if (TYPES_WITH_MARKDOWN_EDITOR.has(item.type.name)) {
       return <MarkdownEditor value={item.content} readOnly />

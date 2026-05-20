@@ -12,6 +12,10 @@ import {
   buildAutoDescriptionInput,
   parseDescriptionResponse,
 } from '@/lib/ai/auto-description'
+import {
+  buildExplainCodeInput,
+  parseExplainCodeResponse,
+} from '@/lib/ai/explain-code'
 import { checkRateLimit, minutesUntil } from '@/lib/rate-limit'
 import { isProForGating } from '@/lib/usage-limits'
 
@@ -173,6 +177,88 @@ export async function generateAutoDescription(
     return { success: true, description }
   } catch (err) {
     console.error('generateAutoDescription failed', err)
+    return { success: false, error: 'AI request failed. Try again.' }
+  }
+}
+
+const explainCodeSchema = z.object({
+  title: z.string().trim().min(1).max(200),
+  content: z.string().max(20_000).nullable().optional(),
+  language: z.string().max(40).nullable().optional(),
+  typeName: z.string().max(40).nullable().optional(),
+})
+
+export type ExplainCodePayload = z.input<typeof explainCodeSchema>
+
+export type ExplainCodeResult =
+  | { success: true; explanation: string }
+  | { success: false; error: string }
+
+export async function explainCode(
+  payload: ExplainCodePayload,
+): Promise<ExplainCodeResult> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { success: false, error: 'Not authenticated' }
+  }
+
+  if (!isProForGating(session)) {
+    return {
+      success: false,
+      error: 'AI features require a Pro subscription.',
+    }
+  }
+
+  const parsed = explainCodeSchema.safeParse(payload)
+  if (!parsed.success) {
+    return { success: false, error: 'Invalid input for code explanation.' }
+  }
+
+  const rate = await checkRateLimit('ai', `user:${session.user.id}`)
+  if (!rate.success) {
+    const minutes = minutesUntil(rate.reset)
+    return {
+      success: false,
+      error: `Too many AI requests. Try again in ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}.`,
+    }
+  }
+
+  if (!isOpenAIConfigured()) {
+    return { success: false, error: 'AI is not configured on this server.' }
+  }
+
+  if (!parsed.data.content?.trim()) {
+    return { success: false, error: 'No content to explain.' }
+  }
+
+  const { instructions, input } = buildExplainCodeInput({
+    title: parsed.data.title,
+    content: parsed.data.content,
+    language: parsed.data.language,
+    typeName: parsed.data.typeName,
+  })
+
+  try {
+    const client = getOpenAI()
+    const completion = await client.chat.completions.create({
+      model: AI_MODEL,
+      messages: [
+        { role: 'system', content: instructions },
+        { role: 'user', content: input },
+      ],
+    })
+    const rawText = completion.choices[0]?.message?.content ?? ''
+
+    const explanation = parseExplainCodeResponse(rawText)
+    if (!explanation) {
+      return {
+        success: false,
+        error: 'AI did not return an explanation. Try again.',
+      }
+    }
+    return { success: true, explanation }
+  } catch (err) {
+    console.error('explainCode failed', err)
     return { success: false, error: 'AI request failed. Try again.' }
   }
 }

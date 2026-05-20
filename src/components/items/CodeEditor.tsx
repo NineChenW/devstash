@@ -1,9 +1,11 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Check, Copy } from 'lucide-react'
+import { Check, Copy, Loader2, Sparkles, Crown } from 'lucide-react'
 import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
 import type { editor } from 'monaco-editor'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { useEditorPreferences } from '@/components/settings/EditorPreferencesContext'
 import type { EditorTheme } from '@/lib/validations/editor-preferences'
 
@@ -15,6 +17,9 @@ interface CodeEditorProps {
   placeholder?: string
   minHeight?: number
   maxHeight?: number
+  showExplain?: boolean
+  userIsPro?: boolean
+  onExplain?: () => Promise<string>
 }
 
 const THEME_VS_DARK = 'devstash-vs-dark'
@@ -29,6 +34,8 @@ const THEME_MAP: Record<EditorTheme, string> = {
 
 const DEFAULT_MIN_HEIGHT = 120
 const DEFAULT_MAX_HEIGHT = 400
+
+type ViewTab = 'code' | 'explain'
 
 let themesDefined = false
 
@@ -135,12 +142,19 @@ export function CodeEditor({
   placeholder,
   minHeight = DEFAULT_MIN_HEIGHT,
   maxHeight = DEFAULT_MAX_HEIGHT,
+  showExplain = false,
+  userIsPro = false,
+  onExplain,
 }: CodeEditorProps) {
   const preferences = useEditorPreferences()
   const monacoRef = useRef<Monaco | null>(null)
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
   const [editorHeight, setEditorHeight] = useState(minHeight)
   const [copied, setCopied] = useState(false)
+  const [activeTab, setActiveTab] = useState<ViewTab>('code')
+  const [explaining, setExplaining] = useState(false)
+  const [explanation, setExplanation] = useState<string | null>(null)
+  const [explainError, setExplainError] = useState<string | null>(null)
 
   const themeId = THEME_MAP[preferences.theme]
 
@@ -192,6 +206,21 @@ export function CodeEditor({
     }
   }
 
+  const handleExplain = async () => {
+    if (!onExplain || explaining) return
+    setExplaining(true)
+    setExplainError(null)
+    try {
+      const result = await onExplain()
+      setExplanation(result)
+      setActiveTab('explain')
+    } catch (err) {
+      setExplainError(err instanceof Error ? err.message : 'Failed to explain code')
+    } finally {
+      setExplaining(false)
+    }
+  }
+
   const showPlaceholder = readOnly && !value && placeholder
 
   return (
@@ -205,15 +234,70 @@ export function CodeEditor({
         <span className="ml-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
           {normalizedLanguage}
         </span>
-        <button
-          type="button"
-          onClick={handleCopy}
-          className="ml-auto flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground hover:bg-[hsl(217.2_32.6%_24%)] hover:text-foreground"
-          aria-label="Copy code"
-        >
-          {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-          <span>{copied ? 'Copied' : 'Copy'}</span>
-        </button>
+        <div className="ml-auto flex items-center gap-1">
+          {showExplain && explanation && (
+            <div className="flex items-center border border-[hsl(217.2_32.6%_30%)] rounded mr-1">
+              <button
+                type="button"
+                onClick={() => setActiveTab('code')}
+                className={`px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide transition-colors ${
+                  activeTab === 'code'
+                    ? 'bg-[hsl(217.2_32.6%_24%)] text-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Code
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('explain')}
+                className={`px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide transition-colors ${
+                  activeTab === 'explain'
+                    ? 'bg-[hsl(217.2_32.6%_24%)] text-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Explain
+              </button>
+            </div>
+          )}
+          {showExplain && (
+            userIsPro ? (
+              <button
+                type="button"
+                onClick={handleExplain}
+                disabled={explaining || !value}
+                className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground hover:bg-[hsl(217.2_32.6%_24%)] hover:text-foreground disabled:opacity-50"
+                aria-label="Explain code"
+                title="Explain code (AI)"
+              >
+                {explaining ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3 w-3" />
+                )}
+                <span>{explaining ? 'Explaining...' : 'Explain'}</span>
+              </button>
+            ) : (
+              <span
+                className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground cursor-not-allowed"
+                title="AI features require Pro subscription"
+              >
+                <Crown className="h-3 w-3" />
+                <span>Explain</span>
+              </span>
+            )
+          )}
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground hover:bg-[hsl(217.2_32.6%_24%)] hover:text-foreground"
+            aria-label="Copy code"
+          >
+            {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+            <span>{copied ? 'Copied' : 'Copy'}</span>
+          </button>
+        </div>
       </div>
       {showPlaceholder ? (
         <div
@@ -221,6 +305,25 @@ export function CodeEditor({
           style={{ minHeight }}
         >
           {placeholder}
+        </div>
+      ) : activeTab === 'explain' && explanation ? (
+        <div className="overflow-auto p-4 text-sm leading-relaxed text-foreground/90" style={{ minHeight, maxHeight }}>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{explanation}</ReactMarkdown>
+        </div>
+      ) : explaining ? (
+        <div
+          className="flex items-center justify-center gap-2 text-muted-foreground"
+          style={{ minHeight }}
+        >
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span className="text-xs">Generating explanation...</span>
+        </div>
+      ) : explainError ? (
+        <div
+          className="flex items-center justify-center gap-2 text-destructive p-4"
+          style={{ minHeight }}
+        >
+          <span className="text-xs">{explainError}</span>
         </div>
       ) : (
         <Editor

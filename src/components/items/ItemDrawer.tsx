@@ -173,6 +173,7 @@ export function ItemDrawer({ itemId, onClose, userIsPro = false }: ItemDrawerPro
             onTogglePin={handleTogglePin}
             onEdit={() => setEditing(true)}
             onDelete={() => setConfirmingDelete(true)}
+            userIsPro={userIsPro}
           />
         )}
         {item && !loading && !error && editing && (
@@ -227,6 +228,7 @@ interface DrawerViewProps {
   onTogglePin: () => void
   onEdit: () => void
   onDelete: () => void
+  userIsPro?: boolean
 }
 
 function DrawerView({
@@ -237,6 +239,7 @@ function DrawerView({
   onTogglePin,
   onEdit,
   onDelete,
+  userIsPro = false,
 }: DrawerViewProps) {
   const Icon = iconMap[item.type.icon] || DefaultIcon
 
@@ -313,7 +316,7 @@ function DrawerView({
         )}
 
         <Section title="Content">
-          <ItemContentPreview item={item} />
+          <ItemContentPreview item={item} userIsPro={userIsPro} />
         </Section>
 
         {item.tags.length > 0 && (
